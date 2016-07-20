@@ -1,0 +1,304 @@
+#undef _GLIBCXX_USE_CXX11_ABI
+#define _GLIBCXX_USE_CXX11_ABI 0
+#include <cmath>
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <random>
+
+#include "lcio.h"
+#include "IMPL/LCEventImpl.h"
+#include "EVENT/LCEvent.h"
+#include "EVENT/LCCollection.h"
+#include "EVENT/SimCalorimeterHit.h"
+#include "UTIL/CellIDDecoder.h"
+#include "IMPL/LCRunHeaderImpl.h"
+
+
+#include "simple_list_geometry.h"
+#include "beamcal_scanner.h"
+#include "beamcal_reconstructor.h"
+
+
+using namespace std;
+
+namespace scipp_ilc {
+    namespace beamcal_recon {
+
+
+/*
+ * In the lcdd file, the beamcal has a square pixel layout. But we want
+ * a radial pixel layout. So we have the pixelate_beamcal function to 
+ * change the pixelation. Unfortunately, all the hits on a pixel are 
+ * reduced to a single point in the center of the pixel. So that 
+ * function also acts to "distribute" the single hit evenly to several
+ * hits across the square pixel area, essentially acting as an
+ * anti-aliasing function. _spreadfactor denotes how heavily we are anti-
+ * aliasing (how much we are dividing up a single hit). If _spreadfactor
+ * = 1, then no spreading is performed. With 2, the hit is divided into
+ * a 2x2 hits; with 3, you get 9 hits in a 3x3 pattern; etc.
+ * _cellsize is the original square pixel size as defined in the lcdd and 
+ * compact.xml.
+ */
+
+        static const float _cellsize = 1; //milimeter
+        static const float _spreadfactor = 1; //1; we decided we don't need to spread a 1 mm pixel
+        static const bool _remove_negative = true;
+        static const float _transform = 0.007; //radians
+
+        //I am removing everything which hits at the very edge of the beamcal
+        //(two 3.5 mm pixels from the 140 mm edge) in order to deal with the
+        //poor statistical data at the outer boundries
+        static const float _radius_cut = 133.0; //mm.
+
+        //the fraction of background events that the program is
+        //allowed to reject. This is used to calculate the
+        //sigma cut
+        static const float _rejection_limit = 0.1;
+        static float _sigma_cut;
+
+        static bool _adding_to_stats;
+        static int _num_bgd_events;
+        static unordered_map<int,double>* _energy_totals;
+        static unordered_map<int,double>* _square_energy_totals;
+        static unordered_map<int,double>* _energy_averages;
+        static unordered_map<int,double>* _energy_std_devs;
+        static unordered_map<int,int>* _times_hit;
+        
+        vector<pixel_map*>* _database;
+
+
+
+        static void pixelate_beamcal(lcio::LCEvent* event, pixel_map* new_pixels) {
+            double dim = _cellsize / ( _spreadfactor );
+            double Ediv = (_spreadfactor * _spreadfactor);
+
+            unsigned int layer_min = 10;
+            unsigned int layer_max = 39;
+
+            lcio::LCCollection* col = event->getCollection("BeamCalHits") ;
+            if( col != NULL ){
+                lcio::CellIDDecoder<lcio::SimCalorimeterHit> decoder = lcio::CellIDDecoder<lcio::SimCalorimeterHit>(col);
+
+                int nElements = col->getNumberOfElements()  ;
+                for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
+                    lcio::SimCalorimeterHit* hit = dynamic_cast<lcio::SimCalorimeterHit*>( col->getElementAt(hitIndex) );
+
+                    const float* old_pos = hit->getPosition();
+
+                    float old_z = old_pos[2];
+                    float old_y = old_pos[1];
+                    float old_x = old_pos[0] - abs(old_z)*_transform;
+                    float radius = hypot(old_x,old_y);
+                    float old_energy = hit->getEnergy();
+                    unsigned int layer = decoder(hit)["layer"];
+
+                    if ( _remove_negative && (old_z<0) ) continue;
+                    if ( radius > _radius_cut ) continue;
+                    if ( layer < layer_min or layer_max < layer ) continue;
+                    
+                    //00340072 : TODO: track this ID. 1) figure out which slcio the outlier is from
+                    // 2) check position of every hit filling this ID (maybe geom is wrong?).
+                    // TODO:, should the _times_hit always be bgd_events_to_read? Ask Bruce
+
+
+                    if (_spreadfactor > 1) {
+                        float spread_energy = old_energy / Ediv;
+                        for (int i = 0; i < _spreadfactor; i++) {
+                            float spread_x = (i*dim) + old_x + (dim/2.0) - (_cellsize/2.0);
+                            for (int j = 0; j < _spreadfactor; j++) {
+                                float spread_y = (j*dim) + old_y + (dim/2.0) - (_cellsize/2.0);
+
+                                int ID = getID(spread_x,spread_y);
+                                (*new_pixels)[ID] += spread_energy;
+                            }
+                        }
+                    } else {
+                        int ID = getID(old_x,old_y);
+                        (*new_pixels)[ID] += old_energy;
+                    }
+                }
+
+                if (_adding_to_stats) {
+                    for( auto pair : *new_pixels ) {
+                        int ID = pair.first;
+                        float energy = pair.second;
+
+                        (*_energy_totals)[ID] += energy;
+                        (*_square_energy_totals)[ID] += ( (double)energy ) * ( (double)energy );
+                        (*_times_hit)[ID] += 1;
+                    }
+                }
+            }
+        }
+
+
+
+        static void process_background_events(string bgd_list_file_name) {
+            _database = new vector<pixel_map*>();
+
+            int numEventsRead = 0;
+            try { 
+                //open filelist
+                ifstream filelist (bgd_list_file_name, ifstream::in);
+                lcio::LCReader* lcReader = lcio::LCFactory::getInstance()->createLCReader() ;
+                string slcioFile;
+                lcio::LCEvent* event = NULL;
+
+                //for each slcio file in the file list
+                while ( filelist >> slcioFile ) {
+                    lcReader->open(slcioFile);
+                    
+                    //for each event in the slcio file
+                    while( (event=lcReader->readNextEvent()) ) {
+                        pixel_map* new_pixels = new pixel_map();
+                        pixelate_beamcal(event,new_pixels);
+                        _database->push_back(new_pixels);
+
+                        numEventsRead++;
+                        cout << "Database read number = " << numEventsRead << endl;
+                        if ( numEventsRead >= _num_bgd_events ) {
+                            delete event;
+                            break;
+                        }
+                    }
+                    lcReader->close();
+                    if ( numEventsRead >= _num_bgd_events ) break;
+                }
+                filelist.close();
+            } catch(lcio::IOException& e) {
+                cout << " Unable to read and analyze the LCIO file - " << e.what() << endl ;
+            }
+        }
+
+
+
+        static void generate_database(string bgd_list_file_name) {
+            cout << "Generating Database...\n";
+
+             _energy_totals = new unordered_map<int,double>();
+             _square_energy_totals = new unordered_map<int,double>();
+             _energy_averages = new unordered_map<int,double>();
+             _energy_std_devs = new unordered_map<int,double>();
+             _times_hit = new unordered_map<int,int>();
+
+            process_background_events(bgd_list_file_name);
+
+            for ( auto pair : *_energy_totals ) {
+                int ID = pair.first;
+                double energy_total = pair.second;
+
+                int hitcount = (*_times_hit)[ID];
+                double squared_energy_total = (*_square_energy_totals)[ID];
+
+                double energy_average = energy_total / hitcount;
+
+                double average_of_squares = squared_energy_total / hitcount;
+                double square_of_averages = energy_average * energy_average;
+                double energy_std_dev = sqrt(average_of_squares - square_of_averages);
+
+                if (hitcount == 1) {
+                    energy_std_dev = -1.0;
+                }
+
+                (*_energy_averages)[ID] = energy_average;
+                (*_energy_std_devs)[ID] = energy_std_dev;
+            }
+
+            //for ( pixel_map* map : *_database ) {
+            //    for ( auto pair : *map ) {
+            //        int ID = pair.first;
+            //        float energy = pair.second;
+            //        float average = (*_energy_averages)[ID];
+            //        float std_dev = (*_energy_std_devs)[ID];
+            //        float bgd_subtracted_energy = energy - average;
+            //        float significance = bgd_subtracted_energy / std_dev;
+            //        int weight = (*_times_hit)[ID];
+
+            //        if (significance > 5.0) {
+            //            printf("%08d: E=%.6e, A=%.6e, S=%.6e, bgdsE=%.6e, SIG=%.6e, W=%d\n",
+            //                    ID,energy,average,std_dev,bgd_subtracted_energy,significance,weight);
+
+            //            for ( pixel_map* map2 : *_database ) {
+            //                if ( map2->find(ID) != map2->end() ) {
+            //                    float e = map2->at(ID);
+            //                    printf("\t%.6e\n",e);
+            //                }
+            //            }
+            //        }
+            //    }
+            //}
+
+            delete _energy_totals;
+            delete _square_energy_totals;
+            delete _times_hit;
+
+            cout << "Database succesfully generated.\n";
+        }
+
+
+        
+        static bool compare_cluster( beamcal_cluster* first, beamcal_cluster* second ) {
+            //Sort from greatest to least significance.
+            //Largest significance cluster is zeroth element in list
+            return ( first->significance > second->significance );
+        }
+
+
+
+        static void calibrate_scanner() {
+            cout << "Calibrating Scanner...\n";
+
+            vector<beamcal_cluster*> cluster_list;
+            int map_num = 0;
+            for( pixel_map* map : *_database ) {
+                beamcal_cluster* new_cluster;
+                new_cluster = scan_beamcal(map,_energy_averages,_energy_std_devs);
+                cluster_list.push_back(new_cluster);
+                cout << "   Calibrating on background event " << map_num++ << endl;
+            }
+            sort(cluster_list.begin(), cluster_list.end(), compare_cluster);
+            
+            for ( beamcal_cluster* cluster: cluster_list ) {
+                cout << cluster->significance << endl;
+            }
+
+            int cutoff_index = (int)( cluster_list.size()*_rejection_limit );
+            _sigma_cut = cluster_list[cutoff_index]->significance;
+
+            cout << "Scanner calibration complete.\n";
+            exit(0);
+        }
+
+
+
+        void initialize_beamcal_reconstructor(string geom_file_name, string bgd_list_file_name, int bgd_events_to_be_read) {
+            _num_bgd_events = bgd_events_to_be_read;
+
+            _adding_to_stats = true;
+            initialize_geometry(geom_file_name);
+            generate_database(bgd_list_file_name);
+            calibrate_scanner();
+            _adding_to_stats = false;
+
+        }
+
+
+
+        beamcal_cluster* reconstruct_beamcal_event(lcio::LCEvent* signal_event) {
+            //literally copy-pasted this RNG from stack exchange
+            //no idea how it works, but it does the job
+            std::random_device rd; // only used once to initialise (seed) engine
+            std::mt19937 rng(rd()); // random-number engine used (Mersenne-Twister in this case)
+            std::uniform_int_distribution<int> uni(0,_num_bgd_events-1); // guaranteed unbiased
+            int bgd_index = uni(rng);
+            
+            pixel_map bgd_populated_beamcal = *( (*_database)[bgd_index] );
+            pixelate_beamcal( signal_event, &bgd_populated_beamcal );
+            beamcal_cluster* signal_cluster = scan_beamcal(&bgd_populated_beamcal,_energy_averages,_energy_std_devs);
+
+            signal_cluster->exceeds_sigma_cut = signal_cluster->significance > _sigma_cut;
+            return signal_cluster;
+        }
+    }
+}
