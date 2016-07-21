@@ -49,43 +49,34 @@ namespace scipp_ilc {
     }
 
 
-    /*double transform_to_cm(double pX, double pY, double pZ, double E){
-	    double theta = inc_ang;
-	    double in_E = E_e;
-	    double beta = Math.sin(theta);
-	    double gamma = Math.pow((1-Math.pow(beta, 2)), -0.5);
-	    double* cm_Vec;
+    void transform_to_cm(double pX, double E, double& pX_new, double& E_new){
+	    double theta = 0.007;
+	    double in_E = 250.0;
+	    double beta = sin(theta);
+	    double gamma = pow((1-pow(beta, 2)), -0.5);
 
-	     *
-	     *    |gamma         -gamma*beta| |p|                       |p'|
-	     *    |-gamma*beta         gamma|*|E| = TRANSOFORMED4vector |E'|
-	     *        
-	     *                                     *                                     *      
+	    // *
+	    // *    |gamma         -gamma*beta| |p|                       |p'|
+	    // *    |-gamma*beta         gamma|*|E| = TRANSOFORMED4vector |E'|
+	    // *        
+	    // *                                     *                                     *      
 
-	    cm_Vec[0] = pX*gamma - gamma*beta*E;
-	    cm_Vec[1] = pY;
-	    cm_Vec[2] = pZ;
-	    cm_Vec[3] = E*gamma - gamma*beta*pX;
-	    return cm_Vec;
+	    pX_new = pX*gamma - gamma*beta*E;
+	    E_new = E*gamma - gamma*beta*pX;
     }    
-    double transform_to_lab(double pX, double pY, double pZ, double E){
-	    double theta = inc_ang;
-	    double in_E = E_e;
-	    double beta = Math.sin(theta);
-	    double gamma = Math.pow((1-Math.pow(beta, 2)), -0.5);
-	    double* cm_Vec;
+    void transform_to_lab(double pX, double E, double& pX_new, double& E_new){
+	    double theta = 0.007;
+	    double in_E = 250.0;
+	    double beta = sin(theta);
+	    double gamma = pow((1-pow(beta, 2)), -0.5);
 
-	     *
-	     *    |gamma         -gamma*beta| |p|                       |p'|
-	     *    |-gamma*beta         gamma|*|E| = TRANSOFORMED4vector |E'|
-	     *    *  
-	     *                                     *                                     *      
+	     //*
+	     //*    |gamma         gamma*beta| |p|                       |p'|
+	     //*    |gamma*beta         gamma|*|E| = TRANSOFORMED4vector |E'|
+	     //*        
+	     //*                                     *                                     *      
 
-	    cm_Vec[0] = pX*(-gamma) + gamma*beta*E;
-	    cm_Vec[1] = pY;
-	    cm_Vec[2] = pZ;
-	    cm_Vec[3] = E*(-gamma) + gamma*beta*pX;
-	    return cm_Vec;
-    }*/
-
-}
+	    pX_new = pX*gamma + gamma*beta*E;
+	    E_new = E*gamma + gamma*beta*pX;
+   }
+}//END

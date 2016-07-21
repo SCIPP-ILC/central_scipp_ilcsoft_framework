@@ -66,11 +66,11 @@ GGHadron_IdealRecon::GGHadron_IdealRecon() : Processor("GGHadron_IdealRecon") {
 void GGHadron_IdealRecon::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("hitmapeWpW.root","RECREATE");
+    _rootfile = new TFile("hitmapeWpB.root","RECREATE");
     _hitmap = new TH2F("hitmap","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
-    _scalar = new TH1F("scalar", "Transverse Momentum Scalar Magnitude", 10000.0, 0.0, 20.0);
-    _vector = new TH1F("vector", "Transverse Momentum Vector Magnitude", 10000.0, 0.0, 20.0);
-    _mass = new TH1F("mass", "Mass Parameter", 10000.0, 0.0, 20.0);  
+    _scalar = new TH1F("scalar", "Transverse Momentum Scalar Magnitude", 2000.0, 0.0, 20.0);
+    _vector = new TH1F("vector", "Transverse Momentum Vector Magnitude", 2000.0, 0.0, 20.0);
+    _mass = new TH1F("mass", "Mass Parameter", 2000.0, 0.0, 20.0);  
     _theta = new TH1F("theta", "Angle Between Prediction Vector and High Energy Vector", 1000.0, 0.0, 0.01); 
     _energy = new TH1F("energy", "Total Final State Energy, eBpB", 50000.0, 300.0, 505.0); 
 
