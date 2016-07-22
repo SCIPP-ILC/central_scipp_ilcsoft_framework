@@ -15,7 +15,7 @@
  * April 5, 2016
  */
 
-#include "GGHadron_IdealRecon.h"
+#include "MissingTransverseMomentum.h"
 #include "scipp_ilc_utilities.h"
 #include <iostream>
 #include <cmath>
@@ -37,7 +37,7 @@ using namespace marlin;
 using namespace std;
 
 
-GGHadron_IdealRecon GGHadron_IdealRecon;
+MissingTransverseMomentum MissingTransverseMomentum;
 
 static TFile* _rootfile;
 static TH2F* _hitmap;
@@ -53,7 +53,7 @@ static TH1F* _ySum;
 static TH1F* _zSum;
 static TH1F* _pTot;
 
-GGHadron_IdealRecon::GGHadron_IdealRecon() : Processor("GGHadron_IdealRecon") {
+MissingTransverseMomentum::MissingTransverseMomentum() : Processor("MissingTransverseMomentum") {
     // modify processor description
     _description = "Protype Processor" ;
 
@@ -63,7 +63,7 @@ GGHadron_IdealRecon::GGHadron_IdealRecon() : Processor("GGHadron_IdealRecon") {
 
 
 
-void GGHadron_IdealRecon::init() { 
+void MissingTransverseMomentum::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
     _rootfile = new TFile("hitmapeBpW.root","RECREATE");
@@ -94,13 +94,13 @@ void GGHadron_IdealRecon::init() {
 
 
 
-void GGHadron_IdealRecon::processRunHeader( LCRunHeader* run) { 
+void MissingTransverseMomentum::processRunHeader( LCRunHeader* run) { 
 //    _nRun++ ;
 } 
 
 
 
-void GGHadron_IdealRecon::processEvent( LCEvent * evt ) { 
+void MissingTransverseMomentum::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
 
@@ -305,13 +305,13 @@ void GGHadron_IdealRecon::processEvent( LCEvent * evt ) {
 
 
 
-void GGHadron_IdealRecon::check( LCEvent * evt ) { 
+void MissingTransverseMomentum::check( LCEvent * evt ) { 
     // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
 
 
 
-void GGHadron_IdealRecon::end(){ 
+void MissingTransverseMomentum::end(){ 
 
     _rootfile->Write();
     cout << "Ratio of events with no deflection: " << _no_def_count/_nEvt << endl;
