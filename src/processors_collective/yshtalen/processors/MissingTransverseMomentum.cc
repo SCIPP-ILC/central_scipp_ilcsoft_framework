@@ -36,11 +36,14 @@ using namespace lcio;
 using namespace marlin;
 using namespace std;
 
-
 MissingTransverseMomentum MissingTransverseMomentum;
 
 static TFile* _rootfile;
 static TH2F* _hitmap;
+static TH1F* _mass;
+static TH1F* _scalar;
+static TH1F* _vector;
+
 
 MissingTransverseMomentum::MissingTransverseMomentum() : Processor("MissingTransverseMomentum") {
     // modify processor description
@@ -55,8 +58,12 @@ MissingTransverseMomentum::MissingTransverseMomentum() : Processor("MissingTrans
 void MissingTransverseMomentum::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("hitmapeBpW.root","RECREATE");
+    _rootfile = new TFile("hitmapeWpB_able.root","RECREATE");
     _hitmap = new TH2F("hitmap","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
+    _scalar = new TH1F("scalar", "Transverse Momentum Scalar Magnitude", 2000.0, 0.0, 20.0);
+    _vector = new TH1F("vector", "Transverse Momentum Vector Magnitude", 2000.0, 0.0, 20.0);
+    _mass = new TH1F("mass", "Mass Parameter", 2000.0, 0.0, 20.0);
+
     // usually a good idea to
     //printParameters() ;
 
@@ -86,6 +93,9 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
     cout << endl;
     cout << "event = " << _nEvt << endl;
     
+    double scatter_vec[] = {0, 0, 0};
+    double mag = 0;
+    double energy = 0;
 
     MCParticle* high_e;
     MCParticle* high_p;
@@ -131,9 +141,81 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                     if(hit->getEnergy()>high_p->getEnergy()){
                         high_p = hit;
                     }               
-                }    
+                }
+                    
            }//end final state
         }//end for loop
+        
+        //--------------HADRONIC SYSTEM------------------------------------------------------//
+        for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
+           MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
+    
+           int id = hit->getPDG(); 
+           int stat = hit->getGeneratorStatus();
+           
+           if(stat==1){
+                const double* mom = hit->getMomentum();
+                double in_x = mom[0];
+                double in_energy = hit->getEnergy();
+                double out_energy, out_x;
+                
+                double theta = 0.007;
+                double in_E = 250.0;
+                
+                double beta = sin(theta);
+                double gamma = pow((1-pow(beta, 2)), -0.5);
+
+                 //*
+                 //*    |gamma         gamma*beta| |p|                       |p'|
+                 //*    |gamma*beta         gamma|*|E| = TRANSOFORMED4vector |E'|
+                 //*        
+                 //*                                     *                                     *      
+
+                out_x = in_x*gamma + gamma*beta*in_energy;
+                out_energy= in_energy*gamma + gamma*beta*in_x;
+          
+
+                //include hadronic only
+                if(hit!=high_e && hit!=high_p){
+                    //exclude neutrinos
+                    if(id!=12 && id!=14 && id!=16){        
+                        if(abs(out_x)>0.0){
+                            scatter_vec[0]+=out_x;               
+                        }
+                        if(abs(mom[1])>0.0){
+                            scatter_vec[1]+=mom[1];               
+                        }
+                        if(abs(mom[2])>0.0){
+                            scatter_vec[2]+=mom[2];               
+                        }
+                        
+                        energy+=out_energy;
+                        
+                        mag+=sqrt(pow(out_x, 2)+pow(mom[1], 2));  
+                    }                  
+                } 
+           }//end final state
+        }//end for
+
+        //all
+        if(_nEvt<1600000){
+            double mass = sqrt(pow(energy, 2)-pow(scatter_vec[0], 2)-pow(scatter_vec[1], 2)-pow(scatter_vec[2], 2));
+            _mass->Fill(mass);
+            //cout << "Mass parameter: " << mass << endl;
+
+            //fill scalar 
+            _scalar->Fill(mag);
+            //cout << "Scalar Momentum: " << mag << endl;
+
+            //fill vector
+            double vector = sqrt(pow(scatter_vec[0], 2) + pow(scatter_vec[1], 2));
+            _vector->Fill(vector);
+            //cout << "Vector Momentum: " << vector << endl;
+              
+            //detected
+            //detectable
+            }
+        }
 
     _nEvt ++ ;
 }
@@ -149,7 +231,4 @@ void MissingTransverseMomentum::check( LCEvent * evt ) {
 void MissingTransverseMomentum::end(){ 
 
     _rootfile->Write();
-    cout << "Ratio of events with no deflection: " << _no_def_count/_nEvt << endl;
-    cout << "Electron deflected: " << _e_def_count/_nEvt << endl;
-    cout << "Positron deflected: " << _p_def_count/_nEvt << endl;
 }
