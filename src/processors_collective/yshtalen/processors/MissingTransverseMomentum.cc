@@ -43,7 +43,7 @@ static TH2F* _hitmap;
 static TH1F* _mass;
 static TH1F* _scalar;
 static TH1F* _vector;
-
+static TH1F* _neutrinos;
 
 MissingTransverseMomentum::MissingTransverseMomentum() : Processor("MissingTransverseMomentum") {
     // modify processor description
@@ -58,12 +58,12 @@ MissingTransverseMomentum::MissingTransverseMomentum() : Processor("MissingTrans
 void MissingTransverseMomentum::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("hitmapeWpB_able.root","RECREATE");
+    _rootfile = new TFile("hitmapeBpW_ed.root","RECREATE");
     _hitmap = new TH2F("hitmap","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _scalar = new TH1F("scalar", "Transverse Momentum Scalar Magnitude", 2000.0, 0.0, 20.0);
     _vector = new TH1F("vector", "Transverse Momentum Vector Magnitude", 2000.0, 0.0, 20.0);
     _mass = new TH1F("mass", "Mass Parameter", 2000.0, 0.0, 20.0);
-
+    _neutrinos = new TH1F("neutrinos", "Neutrinos per Event", 10.0, 0.0,10.0); 
     // usually a good idea to
     //printParameters() ;
 
@@ -96,6 +96,8 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
     double scatter_vec[] = {0, 0, 0};
     double mag = 0;
     double energy = 0;
+    double theta;
+    int neutrino_counter=0;
 
     MCParticle* high_e;
     MCParticle* high_p;
@@ -159,10 +161,9 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                 double in_energy = hit->getEnergy();
                 double out_energy, out_x;
                 
-                double theta = 0.007;
-                double in_E = 250.0;
+                double ang = 0.007;
                 
-                double beta = sin(theta);
+                double beta = sin(ang);
                 double gamma = pow((1-pow(beta, 2)), -0.5);
 
                  //*
@@ -191,32 +192,37 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                         
                         energy+=out_energy;
                         
-                        mag+=sqrt(pow(out_x, 2)+pow(mom[1], 2));  
-                    }                  
+                        double tmag = sqrt(pow(out_x, 2)+pow(mom[1], 2));
+                        mag+=tmag;  
+
+                        theta = atan(tmag/abs(mom[2]));
+                    }
+                    else{neutrino_counter++;}                  
                 } 
            }//end final state
         }//end for
 
         //all
         if(_nEvt<1600000){
-            double mass = sqrt(pow(energy, 2)-pow(scatter_vec[0], 2)-pow(scatter_vec[1], 2)-pow(scatter_vec[2], 2));
-            _mass->Fill(mass);
-            //cout << "Mass parameter: " << mass << endl;
+            if(cos(theta)<0.9){
+                double mass = sqrt(pow(energy, 2)-pow(scatter_vec[0], 2)-pow(scatter_vec[1], 2)-pow(scatter_vec[2], 2));
+                _mass->Fill(mass);
+                cout << "Mass parameter: " << mass << endl;
 
-            //fill scalar 
-            _scalar->Fill(mag);
-            //cout << "Scalar Momentum: " << mag << endl;
+                //fill scalar 
+                _scalar->Fill(mag);
+                cout << "Scalar Momentum: " << mag << endl;
 
-            //fill vector
-            double vector = sqrt(pow(scatter_vec[0], 2) + pow(scatter_vec[1], 2));
-            _vector->Fill(vector);
-            //cout << "Vector Momentum: " << vector << endl;
-              
-            //detected
-            //detectable
+                //fill vector
+                double vector = sqrt(pow(scatter_vec[0], 2) + pow(scatter_vec[1], 2));
+                _vector->Fill(vector);
+                cout << "Vector Momentum: " << vector << endl;
+                  
+                
             }
+            _neutrinos->Fill(neutrino_counter);
         }
-
+    }
     _nEvt ++ ;
 }
 
