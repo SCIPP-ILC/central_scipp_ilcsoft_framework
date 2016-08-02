@@ -55,7 +55,7 @@ CesarTest::CesarTest() : Processor("CesarTest") {
 }
 
 
-void CesarTest::init() { 
+void CesarTest::init() {
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
     _rootfile = new TFile("hitmap.root","RECREATE");
@@ -73,46 +73,45 @@ void CesarTest::init() {
 }
 
 
-void CesarTest::processRunHeader( LCRunHeader* run) { 
+void CesarTest::processRunHeader( LCRunHeader* run) {
 //    _nRun++ ;
 } 
 
 
-void CesarTest::processEvent( LCEvent * evt ) { 
-    // this gets called for every event 
+void CesarTest::processEvent( LCEvent * evt ) {
+    // this gets called for every event
     // usually the working horse ...
 
-    LCCollection* col = evt->getCollection( _colName ) ;
+    LCCollection* col = evt->getCollection( _colName );
 
     // this will only be entered if the collection is available
     if( col != NULL ){
-        int nElements = col->getNumberOfElements()  ;
+        int nElements = col->getNumberOfElements();
 	double radius = 0.0;
 	int rad_count = 0;
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
 	  MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
-           const double* pos = hit->getEndpoint();
-
-	   const double* momentum = hit->getMomentum();
-	   //	   cout << "m1: " << momentum[0] << ", m2: " << momentum[1] << ", m3: " << momentum[2] << endl;
+	  
+	  const double* momentum = hit->getMomentum();
+	  cout << "old m1: " << momentum[0] << endl;
 	   
-	   double angle = atan ( momentum[0] / momentum[1] )
+	  double energy = hit->getEnergy();
+	  double new_x;
+	  double new_energy ;
 
-           _hitmap->Fill(pos[0],pos[1]);
-	   radius = sqrt( pow(pos[0], 2.0) + pow(pos[1], 2.0) );
-	   _radius->Fill(radius);
+	  scipp_ilc::transform_to_lab(momentum[0], energy, new_x, new_energy);
+	  
+	  cout << "new m1: " << new_x << endl;
+	   
 
-	   if(radius != 0){
-	     //	     cout << "radius of particle "<< hitIndex << ": "<< radius << endl;
-	     //	     cout << "xpos: "<< pos[0] << ",  ypos"<< pos[1] << endl;
-	   }
-	     double energy = hit->getEnergy();
-	   if(radius != 0){
-	     //	     cout << "energy of particle "<< hitIndex << ": "<< energy << endl;
-	   }
-	   _energy->Fill(energy);
-	   _energyVradius->Fill(radius, energy);
-        } 
+	  double angle = atan ( new_x / momentum[1] );
+
+
+
+
+	    _energy->Fill(new_energy);
+
+        }
 
     }
 

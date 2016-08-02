@@ -5,4 +5,8 @@
 
 namespace scipp_ilc {
     bool get_detectable_signal_event(lcio::LCEvent* signal_event, lcio::MCParticle*& electron);
+
+    void transform_to_cm(double pX, double E, double& pX_new, double& E_new);
+
+    void transform_to_lab(double pX, double E, double& pX_new, double& E_new);
 }

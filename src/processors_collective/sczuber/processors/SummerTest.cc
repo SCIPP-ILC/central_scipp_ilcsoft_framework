@@ -36,22 +36,14 @@ using namespace lcio;
 using namespace marlin;
 using namespace std;
 
-
 SummerTest SummerTest;
 
 static TFile* _rootfile;
 static TH2F* _hitmap;
-static TH1F* _vector;
-static TH1F* _scalar;
 static TH1F* _mass;
-static TH1F* _theta;
-static TH1F* _energy;
-static TH1F* _pMom;
-static TH1F* _eMom;
-static TH1F* _xSum;
-static TH1F* _ySum;
-static TH1F* _zSum;
-static TH1F* _pTot;
+static TH1F* _scalar;
+static TH1F* _vector;
+static TH1F* _neutrinos;
 
 SummerTest::SummerTest() : Processor("SummerTest") {
     // modify processor description
@@ -66,21 +58,12 @@ SummerTest::SummerTest() : Processor("SummerTest") {
 void SummerTest::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("hitmapeBpW.root","RECREATE");
+    _rootfile = new TFile("hitmapeBpW_ed.root","RECREATE");
     _hitmap = new TH2F("hitmap","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _scalar = new TH1F("scalar", "Transverse Momentum Scalar Magnitude", 2000.0, 0.0, 20.0);
     _vector = new TH1F("vector", "Transverse Momentum Vector Magnitude", 2000.0, 0.0, 20.0);
-    _mass = new TH1F("mass", "Mass Parameter", 2000.0, 0.0, 20.0);  
-    _theta = new TH1F("theta", "Angle Between Prediction Vector and High Energy Vector", 1000.0, 0.0, 0.01); 
-    _energy = new TH1F("energy", "Total Final State Energy, eBpB", 50000.0, 300.0, 505.0); 
-
-    _pMom = new TH1F("pMom", "Positron Momentum Vector Magnitudes, eBpB", 1000.0, 0.0, 4.0);
-    _eMom = new TH1F("eMom", "Electron Momentum Vector Magnitudes, eBpB", 1000.0, 0.0, 4.0);
-    _xSum = new TH1F("xSum", "X-Momentum Event Total, eBpW", 1000.0, -2.0, 2.0); 
-    _ySum = new TH1F("ySum", "Y-Momentum Event Total, eBpW", 1000.0, -2.0, 2.0); 
-    _zSum = new TH1F("zSum", "Z-Momentum Event Total", 1000.0, -20.0, 20.0); 
-    
-    _pTot = new TH1F("pTot", "Transverse Momentum Event Total", 1000.0, 0.0, 2.0); 
+    _mass = new TH1F("mass", "Mass Parameter", 2000.0, 0.0, 20.0);
+    _neutrinos = new TH1F("neutrinos", "Neutrinos per Event", 10.0, 0.0,10.0); 
     // usually a good idea to
     //printParameters() ;
 
@@ -104,8 +87,6 @@ void SummerTest::processEvent( LCEvent * evt ) {
     // this gets called for every event 
     // usually the working horse ...
 
-    cout << "test" << endl;
-
     LCCollection* col = evt->getCollection( _colName ) ;
     cout << endl;
     cout << endl;
@@ -113,15 +94,10 @@ void SummerTest::processEvent( LCEvent * evt ) {
     cout << "event = " << _nEvt << endl;
     
     double scatter_vec[] = {0, 0, 0};
-    double high_vec[] = {0, 0, 0};
     double mag = 0;
     double energy = 0;
-    double e_scatter = 0;
-
-    int no_def = 0;
-     
-    const double* mom_e;
-    const double* mom_p;
+    double theta;
+    int neutrino_counter=0;
 
     MCParticle* high_e;
     MCParticle* high_p;
@@ -167,141 +143,73 @@ void SummerTest::processEvent( LCEvent * evt ) {
                     if(hit->getEnergy()>high_p->getEnergy()){
                         high_p = hit;
                     }               
-                }    
+                }
+                    
            }//end final state
         }//end for loop
-
-        mom_e =  high_e->getMomentum();
-        mom_p =  high_p->getMomentum();
-        cout << "high energy electron momentum: [" << mom_e[0] << ", " << mom_e[1] << ", " << mom_e[2] << "]" << endl;
-        cout << "high energy positron momentum: [" << mom_p[0] << ", " << mom_p[1] << ", " << mom_p[2] << "]" << endl;
-        cout << endl;
-
-        if(mom_e[0]!=0 || mom_e[1]!=0){
-            high_vec[0] = mom_e[0];
-            high_vec[1] = mom_e[1];
-            high_vec[2] = mom_e[2];
-        }
-        else if(mom_p[0]!=0 || mom_p[1]!=0){
-            high_vec[0] = mom_p[0];
-            high_vec[1] = mom_p[1];
-            high_vec[2] = mom_p[2];
-        }
-        else{
-            no_def=1;
-        }    
-            
-       //create high energy transverse momentum vectors 
-       double e_mom = sqrt(pow(mom_e[0], 2)+pow(mom_e[1], 2));
-       double p_mom = sqrt(pow(mom_p[0], 2)+pow(mom_p[1], 2));
-       _pMom->Fill(p_mom);
-       _eMom->Fill(e_mom);
-
+        
+        //--------------HADRONIC SYSTEM------------------------------------------------------//
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
-          
-           //only check final state 
+           if(is_detectable(hit)){cout << "detected" << endl;} 
+           int id = hit->getPDG(); 
            int stat = hit->getGeneratorStatus();
+           
            if(stat==1){
-            
-               //get endpoint and fill hitmap
-               const double* pos = hit->getEndpoint();
-               _hitmap->Fill(pos[0],pos[1]);
-              cout << pos[0] << " " << pos[1] << " " << pos[2] << endl; 
-                //add to event total energy
-                energy+= hit->getEnergy();
-
-                //add to momentum vector component-wise for every final state scatter particle
                 const double* mom = hit->getMomentum();
-                int id = hit->getPDG();
+                double in_x = mom[0];
+                double in_energy = hit->getEnergy();
+                double out_energy, out_x;
+                
+                trasform_to_lab(in_x, in_energy, out_x, out_energy);
+
+                //include hadronic only
                 if(hit!=high_e && hit!=high_p){
-                    //cout << "id: " << id << "     " << "momentum: [" << mom[0] << ", " << mom[1] << ", " << mom[2] << "]" << endl;
+                    //exclude neutrinos
+                    if(id!=12 && id!=14 && id!=16){        
+                        if(abs(out_x)>0.0){
+                            scatter_vec[0]+=out_x;               
+                        }
+                        if(abs(mom[1])>0.0){
+                            scatter_vec[1]+=mom[1];               
+                        }
+                        if(abs(mom[2])>0.0){
+                            scatter_vec[2]+=mom[2];               
+                        }
+                        
+                        energy+=out_energy;
+                        
+                        double tmag = sqrt(pow(out_x, 2)+pow(mom[1], 2));
+                        mag+=tmag;  
 
-                    //add particle mom magnitude and energy to event totals
-                    mag += sqrt(pow(mom[0], 2)+pow(mom[1], 2));
-                    e_scatter+=hit->getEnergy();
-
-                    if(abs(mom[0]) > 0.0){
-                        scatter_vec[0] += (double) mom[0];
+                        theta = atan(tmag/abs(mom[2]));
                     }
-                    if(abs(mom[1]) > 0.0){
-                        scatter_vec[1] += (double) mom[1];
-                    }
-                    if(abs(mom[2]) > 0.0){
-                        scatter_vec[2] += (double) mom[2];
-                    }    
-                }
-            }//end final state
-        }//end for loop
-   
+                    else{neutrino_counter++;}                  
+                } 
+           }//end final state
+        }//end for
 
-        
-    }
+        //all
+        if(_nEvt<1600000){
+            if(cos(theta)<0.9){
+                double mass = sqrt(pow(energy, 2)-pow(scatter_vec[0], 2)-pow(scatter_vec[1], 2)-pow(scatter_vec[2], 2));
+                _mass->Fill(mass);
+                cout << "Mass parameter: " << mass << endl;
 
-//-----------------------------HADRONIC SYSTEM----------------------------------------------------------------------
-    if(_nEvt<1600000){
-        //fill mass
-        double mass = sqrt(pow(e_scatter, 2)-pow(scatter_vec[0], 2)-pow(scatter_vec[1], 2)-pow(scatter_vec[2], 2));
-        _mass->Fill(mass);
-        //cout << "Mass parameter: " << mass << endl;
-        
-        //fill scalar 
-        _scalar->Fill(mag);
-        //cout << "Scalar Momentum: " << mag << endl;
-        
-        //fill vector
-        double vector = sqrt(pow(scatter_vec[0], 2) + pow(scatter_vec[1], 2));
-        _vector->Fill(vector);
-        //cout << "Vector Momentum: " << vector << endl;
-        //
-    }
-//-------------------------------------------------------------------------------------------------------------------
-    if(no_def==0){
-        //reflect vector through the origin
-        scatter_vec[0] = -scatter_vec[0];
-        scatter_vec[1] = -scatter_vec[1];
-        scatter_vec[2] = -scatter_vec[2];
+                //fill scalar 
+                _scalar->Fill(mag);
+                cout << "Scalar Momentum: " << mag << endl;
 
-        //calculate longitudinal momentum prediction
-        scatter_vec[2] = sqrt(pow(250.0 - e_scatter, 2) - pow(mag, 2)); 
-        
-        double smag = sqrt(pow(scatter_vec[0], 2)+pow(scatter_vec[1], 2)+pow(scatter_vec[2], 2));
-        double hmag = sqrt(pow(high_vec[0], 2)+pow(high_vec[1], 2)+pow(high_vec[2], 2));
-
-        double cos = (scatter_vec[0]*high_vec[0] + scatter_vec[1]*high_vec[1] + scatter_vec[2]*high_vec[2])/(smag*hmag);
-        double theta = acos(cos);
-
-        cout << "Prediction Vector: " << "[" << scatter_vec[0] << ", " << scatter_vec[1] << ", " << scatter_vec[2] << "]" << endl;
-        cout << "High Energy Vector: " << "[" << high_vec[0] << ", " << high_vec[1] << ", " << high_vec[2] << "]" << endl;
-        cout << "Error Angle: " << theta << endl;
-        
-        if(high_vec[2]>0){
-            _e_def_count++;
+                //fill vector
+                double vector = sqrt(pow(scatter_vec[0], 2) + pow(scatter_vec[1], 2));
+                _vector->Fill(vector);
+                cout << "Vector Momentum: " << vector << endl;
+                  
+                
+            }
+            _neutrinos->Fill(neutrino_counter);
         }
-        else{
-            _p_def_count++;
-        }
-
-        _theta->Fill(theta);
     }
-    else{
-        _no_def_count++;
-    }    
-
-//--------------------------------------TOTAL SYSTEM---------------------------------------------------------------------
-    scatter_vec[0]= scatter_vec[0] + mom_e[0] + mom_p[0];
-    scatter_vec[1]= scatter_vec[1] + mom_e[1] + mom_p[1];
-    scatter_vec[2]= scatter_vec[2] + mom_e[2] + mom_p[2];
-
-    //fill energy
-    _energy->Fill(energy);
-    double total_trans = sqrt(pow(scatter_vec[0], 2) + pow(scatter_vec[1], 2));
-    _pTot->Fill(total_trans);
-
-    //fill x and y mom check sums
-    _xSum->Fill(scatter_vec[0]);
-    _ySum->Fill(scatter_vec[1]);
-    _zSum->Fill(scatter_vec[2]);
     _nEvt ++ ;
 }
 
@@ -316,7 +224,4 @@ void SummerTest::check( LCEvent * evt ) {
 void SummerTest::end(){ 
 
     _rootfile->Write();
-    cout << "Ratio of events with no deflection: " << _no_def_count/_nEvt << endl;
-    cout << "Electron deflected: " << _e_def_count/_nEvt << endl;
-    cout << "Positron deflected: " << _p_def_count/_nEvt << endl;
 }

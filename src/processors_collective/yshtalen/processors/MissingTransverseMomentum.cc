@@ -87,6 +87,7 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
     // this gets called for every event 
     // usually the working horse ...
 
+
     LCCollection* col = evt->getCollection( _colName ) ;
     cout << endl;
     cout << endl;
@@ -151,7 +152,7 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
         //--------------HADRONIC SYSTEM------------------------------------------------------//
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
-    
+           
            int id = hit->getPDG(); 
            int stat = hit->getGeneratorStatus();
            
@@ -161,20 +162,7 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                 double in_energy = hit->getEnergy();
                 double out_energy, out_x;
                 
-                double ang = 0.007;
-                
-                double beta = sin(ang);
-                double gamma = pow((1-pow(beta, 2)), -0.5);
-
-                 //*
-                 //*    |gamma         gamma*beta| |p|                       |p'|
-                 //*    |gamma*beta         gamma|*|E| = TRANSOFORMED4vector |E'|
-                 //*        
-                 //*                                     *                                     *      
-
-                out_x = in_x*gamma + gamma*beta*in_energy;
-                out_energy= in_energy*gamma + gamma*beta*in_x;
-          
+                scipp_ilc::transform_to_lab(in_x, in_energy, out_x, out_energy);
 
                 //include hadronic only
                 if(hit!=high_e && hit!=high_p){
