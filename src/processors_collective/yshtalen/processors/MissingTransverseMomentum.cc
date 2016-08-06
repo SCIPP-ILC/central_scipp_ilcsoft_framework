@@ -17,6 +17,8 @@
 
 #include "MissingTransverseMomentum.h"
 #include "scipp_ilc_utilities.h"
+#include "scipp_ilc_globals.h"
+#include "polar_coords.h"
 #include <iostream>
 #include <cmath>
 
@@ -40,6 +42,8 @@ MissingTransverseMomentum MissingTransverseMomentum;
 
 static TFile* _rootfile;
 static TH2F* _hitmap;
+static TH2F* _hitmap_Lorentz;
+static TH2F* _hitmap_Lorentz_shift;
 static TH1F* _mass;
 static TH1F* _scalar;
 static TH1F* _vector;
@@ -58,8 +62,10 @@ MissingTransverseMomentum::MissingTransverseMomentum() : Processor("MissingTrans
 void MissingTransverseMomentum::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("hitmapeBpW_ed.root","RECREATE");
+    _rootfile = new TFile("Beamcal_AAlowpt_Predicting_Vector.root","RECREATE");
     _hitmap = new TH2F("hitmap","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
+    _hitmap_Lorentz = new TH2F("hitmap_Lorentz","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
+    _hitmap_Lorentz_shift = new TH2F("hitmap_Lorentz_shift","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _scalar = new TH1F("scalar", "Transverse Momentum Scalar Magnitude", 2000.0, 0.0, 20.0);
     _vector = new TH1F("vector", "Transverse Momentum Vector Magnitude", 2000.0, 0.0, 20.0);
     _mass = new TH1F("mass", "Mass Parameter", 2000.0, 0.0, 20.0);
@@ -96,9 +102,11 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
     
     double scatter_vec[] = {0, 0, 0};
     double mag = 0;
+    double pos[] = {0, 0, 0};
     double energy = 0;
     double theta;
     int neutrino_counter=0;
+    int id, stat;
 
     MCParticle* high_e;
     MCParticle* high_p;
@@ -108,12 +116,12 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
         
-        
+        //first, find an electron and positron in the event
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
     
-           int id = hit->getPDG(); 
-           int stat = hit->getGeneratorStatus();
+           id = hit->getPDG(); 
+           stat = hit->getGeneratorStatus();
            
            if(stat==1){
                 if(id==11){
@@ -125,14 +133,15 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
            }//end final state
         }//end for loop
         
+        //------------------------HIGH-ENERGY ANALYSIS-----------------------------------------
+        //then, determine if these are the high energy electron and positron
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
     
-           int id = hit->getPDG(); 
-           int stat = hit->getGeneratorStatus();
+           id = hit->getPDG(); 
+           stat = hit->getGeneratorStatus();
            
            if(stat==1){
-
                 //find high energy electron
                 if(id==11){
                     if(hit->getEnergy()>high_e->getEnergy()){
@@ -149,25 +158,52 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
            }//end final state
         }//end for loop
         
-        //--------------HADRONIC SYSTEM------------------------------------------------------//
+        //-------------------------HADRONIC SYSTEM-----------------------------------------------
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
            
-           int id = hit->getPDG(); 
-           int stat = hit->getGeneratorStatus();
+           id = hit->getPDG(); 
+           stat = hit->getGeneratorStatus();
            
            if(stat==1){
+
+
+                //determine stdhep position
                 const double* mom = hit->getMomentum();
+                cout << "Momentum stdhep: " << mom[0] << ", " << mom[1] << ", " << mom[2] << endl; 
+                
+                //create position vector by ratios from known z position and momentum
+                pos[2] = scipp_ilc::_BeamCal_zmin;
+                pos[0] = mom[0]*pos[2]/mom[2];
+                pos[1] = mom[1]*pos[2]/mom[2];
+                
+                //fill stdhep hitmap
+                _hitmap->Fill(pos[0], pos[1]);
+                //collect parameters necessary for Lorentz transform
+
                 double in_x = mom[0];
                 double in_energy = hit->getEnergy();
                 double out_energy, out_x;
                 
+                //apply transform
                 scipp_ilc::transform_to_lab(in_x, in_energy, out_x, out_energy);
+                cout << "Momentum after Lorentz transform: " << mom[0] << ", " << mom[1] << ", " << mom[2] << endl; 
+                
+
+
+                pos[0] = out_x*pos[2]/mom[2];
+           
+                cout << "Position: " << pos[0] << ", " << pos[1] << ", " << pos[2] << endl; 
+                _hitmap_Lorentz->Fill(pos[0], pos[1]);
+                scipp_ilc::z_to_beam_out(pos[0], pos[1], pos[2]);
+
+                cout << "Position after coordinate change " << pos[0] << ", " << pos[1] << ", " << pos[2] << endl; 
+                _hitmap_Lorentz_shift->Fill(pos[0], pos[1]);
 
                 //include hadronic only
                 if(hit!=high_e && hit!=high_p){
                     //exclude neutrinos
-                    if(id!=12 && id!=14 && id!=16){        
+                   // if(id!=12 && id!=14 && id!=16){        
                         if(abs(out_x)>0.0){
                             scatter_vec[0]+=out_x;               
                         }
@@ -184,8 +220,12 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                         mag+=tmag;  
 
                         theta = atan(tmag/abs(mom[2]));
-                    }
-                    else{neutrino_counter++;}                  
+                    //}
+                    //else{neutrino_counter++;} 
+
+                    if(id==12 || id==14 || id==16){
+                        neutrino_counter++;
+                    }    
                 } 
            }//end final state
         }//end for
