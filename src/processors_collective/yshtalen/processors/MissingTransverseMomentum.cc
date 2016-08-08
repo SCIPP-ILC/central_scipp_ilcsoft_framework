@@ -63,7 +63,7 @@ void MissingTransverseMomentum::init() {
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
     _rootfile = new TFile("Beamcal_AAlowpt_Predicting_Vector.root","RECREATE");
-    _hitmap = new TH2F("hitmap","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
+    _hitmap = new TH2F("hitmap","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
     _hitmap_Lorentz = new TH2F("hitmap_Lorentz","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _hitmap_Lorentz_shift = new TH2F("hitmap_Lorentz_shift","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _scalar = new TH1F("scalar", "Transverse Momentum Scalar Magnitude", 2000.0, 0.0, 20.0);
@@ -177,6 +177,7 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                 pos[0] = mom[0]*pos[2]/mom[2];
                 pos[1] = mom[1]*pos[2]/mom[2];
                 
+                cout << "Position from stdhep: " << pos[0] << ", " << pos[1] << ", " << pos[2] << endl; 
                 //fill stdhep hitmap
                 _hitmap->Fill(pos[0], pos[1]);
                 //collect parameters necessary for Lorentz transform
@@ -193,7 +194,7 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
 
                 pos[0] = out_x*pos[2]/mom[2];
            
-                cout << "Position: " << pos[0] << ", " << pos[1] << ", " << pos[2] << endl; 
+                cout << "Position after Lorentz: " << pos[0] << ", " << pos[1] << ", " << pos[2] << endl; 
                 _hitmap_Lorentz->Fill(pos[0], pos[1]);
                 scipp_ilc::z_to_beam_out(pos[0], pos[1], pos[2]);
 

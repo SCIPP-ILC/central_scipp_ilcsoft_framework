@@ -12,7 +12,7 @@
 
 /*
  * author Summer Zuber
- * April 5, 2016
+ * August 7, 2016
  */
 
 #include "SusyCutflow.h"
@@ -58,12 +58,12 @@ SusyCutflow::SusyCutflow() : Processor("SusyCutflow") {
 void SusyCutflow::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("hitmapeBpW_ed.root","RECREATE");
-    _hitmap = new TH2F("hitmap","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
-    _scalar = new TH1F("scalar", "Transverse Momentum Scalar Magnitude", 2000.0, 0.0, 20.0);
-    _vector = new TH1F("vector", "Transverse Momentum Vector Magnitude", 2000.0, 0.0, 20.0);
-    _mass = new TH1F("mass", "Mass Parameter", 2000.0, 0.0, 20.0);
-    _neutrinos = new TH1F("neutrinos", "Neutrinos per Event", 10.0, 0.0,10.0); 
+    _rootfile = new TFile("SusyCutflow.root","RECREATE");
+    //_hitmap = new TH2F("hitmap","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
+    //_scalar = new TH1F("scalar", "Transverse Momentum Scalar Magnitude", 2000.0, 0.0, 20.0);
+    //_vector = new TH1F("vector", "Transverse Momentum Vector Magnitude", 2000.0, 0.0, 20.0);
+    //_mass = new TH1F("mass", "Mass Parameter", 2000.0, 0.0, 20.0);
+    //_neutrinos = new TH1F("neutrinos", "Neutrinos per Event", 10.0, 0.0,10.0); 
     // usually a good idea to
     //printParameters() ;
 
@@ -93,14 +93,12 @@ void SusyCutflow::processEvent( LCEvent * evt ) {
     cout << endl;
     cout << "event = " << _nEvt << endl;
     
-    double scatter_vec[] = {0, 0, 0};
-    double mag = 0;
-    double energy = 0;
-    double theta;
-    int neutrino_counter=0;
+    double vec[4][3];
+    double scalars[4];
+    double energy[4]; 
 
-    MCParticle* high_e;
-    MCParticle* high_p;
+    //MCParticle* high_e;
+    //MCParticle* high_p;
 
 
     // this will only be entered if the collection is available
