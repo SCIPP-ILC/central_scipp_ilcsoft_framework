@@ -161,19 +161,19 @@ void SusyCutflow::processEvent( LCEvent * evt ) {
                 
                 trasform_to_lab(in_x, in_energy, out_x, out_energy);
 
-                //include hadronic only
-                if(hit!=high_e && hit!=high_p){
-                    //exclude neutrinos
-                    if(id!=12 && id!=14 && id!=16){        
-                        if(abs(out_x)>0.0){
-                            scatter_vec[0]+=out_x;               
-                        }
-                        if(abs(mom[1])>0.0){
-                            scatter_vec[1]+=mom[1];               
-                        }
-                        if(abs(mom[2])>0.0){
-                            scatter_vec[2]+=mom[2];               
-                        }
+              
+               
+             
+            
+           
+          
+         
+        
+       
+      
+     
+    
+   
                         
                         energy+=out_energy;
                         
