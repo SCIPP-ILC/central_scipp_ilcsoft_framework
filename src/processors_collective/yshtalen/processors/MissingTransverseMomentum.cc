@@ -62,10 +62,10 @@ MissingTransverseMomentum::MissingTransverseMomentum() : Processor("MissingTrans
 void MissingTransverseMomentum::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("Beamcal_AAlowpt_Predicting_Vector.root","RECREATE");
+    _rootfile = new TFile("pos_eBpW.root","RECREATE");
     _hitmap = new TH2F("hitmap","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
-    _hitmap_Lorentz = new TH2F("hitmap_Lorentz","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
-    _hitmap_Lorentz_shift = new TH2F("hitmap_Lorentz_shift","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
+    _hitmap_Lorentz = new TH2F("hitmap_Lorentz","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
+    _hitmap_Lorentz_shift = new TH2F("hitmap_Lorentz_shift","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
     _scalar = new TH1F("scalar", "Transverse Momentum Scalar Magnitude", 2000.0, 0.0, 20.0);
     _vector = new TH1F("vector", "Transverse Momentum Vector Magnitude", 2000.0, 0.0, 20.0);
     _mass = new TH1F("mass", "Mass Parameter", 2000.0, 0.0, 20.0);
