@@ -179,7 +179,10 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                 
                 cout << "Position from stdhep: " << pos[0] << ", " << pos[1] << ", " << pos[2] << endl; 
                 //fill stdhep hitmap
-                _hitmap->Fill(pos[0], pos[1]);
+                double rad = sqrt(pow(pos[0], 2)+ pow(pos[1], 2));
+                if(rad<140){
+                    _hitmap->Fill(pos[0], pos[1]);
+                }
                 //collect parameters necessary for Lorentz transform
 
                 double in_x = mom[0];
@@ -195,12 +198,18 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                 pos[0] = out_x*pos[2]/mom[2];
            
                 cout << "Position after Lorentz: " << pos[0] << ", " << pos[1] << ", " << pos[2] << endl; 
-                _hitmap_Lorentz->Fill(pos[0], pos[1]);
+                rad = sqrt(pow(pos[0], 2) + pow(pos[1], 2));
+                if(rad<140){
+                    _hitmap_Lorentz->Fill(pos[0], pos[1]);
+                }
                 scipp_ilc::z_to_beam_out(pos[0], pos[1], pos[2]);
 
                 cout << "Position after coordinate change " << pos[0] << ", " << pos[1] << ", " << pos[2] << endl; 
-                _hitmap_Lorentz_shift->Fill(pos[0], pos[1]);
-
+                
+                rad = sqrt(pow(pos[0], 2) + pow(pos[1], 2));
+                if(rad<140){
+                    _hitmap_Lorentz_shift->Fill(pos[0], pos[1]);
+                }
                 //include hadronic only
                 if(hit!=high_e && hit!=high_p){
                     //exclude neutrinos
