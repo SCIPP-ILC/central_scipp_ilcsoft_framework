@@ -15,7 +15,7 @@
  * April 5, 2016
  */
 
-#include "MissingTransverseMomentum.h"
+#include "Basic.h"
 #include "scipp_ilc_utilities.h"
 #include "scipp_ilc_globals.h"
 #include "polar_coords.h"
@@ -38,7 +38,7 @@ using namespace lcio;
 using namespace marlin;
 using namespace std;
 
-MissingTransverseMomentum MissingTransverseMomentum;
+Basic Basic;
 
 static TFile* _rootfile;
 static TH2F* _hitmap;
@@ -49,7 +49,7 @@ static TH1F* _scalar;
 static TH1F* _vector;
 static TH1F* _neutrinos;
 
-MissingTransverseMomentum::MissingTransverseMomentum() : Processor("MissingTransverseMomentum") {
+Basic::Basic() : Processor("Basic") {
     // modify processor description
     _description = "Protype Processor" ;
 
@@ -59,37 +59,31 @@ MissingTransverseMomentum::MissingTransverseMomentum() : Processor("MissingTrans
 
 
 
-void MissingTransverseMomentum::init() { 
+void Basic::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("mass_eBpW.root","RECREATE");
+    _rootfile = new TFile("mass_eBpW_2mill.root","RECREATE");
     _hitmap = new TH2F("hitmap","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
-    _hitmap_Lorentz = new TH2F("hitmap_Lorentz","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
-    _hitmap_Lorentz_shift = new TH2F("hitmap_Lorentz_shift","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
     _scalar = new TH1F("scalar", "Transverse Momentum Scalar Magnitude", 2000.0, 0.0, 20.0);
     _vector = new TH1F("vector", "Transverse Momentum Vector Magnitude", 2000.0, 0.0, 20.0);
     _mass = new TH1F("mass", "Mass Parameter", 2000.0, 0.0, 20.0);
-    _neutrinos = new TH1F("neutrinos", "Neutrinos per Event", 10.0, 0.0,10.0); 
     // usually a good idea to
     //printParameters() ;
 
     _nRun = 0 ;
     _nEvt = 0 ;
 
-    _no_def_count = 0;
-    _e_def_count = 0;
-    _p_def_count = 0;
 }
 
 
 
-void MissingTransverseMomentum::processRunHeader( LCRunHeader* run) { 
+void Basic::processRunHeader( LCRunHeader* run) { 
 //    _nRun++ ;
 } 
 
 
 
-void MissingTransverseMomentum::processEvent( LCEvent * evt ) { 
+void Basic::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
 
@@ -105,7 +99,6 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
     double pos[] = {0, 0, 0};
     double energy = 0;
     double theta;
-    int neutrino_counter=0;
     int id, stat;
 
     MCParticle* high_e;
@@ -170,52 +163,13 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
 
                 //determine stdhep position
                 const double* mom = hit->getMomentum();
-                cout << "Momentum stdhep: " << mom[0] << ", " << mom[1] << ", " << mom[2] << endl; 
                 
-                //create position vector by ratios from known z position and momentum
-                pos[2] = scipp_ilc::_BeamCal_zmin;
-                pos[0] = mom[0]*pos[2]/mom[2];
-                pos[1] = mom[1]*pos[2]/mom[2];
-                
-                cout << "Position from stdhep: " << pos[0] << ", " << pos[1] << ", " << pos[2] << endl; 
-                //fill stdhep hitmap
-                double rad = sqrt(pow(pos[0], 2)+ pow(pos[1], 2));
-                if(rad<140){
-                    _hitmap->Fill(pos[0], pos[1]);
-                }
-                //collect parameters necessary for Lorentz transform
-
-                double in_x = mom[0];
-                double in_energy = hit->getEnergy();
-                double out_energy, out_x;
-                
-                //apply transform
-                scipp_ilc::transform_to_lab(in_x, in_energy, out_x, out_energy);
-                cout << "Momentum after Lorentz transform: " << mom[0] << ", " << mom[1] << ", " << mom[2] << endl; 
-                
-
-
-                pos[0] = out_x*pos[2]/mom[2];
-           
-                cout << "Position after Lorentz: " << pos[0] << ", " << pos[1] << ", " << pos[2] << endl; 
-                rad = sqrt(pow(pos[0], 2) + pow(pos[1], 2));
-                if(rad<140){
-                    _hitmap_Lorentz->Fill(pos[0], pos[1]);
-                }
-                scipp_ilc::z_to_beam_out(pos[0], pos[1], pos[2]);
-
-                cout << "Position after coordinate change " << pos[0] << ", " << pos[1] << ", " << pos[2] << endl; 
-                
-                rad = sqrt(pow(pos[0], 2) + pow(pos[1], 2));
-                if(rad<140){
-                    _hitmap_Lorentz_shift->Fill(pos[0], pos[1]);
-                }
                 //include hadronic only
                 if(hit!=high_e && hit!=high_p){
                     //exclude neutrinos
                    // if(id!=12 && id!=14 && id!=16){        
-                        if(abs(out_x)>0.0){
-                            scatter_vec[0]+=out_x;               
+                        if(abs(mom[0])>0.0){
+                            scatter_vec[0]+=mom[0];               
                         }
                         if(abs(mom[1])>0.0){
                             scatter_vec[1]+=mom[1];               
@@ -224,25 +178,21 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                             scatter_vec[2]+=mom[2];               
                         }
                         
-                        energy+=out_energy;
+                        energy+=hit->getEnergy();
                         
-                        double tmag = sqrt(pow(out_x, 2)+pow(mom[1], 2));
+                        double tmag = sqrt(pow(mom[0], 2)+pow(mom[1], 2));
                         mag+=tmag;  
 
                         theta = atan(tmag/abs(mom[2]));
                     //}
                     //else{neutrino_counter++;} 
 
-                    if(id==12 || id==14 || id==16){
-                        neutrino_counter++;
-                    }    
                 } 
            }//end final state
         }//end for
 
         //all
-        if(_nEvt<20000){
-            if(cos(theta)<0.9){
+        if(_nEvt<1000000){
                 double mass = sqrt(pow(energy, 2)-pow(scatter_vec[0], 2)-pow(scatter_vec[1], 2)-pow(scatter_vec[2], 2));
                 _mass->Fill(mass);
                 cout << "Mass parameter: " << mass << endl;
@@ -257,8 +207,6 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                 cout << "Vector Momentum: " << vector << endl;
                   
                 
-            }
-            _neutrinos->Fill(neutrino_counter);
         }
     }
     _nEvt ++ ;
@@ -266,13 +214,13 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
 
 
 
-void MissingTransverseMomentum::check( LCEvent * evt ) { 
+void Basic::check( LCEvent * evt ) { 
     // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
 
 
 
-void MissingTransverseMomentum::end(){ 
+void Basic::end(){ 
 
     _rootfile->Write();
 }
