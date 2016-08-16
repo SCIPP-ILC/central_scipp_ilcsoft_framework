@@ -42,8 +42,6 @@ Basic Basic;
 
 static TFile* _rootfile;
 static TH2F* _hitmap;
-static TH2F* _hitmap_Lorentz;
-static TH2F* _hitmap_Lorentz_shift;
 static TH1F* _mass;
 static TH1F* _scalar;
 static TH1F* _vector;
@@ -62,7 +60,7 @@ Basic::Basic() : Processor("Basic") {
 void Basic::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("mass_eBpW_2mill.root","RECREATE");
+    _rootfile = new TFile("vec_eBpB.root","RECREATE");
     _hitmap = new TH2F("hitmap","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
     _scalar = new TH1F("scalar", "Transverse Momentum Scalar Magnitude", 2000.0, 0.0, 20.0);
     _vector = new TH1F("vector", "Transverse Momentum Vector Magnitude", 2000.0, 0.0, 20.0);
@@ -192,7 +190,7 @@ void Basic::processEvent( LCEvent * evt ) {
         }//end for
 
         //all
-        if(_nEvt<1000000){
+        if(_nEvt<1600000){
                 double mass = sqrt(pow(energy, 2)-pow(scatter_vec[0], 2)-pow(scatter_vec[1], 2)-pow(scatter_vec[2], 2));
                 _mass->Fill(mass);
                 cout << "Mass parameter: " << mass << endl;
