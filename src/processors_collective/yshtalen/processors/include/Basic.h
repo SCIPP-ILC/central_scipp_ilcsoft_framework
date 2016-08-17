@@ -66,9 +66,12 @@ class Basic : public Processor {
 
   int _nRun ;
   int _nEvt ;
-  double _no_def_count;
-  double _e_def_count;
-  double _p_def_count;
+
+  int _b_def_count;
+  int _e_def_count;
+  int _p_def_count;
+  int _zero_scatter_count;
+  int _low_scatter_count;
 } ;
 
 #endif

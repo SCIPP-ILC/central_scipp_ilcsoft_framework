@@ -79,4 +79,14 @@ namespace scipp_ilc {
 	    pX_new = pX*gamma + gamma*beta*E;
 	    E_new = E*gamma + gamma*beta*pX;
    }
+
+   int get_hitStatus(double x, double y){
+	double rad = sqrt(pow(x, 2)+pow(y, 2));
+	//check if outside Beamcal radius
+	if(rad>140){return 2;}
+	//check if inside beampipe hole
+	else if(rad<20.5){return 3;}
+	//otherwise it hit the Beamcal
+	else{return 1;}
+   }
 }//END

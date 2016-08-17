@@ -244,7 +244,7 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                     }
                     if(id==-11){
                         if(mom[0]!=0 || mom[1]!=0){
-                            e_def_count++;
+                            p_def_count++;
                             high_vec[0]+=out_x;
                             high_vec[1]+=mom[1];
                             high_vec[2]+=mom[2];
@@ -262,6 +262,7 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
 
 
         //determine prediction vector hit status
+
         //determine deflected high energy particle hit status
 
        

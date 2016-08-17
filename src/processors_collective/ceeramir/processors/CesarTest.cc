@@ -17,6 +17,8 @@
 
 #include "CesarTest.h"
 #include "scipp_ilc_utilities.h"
+#include "scipp_ilc_globals.h"
+#include "polar_coords.h"
 #include <iostream>
 #include <cmath>
 
@@ -84,29 +86,38 @@ void CesarTest::processEvent( LCEvent * evt ) {
 
     LCCollection* col = evt->getCollection( _colName );
 
+    double pos[] = {0, 0, 0};
+    
     // this will only be entered if the collection is available
     if( col != NULL ){
         int nElements = col->getNumberOfElements();
+
 	double radius = 0.0;
 	int rad_count = 0;
+
+
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
 	  MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
-	  
 	  const double* momentum = hit->getMomentum();
-	  cout << "old m1: " << momentum[0] << endl;
+
+	  pos[2] = scipp_ilc::_BeamCal_zmin;
+	  pos[0] = momentum[0]*pos[2]/momentum[2];
+	  pos[1] = momentum[1]*pos[2]/momentum[2];
 	   
 	  double energy = hit->getEnergy();
-	  double new_x;
+	  double new_x_pos;
 	  double new_energy ;
 
-	  scipp_ilc::transform_to_lab(momentum[0], energy, new_x, new_energy);
+	  scipp_ilc::transform_to_lab(momentum[0], energy, new_x_pos, new_energy);
 	  
-	  cout << "new m1: " << new_x << endl;
-	   
+	  pos[0] = new_x_pos*pos[2]/momentum[2];
 
-	  double angle = atan ( new_x / momentum[1] );
+	  //	  cout << "befor, pos[0] = " << pos[0] << ", \t pos (y,z): (" << pos[1] << " ," << pos[2] << ")" << endl;
+	  scipp_ilc::z_to_beam_out(pos[0], pos[1], pos[2]);
 
-
+	  //	  cout << "after, pos[0] = " << pos[0] << ", \t pos (y,z): (" << pos[1] << " ," << pos[2] << ")" << endl;
+	  
+	  
 
 
 	    _energy->Fill(new_energy);

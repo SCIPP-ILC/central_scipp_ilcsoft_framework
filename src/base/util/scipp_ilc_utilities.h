@@ -9,4 +9,6 @@ namespace scipp_ilc {
     void transform_to_cm(double pX, double E, double& pX_new, double& E_new);
 
     void transform_to_lab(double pX, double E, double& pX_new, double& E_new);
+
+    int get_hitStatus(double x, double y);
 }

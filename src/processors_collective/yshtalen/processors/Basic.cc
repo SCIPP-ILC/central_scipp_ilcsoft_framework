@@ -11,8 +11,8 @@
  */
 
 /*
- * author Christopher Milke
- * April 5, 2016
+ * author Jane Shtalenkovae
+ * August 5, 2016
  */
 
 #include "Basic.h"
@@ -45,7 +45,6 @@ static TH2F* _hitmap;
 static TH1F* _mass;
 static TH1F* _scalar;
 static TH1F* _vector;
-static TH1F* _neutrinos;
 
 Basic::Basic() : Processor("Basic") {
     // modify processor description
@@ -60,10 +59,10 @@ Basic::Basic() : Processor("Basic") {
 void Basic::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("vec_eBpB.root","RECREATE");
+    _rootfile = new TFile("def_eWpB.root","RECREATE");
     _hitmap = new TH2F("hitmap","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
     _scalar = new TH1F("scalar", "Transverse Momentum Scalar Magnitude", 2000.0, 0.0, 20.0);
-    _vector = new TH1F("vector", "Transverse Momentum Vector Magnitude", 2000.0, 0.0, 20.0);
+    _vector = new TH1F("vector", "Transverse Momentum Vector Magnitude", 2000.0, 0.0, 4.0);
     _mass = new TH1F("mass", "Mass Parameter", 2000.0, 0.0, 20.0);
     // usually a good idea to
     //printParameters() ;
@@ -71,6 +70,12 @@ void Basic::init() {
     _nRun = 0 ;
     _nEvt = 0 ;
 
+
+    _p_def_count=0;
+    _e_def_count=0;
+    _b_def_count=0;
+    _zero_scatter_count=0;
+    _low_scatter_count=0;
 }
 
 
@@ -94,7 +99,6 @@ void Basic::processEvent( LCEvent * evt ) {
     
     double scatter_vec[] = {0, 0, 0};
     double mag = 0;
-    double pos[] = {0, 0, 0};
     double energy = 0;
     double theta;
     int id, stat;
@@ -102,6 +106,9 @@ void Basic::processEvent( LCEvent * evt ) {
     MCParticle* high_e;
     MCParticle* high_p;
 
+    int p_def=0;
+    int e_def=0;
+    int b_def=0;
 
     // this will only be entered if the collection is available
     if( col != NULL ){
@@ -164,8 +171,6 @@ void Basic::processEvent( LCEvent * evt ) {
                 
                 //include hadronic only
                 if(hit!=high_e && hit!=high_p){
-                    //exclude neutrinos
-                   // if(id!=12 && id!=14 && id!=16){        
                         if(abs(mom[0])>0.0){
                             scatter_vec[0]+=mom[0];               
                         }
@@ -182,27 +187,51 @@ void Basic::processEvent( LCEvent * evt ) {
                         mag+=tmag;  
 
                         theta = atan(tmag/abs(mom[2]));
-                    //}
-                    //else{neutrino_counter++;} 
-
+                }
+                else{
+                    if(id==11){
+                        cout << "Electron mom: " << mom[0] << " " << mom[1] << " " << mom[2] << endl;
+                        if(abs(mom[0])!=0 || abs(mom[1])!=0){
+                            cout << "Found deflected electron" << endl;
+                            e_def=1;    
+                        }        
+                    } 
+                    else{
+                        cout << "Positron mom: " << mom[0] << " " << mom[1] << " " << mom[2] << endl;
+                        if(abs(mom[0])!=0 || abs(mom[1])!=0){
+                            cout << "Found deflected positron" << endl;
+                            p_def=1;
+                            if(e_def==1){b_def=1; e_def=0; p_def =0;}    
+                        }        
+                    } 
+                       
                 } 
            }//end final state
         }//end for
 
+
+
         //all
-        if(_nEvt<1600000){
-                double mass = sqrt(pow(energy, 2)-pow(scatter_vec[0], 2)-pow(scatter_vec[1], 2)-pow(scatter_vec[2], 2));
-                _mass->Fill(mass);
-                cout << "Mass parameter: " << mass << endl;
+        if(_nEvt<10000){
+            
+            if(e_def==1 && p_def==1){_b_def_count++;}
+            else if(e_def==1){_e_def_count++;}
+            else if(p_def==1){_p_def_count++;}
+            
+            double mass = sqrt(pow(energy, 2)-pow(scatter_vec[0], 2)-pow(scatter_vec[1], 2)-pow(scatter_vec[2], 2));
+            _mass->Fill(mass);
+            //cout << "Mass parameter: " << mass << endl;
 
-                //fill scalar 
-                _scalar->Fill(mag);
-                cout << "Scalar Momentum: " << mag << endl;
+            //fill scalar 
+            _scalar->Fill(mag);
+            //cout << "Scalar Momentum: " << mag << endl;
 
-                //fill vector
-                double vector = sqrt(pow(scatter_vec[0], 2) + pow(scatter_vec[1], 2));
-                _vector->Fill(vector);
-                cout << "Vector Momentum: " << vector << endl;
+            //fill vector
+            double vector = sqrt(pow(scatter_vec[0], 2) + pow(scatter_vec[1], 2));
+            if(vector==0.0){_zero_scatter_count++;}
+            if(vector>0.0 && vector< 0.01){_low_scatter_count++;}
+            _vector->Fill(vector);
+            cout << "Vector Momentum: " << vector << endl;
                   
                 
         }
@@ -218,7 +247,21 @@ void Basic::check( LCEvent * evt ) {
 
 
 
-void Basic::end(){ 
+void Basic::end(){
+    cout << "Number deflected electrons: " << _e_def_count << endl;
+    cout << "Number deflected positrons: " << _p_def_count << endl;
+     
+    double e_def_ratio= _e_def_count/10000.0;
+    double p_def_ratio= _p_def_count/10000.0;
+    double b_def_ratio= _b_def_count/10000.0;
+    double zero_scatter_ratio = _zero_scatter_count/10000.0;
+    double low_scatter_ratio = _low_scatter_count/10000.0;
 
+    cout << "Ratio deflected electrons: " << e_def_ratio  << endl;
+    cout << "Ratio deflected positrons: " << p_def_ratio << endl;
+    cout << "Ratio deflected both: " << b_def_ratio << endl;
+
+    cout << "Ratio events where scatter sums to zero: " << zero_scatter_ratio << endl;
+    cout << "Ratio events where 0 < scatter_sum < 0.01: " << low_scatter_ratio << endl;
     _rootfile->Write();
 }
