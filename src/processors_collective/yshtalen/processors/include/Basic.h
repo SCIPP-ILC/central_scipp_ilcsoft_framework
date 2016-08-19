@@ -67,6 +67,7 @@ class Basic : public Processor {
   int _nRun ;
   int _nEvt ;
 
+  int _neutrino_counter;      
   int _b_def_count;
   int _e_def_count;
   int _p_def_count;

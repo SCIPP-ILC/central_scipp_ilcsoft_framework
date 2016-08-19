@@ -41,10 +41,13 @@ using namespace std;
 Basic Basic;
 
 static TFile* _rootfile;
-static TH2F* _hitmap;
+//static TH2F* _hitmap;
 static TH1F* _mass;
-static TH1F* _scalar;
+//static TH1F* _scalar;
 static TH1F* _vector;
+
+static TH1F* _xSum;
+static TH1F* _ySum;
 
 Basic::Basic() : Processor("Basic") {
     // modify processor description
@@ -59,18 +62,22 @@ Basic::Basic() : Processor("Basic") {
 void Basic::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("def_eWpB.root","RECREATE");
-    _hitmap = new TH2F("hitmap","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
-    _scalar = new TH1F("scalar", "Transverse Momentum Scalar Magnitude", 2000.0, 0.0, 20.0);
-    _vector = new TH1F("vector", "Transverse Momentum Vector Magnitude", 2000.0, 0.0, 4.0);
-    _mass = new TH1F("mass", "Mass Parameter", 2000.0, 0.0, 20.0);
+    _rootfile = new TFile("eBpW_all.root","RECREATE");
+    //_hitmap = new TH2F("hitmap","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
+    //_scalar = new TH1F("scalar", "Transverse Momentum Scalar Magnitude", 2000.0, 0.0, 20.0);
+    _vector = new TH1F("vector", "Deflected Particle Momentum Magnitude, sqrt(pX^2+pY^2)", 2000.0, 0.0, 20.0);
+    _mass = new TH1F("mass", "Deflected Particle sqrt(Q^2) = sqrt(E^2 - <del_p>^2)", 2000.0, 0.0, 3.0);
+    
+    _xSum = new TH1F("xSum","X-Momentum Event Total",600.0,-10.0,10.0);
+    _ySum = new TH1F("ySum","Y-Momentum Event Total",600.0,-10.0,10.0);
+    
     // usually a good idea to
     //printParameters() ;
 
     _nRun = 0 ;
     _nEvt = 0 ;
 
-
+    _neutrino_counter=0;
     _p_def_count=0;
     _e_def_count=0;
     _b_def_count=0;
@@ -114,7 +121,7 @@ void Basic::processEvent( LCEvent * evt ) {
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
         
-        //first, find an electron and positron in the event
+        //first, find last electron and positron in the event
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
     
@@ -128,36 +135,36 @@ void Basic::processEvent( LCEvent * evt ) {
                 if(id==-11){
                     high_p = hit;
                 }
+                //find neutrinos 
+                if(id==12 || id==14 || id==16){_neutrino_counter++;}
            }//end final state
         }//end for loop
         
+
         //------------------------HIGH-ENERGY ANALYSIS-----------------------------------------
         //determine if these are the high energy electron and positron
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
     
-           id = hit->getPDG(); 
+           id = hit->getPDG();
            stat = hit->getGeneratorStatus();
-           
+
+           const double* mom = hit->getMomentum();
            if(stat==1){
-                //find high energy electron
-                if(id==11){
-                    if(hit->getEnergy()>high_e->getEnergy()){
-                        high_e = hit;
-                    }               
-                }    
-                //find high energy positron
-                if(id==-11){
-                    if(hit->getEnergy()>high_p->getEnergy()){
-                        high_p = hit;
-                    }               
-                }
-                    
+               cout << id << endl;;
+               cout << endl;
+               cout << endl;
+               cout << endl;
+                //if(hit!=high_e && hit!=high_p){
+                    scatter_vec[0]+=mom[0];
+                    scatter_vec[1]+=mom[1];
+                    scatter_vec[2]+=mom[2];
+                    energy+=hit->getEnergy();
+                //}
            }//end final state
         }//end for loop
-        
         //-------------------------HADRONIC SYSTEM-----------------------------------------------
-        for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
+        /*for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
            
            id = hit->getPDG(); 
@@ -208,22 +215,28 @@ void Basic::processEvent( LCEvent * evt ) {
                 } 
            }//end final state
         }//end for
-
-
+        */
+        const double* mom_e = high_e->getMomentum();
+        const double* mom_p = high_p->getMomentum();
 
         //all
-        if(_nEvt<10000){
+        if(_nEvt<200000){
             
+            _xSum->Fill(scatter_vec[0]);
+            _ySum->Fill(scatter_vec[1]);
+
             if(e_def==1 && p_def==1){_b_def_count++;}
             else if(e_def==1){_e_def_count++;}
             else if(p_def==1){_p_def_count++;}
             
-            double mass = sqrt(pow(energy, 2)-pow(scatter_vec[0], 2)-pow(scatter_vec[1], 2)-pow(scatter_vec[2], 2));
+            //double mass = sqrt(pow(energy, 2)-pow(scatter_vec[0], 2)-pow(scatter_vec[1], 2)-pow(scatter_vec[2], 2));
+            double q_2 = pow((250.0-energy), 2) - pow(scatter_vec[0], 2) - pow(scatter_vec[1], 2) - pow((250.0-abs(scatter_vec[2])), 2);
+            double mass = sqrt(-q_2);
             _mass->Fill(mass);
-            //cout << "Mass parameter: " << mass << endl;
+    //        cout << "Mass parameter: " << mass << endl;
 
             //fill scalar 
-            _scalar->Fill(mag);
+            //_scalar->Fill(mag);
             //cout << "Scalar Momentum: " << mag << endl;
 
             //fill vector
@@ -231,7 +244,7 @@ void Basic::processEvent( LCEvent * evt ) {
             if(vector==0.0){_zero_scatter_count++;}
             if(vector>0.0 && vector< 0.01){_low_scatter_count++;}
             _vector->Fill(vector);
-            cout << "Vector Momentum: " << vector << endl;
+      //      cout << "Vector Momentum: " << vector << endl;
                   
                 
         }
@@ -248,20 +261,37 @@ void Basic::check( LCEvent * evt ) {
 
 
 void Basic::end(){
-    cout << "Number deflected electrons: " << _e_def_count << endl;
-    cout << "Number deflected positrons: " << _p_def_count << endl;
-     
+    /*cout << "Number of NEUTRINOS: " << _neutrino_counter << endl;
+    cout << "Number deflected ELECTRONS: " << _e_def_count << endl;
+    cout << "Number deflected POSITRONS: " << _p_def_count << endl;
+    cout << endl; 
+    cout << endl; 
+    cout << endl; 
+    
     double e_def_ratio= _e_def_count/10000.0;
     double p_def_ratio= _p_def_count/10000.0;
     double b_def_ratio= _b_def_count/10000.0;
     double zero_scatter_ratio = _zero_scatter_count/10000.0;
     double low_scatter_ratio = _low_scatter_count/10000.0;
 
+
+    cout << "            DEFLECTION RATIOS" << endl;
+    cout << endl; 
     cout << "Ratio deflected electrons: " << e_def_ratio  << endl;
     cout << "Ratio deflected positrons: " << p_def_ratio << endl;
     cout << "Ratio deflected both: " << b_def_ratio << endl;
+    cout << endl; 
+    cout << endl; 
+    cout << endl; 
 
+
+    cout << "            SCATTER RATIO" << endl;
+    cout << endl; 
     cout << "Ratio events where scatter sums to zero: " << zero_scatter_ratio << endl;
     cout << "Ratio events where 0 < scatter_sum < 0.01: " << low_scatter_ratio << endl;
+    cout << endl; 
+    cout << endl; 
+    cout << endl; */
     _rootfile->Write();
 }
+
