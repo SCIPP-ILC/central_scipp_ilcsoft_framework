@@ -48,6 +48,8 @@ EventAnalysis::EventAnalysis() : Processor("EventAnalysis") {
 
     // register steering parameters: name, description, class-variable, default value
     registerInputCollection( LCIO::MCPARTICLE, "CollectionName" , "Name of the MCParticle collection"  , _colName , std::string("MCParticle") );
+
+    registerProcessorParameter( "RootOutputName" , "output file"  , _root_file_name , std::string("output.root") );
 }
 
 
@@ -55,7 +57,7 @@ EventAnalysis::EventAnalysis() : Processor("EventAnalysis") {
 void EventAnalysis::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("hitmap.root","RECREATE");
+    _rootfile = new TFile(_root_file_name.c_str(),"RECREATE");
     _hitmap = new TH2F("hitmap","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
 
     // usually a good idea to

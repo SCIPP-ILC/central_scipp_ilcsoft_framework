@@ -1,5 +1,5 @@
-#ifndef EventAnalysis_h
-#define EventAnalysis_h 1
+#ifndef BeamCalReconTest_h
+#define BeamCalReconTest_h 1
 
 #include "marlin/Processor.h"
 #include "lcio.h"
@@ -24,17 +24,17 @@ using namespace marlin ;
  * @param CollectionName Name of the MCParticle collection
  * 
  * @author F. Gaede, DESY
- * @version $Id: EventAnalysis.h,v 1.4 2005-10-11 12:57:39 gaede Exp $ 
+ * @version $Id: BeamCalReconTest.h,v 1.4 2005-10-11 12:57:39 gaede Exp $ 
  */
 
-class EventAnalysis : public Processor {
+class BeamCalReconTest : public Processor {
 
     public:
 
-        virtual Processor*  newProcessor() { return new EventAnalysis ; }
+        virtual Processor*  newProcessor() { return new BeamCalReconTest ; }
 
 
-        EventAnalysis() ;
+        BeamCalReconTest() ;
 
         /** Called at the begin of the job before anything is read.
          * Use to initialize the processor, e.g. book histograms.
@@ -63,11 +63,15 @@ class EventAnalysis : public Processor {
         /** Input collection name.
         */
         std::string _colName ;
+        std::string _beamcal_geometry_file_name;
+        std::string _background_event_list;
+        int _num_bgd_events_to_read;
         std::string _root_file_name;
 
         int _nRun ;
         int _nEvt ;
-};
+
+} ;
 
 #endif
 

@@ -4,7 +4,7 @@
 #include "marlin/Processor.h"
 #include "lcio.h"
 #include <string>
-
+#include <EVENT/MCParticle.h>
 
 using namespace lcio ;
 using namespace marlin ;
@@ -43,6 +43,8 @@ class Basic : public Processor {
   
   /** Called for every run.
    */
+  virtual void getChildren( MCParticle* hit , int gen );
+  
   virtual void processRunHeader( LCRunHeader* run ) ;
   
   /** Called for every event - the working horse.

@@ -7,6 +7,8 @@
 #include "scipp_ilc_globals.h"
 #include "polar_coords.h"
 
+#include <EVENT/MCParticle.h>
+
 using namespace std;
 using namespace lcio;
 
@@ -89,4 +91,5 @@ namespace scipp_ilc {
 	//otherwise it hit the Beamcal
 	else{return 1;}
    }
+
 }//END
