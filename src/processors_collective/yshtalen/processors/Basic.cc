@@ -168,13 +168,15 @@ void Basic::processEvent( LCEvent * evt ) {
            }//end final state
         }//end for loop
         
+        cout << "event = " << _nEvt << endl;
+        
         if(abs(scatter_vec[0])>1.9){
             _b_def_count++;
             cout << endl;
             cout << endl;
             cout << endl;
-            cout << "event = " << _nEvt << endl;
-            
+
+            //particle printer
             for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
                MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
         
@@ -191,7 +193,7 @@ void Basic::processEvent( LCEvent * evt ) {
             }//end for loop
             cout << "XSum: " << scatter_vec[0] << endl;
             cout << "YSum: " << scatter_vec[1] << endl;
-        }
+        }//end delta cut
         const double* mom_e = high_e->getMomentum();
         const double* mom_p = high_p->getMomentum();
 
