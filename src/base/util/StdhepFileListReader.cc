@@ -55,7 +55,8 @@ namespace marlin{
         try { 
             ifstream filelist (_fileName, ifstream::in);
             string stdhepFile;
-
+            
+            cout << "file: " << _fileName << "    numEvents: " << numEvents << endl;
             while ( filelist >> stdhepFile ) {
                 LCStdHepRdr* rdr = new  LCStdHepRdr( stdhepFile.c_str() ) ;
 
