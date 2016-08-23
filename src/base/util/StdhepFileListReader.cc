@@ -58,7 +58,9 @@ namespace marlin{
             
             cout << "file: " << _fileName << "    numEvents: " << numEvents << endl;
             while ( filelist >> stdhepFile ) {
-                LCStdHepRdr* rdr = new  LCStdHepRdr( stdhepFile.c_str() ) ;
+               
+		cout << "stdhep file: " << stdhepFile << endl;
+		LCStdHepRdr* rdr = new  LCStdHepRdr( stdhepFile.c_str() ) ;
 
                 LCCollection* col ;
                 LCEventImpl* evt ;

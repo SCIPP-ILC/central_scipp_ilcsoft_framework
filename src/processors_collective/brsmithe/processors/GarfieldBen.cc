@@ -89,11 +89,11 @@ void GarfieldBen::processEvent( LCEvent * evt ) {
 
            const float* pos = hit->getPosition();
            _hitmap->Fill(pos[0],pos[1]);
-
-	   cout << "The z position is: " <<  pos[2] << endl;
+	   
+	   cout << "The Z Position is at " << pos[2] << endl;
         } 
     }
-
+    cout << "Event Number: " << _nEvt << endl;
     _nEvt ++ ;
 }
 
