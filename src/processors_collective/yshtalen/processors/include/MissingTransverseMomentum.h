@@ -66,9 +66,10 @@ class MissingTransverseMomentum : public Processor {
 
   int _nRun ;
   int _nEvt ;
-  double _no_def_count;
-  double _e_def_count;
-  double _p_def_count;
+  int _no_def_count;
+  int _e_def_count;
+  int _p_def_count;
+  int _b_def_count;
 } ;
 
 #endif

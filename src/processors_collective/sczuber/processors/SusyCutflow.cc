@@ -159,20 +159,7 @@ void SusyCutflow::processEvent( LCEvent * evt ) {
                 double in_energy = hit->getEnergy();
                 double out_energy, out_x;
                 
-                trasform_to_lab(in_x, in_energy, out_x, out_energy);
-
-              
-               
-             
-            
-           
-          
-         
-        
-       
-      
-     
-    
+                trasform_to_lab(in_x, in_energy, out_x, out_energy); 
    
                         
                         energy+=out_energy;

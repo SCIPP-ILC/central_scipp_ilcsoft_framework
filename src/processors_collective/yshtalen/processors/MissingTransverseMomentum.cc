@@ -41,13 +41,14 @@ using namespace std;
 MissingTransverseMomentum MissingTransverseMomentum;
 
 static TFile* _rootfile;
-static TH2F* _hitmap;
-static TH2F* _hitmap_Lorentz;
-static TH2F* _hitmap_Lorentz_shift;
+//static TH2F* _hitmap_hi;
+//static TH2F* _hitmap_had;
+static TH1F* _deltaX;
+static TH1F* _deltaY;
+static TH1F* _deltaZ;
 static TH1F* _mass;
 static TH1F* _scalar;
 static TH1F* _vector;
-static TH1F* _neutrinos;
 
 MissingTransverseMomentum::MissingTransverseMomentum() : Processor("MissingTransverseMomentum") {
     // modify processor description
@@ -62,14 +63,15 @@ MissingTransverseMomentum::MissingTransverseMomentum() : Processor("MissingTrans
 void MissingTransverseMomentum::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("mass_eBpW.root","RECREATE");
-    _hitmap = new TH2F("hitmap","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
-    _hitmap_Lorentz = new TH2F("hitmap_Lorentz","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
-    _hitmap_Lorentz_shift = new TH2F("hitmap_Lorentz_shift","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
+    _rootfile = new TFile("predicting_eBpW.root","RECREATE");
+  //  _hitmap_hi = new TH2F("high_hit","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
+  //  _hitmap_had = new TH2F("hadronic_hit","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
+    _deltaX = new TH1F("x_diff", "Delta X-Pos, Predicting + High Energy Vectors", 2000.0, -10.0, 10.0)
+    _deltaY = new TH1F("y_diff", "Delta Y-Pos, Predicting + High Energy Vectors", 2000.0, -10.0, 10.0)
+    _deltaZ = new TH1F("z_diff", "Delta Z-Pos, Predicting + High Energy Vectors", 2000.0, -10.0, 10.0)
     _scalar = new TH1F("scalar", "Transverse Momentum Scalar Magnitude", 2000.0, 0.0, 20.0);
     _vector = new TH1F("vector", "Transverse Momentum Vector Magnitude", 2000.0, 0.0, 20.0);
     _mass = new TH1F("mass", "Mass Parameter", 2000.0, 0.0, 20.0);
-    _neutrinos = new TH1F("neutrinos", "Neutrinos per Event", 10.0, 0.0,10.0); 
     // usually a good idea to
     //printParameters() ;
 
@@ -79,6 +81,7 @@ void MissingTransverseMomentum::init() {
     _no_def_count = 0;
     _e_def_count = 0;
     _p_def_count = 0;
+    _b_def_count = 0;
 }
 
 
@@ -120,14 +123,17 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
     int h_hit_status=0;
     int p_hit_status=0;
 
-    //counters
-    int neutrino_counter=0;
-    int e_def_count=0;
-    int p_def_count=0;
+    //booleanss
+    int e_def=0;
+    int p_def=0;
+    int b_def=0;
 
     //high energy electron and positron objects
     MCParticle* high_e;
     MCParticle* high_p;
+
+    const double* mom_e = {0,0,0};
+    const double* mom_p = {0,0,0};
 
     // this will only be entered if the collection is available
     if( col != NULL ){
@@ -150,7 +156,7 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
            }//end final state
         }//end for loop
         
-        //------------------------HIGH-ENERGY ANALYSIS-----------------------------------------
+        //------------------------HIGH-ENERGY-------------------------------------------------
         //determine if these are the high energy electron and positron
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
@@ -172,10 +178,49 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                     }               
                 }
                     
+                    
            }//end final state
         }//end for loop
         
-        //-------------------------PROCESS LOOP-----------------------------------------------
+        //create high energy vector, track deflections
+        mom_e = high_e->getMomentum();
+        mom_p = high_p->getMomentum();
+
+        if(mom_e[0]!=0 || mom_e[1]!=0){
+                e_def=1;       
+        }
+        if(mom_p[0]!=0 || mom_p[1]!=0){
+                p_def=1;       
+        }
+        if(e_def==1 && p_def==1){
+            e_def=0;
+            p_def=0;
+            b_def=1;
+        }
+        if(b_def=1){
+            _b_def_count++;
+            high_vec[0]=mom_e[0]+mom_p[0];
+            high_vec[1]=mom_e[1]+mom_p[1];
+            high_vec[2]=mom_e[2]+mom_p[2];
+        }
+        else{
+            if(e_def==1){
+                _e_def_count++;
+                high_vec[0]=mom_e[0];
+                high_vec[1]=mom_e[1];
+                high_vec[2]=mom_e[2];
+            }
+            else if(p_def==1){
+                _p_def_count++;
+                high_vec[0]=mom_p[0];
+                high_vec[1]=mom_p[1];
+                high_vec[2]=mom_p[2];
+            }
+            else{_no_def_count++;} 
+        }
+
+
+        //-------------------------HADRONIC-----------------------------------------------
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
            
@@ -192,9 +237,8 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                 pos[2] = scipp_ilc::_BeamCal_zmin;
                 pos[0] = mom[0]*pos[2]/mom[2];
                 pos[1] = mom[1]*pos[2]/mom[2];
-                
-                //fill stdhep hitmap
-                double rad = sqrt(pow(pos[0], 2)+ pow(pos[1], 2));
+               
+
 
                 //collect parameters necessary for Lorentz transform
                 double in_x = mom[0];
@@ -203,11 +247,15 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                 
                 //apply transform
                 scipp_ilc::transform_to_lab(in_x, in_energy, out_x, out_energy);
+                
                 //adjust x position
                 pos[0] = out_x*pos[2]/mom[2];
+                
                 //shift origin to center of beamcal beampipe hole
                 scipp_ilc::z_to_beam_out(pos[0], pos[1], pos[2]);
 
+                double rad = sqrt(pow(pos[0], 2)+ pow(pos[1], 2));
+                
                 //include hadronic only
                 if(hit!=high_e && hit!=high_p){
                         if(abs(out_x)>0.0){
@@ -232,26 +280,6 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                         neutrino_counter++;
                     }    
                 }
-                //create high energy vector and track deflections
-                else{
-                    if(id==11){
-                        if(mom[0]!=0 || mom[1]!=0){
-                            e_def_count++;
-                            high_vec[0]+=out_x;
-                            high_vec[1]+=mom[1];
-                            high_vec[2]+=mom[2];
-                        }    
-                    }
-                    if(id==-11){
-                        if(mom[0]!=0 || mom[1]!=0){
-                            p_def_count++;
-                            high_vec[0]+=out_x;
-                            high_vec[1]+=mom[1];
-                            high_vec[2]+=mom[2];
-                        }    
-                    
-                    }
-                } 
            }//end final state
         }//end for
 
@@ -260,6 +288,7 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
         scatter_vec[1] = -scatter_vec[1];
         scatter_vec[2] = sqrt(pow(250.0-energy, 2) - pow(mag, 2));
 
+        //fill delta maps
 
         //determine prediction vector hit status
 
