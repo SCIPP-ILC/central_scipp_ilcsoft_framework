@@ -93,7 +93,7 @@ void NewProc::processEvent( LCEvent * evt ) {
            SimCalorimeterHit* hit = dynamic_cast<SimCalorimeterHit*>( col->getElementAt(hitIndex) );
 	   
            const float* pos = hit->getPosition();
-	   const int id = 11;
+	   const int id = hit->getPDG();
 
 	   // cout << "This is type " << id << endl;
 	   switch (id){

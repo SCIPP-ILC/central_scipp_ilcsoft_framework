@@ -70,9 +70,9 @@ void SusyCutflow::init() {
     _nRun = 0 ;
     _nEvt = 0 ;
 
-    _no_def_count = 0;
-    _e_def_count = 0;
-    _p_def_count = 0;
+   // _no_def_count = 0;
+   // _e_def_count = 0;
+   // _p_def_count = 0;
 }
 
 
@@ -97,103 +97,134 @@ void SusyCutflow::processEvent( LCEvent * evt ) {
     double scalars[4];
     double energy[4]; 
 
-    //MCParticle* high_e;
-    //MCParticle* high_p;
-
-
     // this will only be entered if the collection is available
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
         
-        
-        for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
-           MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
-    
-           int id = hit->getPDG(); 
-           int stat = hit->getGeneratorStatus();
-           
+        // For each particle in Event ...
+        for(int particleIndex = 0; particleIndex < nElements ; particleIndex++){
+           MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(particleIndex) );
+            
+           int id = particle->getPDG(); 
+           int stat = particle->getGeneratorStatus();
+           // If Particle is FINAL-STATE 
            if(stat==1){
-                if(id==11){
-                    high_e = hit;
-                }
-                if(id==-11){
-                    high_p = hit;
-                }
-           }//end final state
-        }//end for loop
-        
-        for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
-           MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
-    
-           int id = hit->getPDG(); 
-           int stat = hit->getGeneratorStatus();
-           
-           if(stat==1){
-
-                //find high energy electron
-                if(id==11){
-                    if(hit->getEnergy()>high_e->getEnergy()){
-                        high_e = hit;
-                    }               
-                }    
-                //find high energy positron
-                if(id==-11){
-                    if(hit->getEnergy()>high_p->getEnergy()){
-                        high_p = hit;
-                    }               
-                }
-                    
-           }//end final state
-        }//end for loop
-        
-        //--------------HADRONIC SYSTEM------------------------------------------------------//
-        for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
-           MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
-           if(is_detectable(hit)){cout << "detected" << endl;} 
-           int id = hit->getPDG(); 
-           int stat = hit->getGeneratorStatus();
-           
-           if(stat==1){
-                const double* mom = hit->getMomentum();
-                double in_x = mom[0];
-                double in_energy = hit->getEnergy();
-                double out_energy, out_x;
-                
-                trasform_to_lab(in_x, in_energy, out_x, out_energy); 
-   
-                        
-                        energy+=out_energy;
-                        
-                        double tmag = sqrt(pow(out_x, 2)+pow(mom[1], 2));
-                        mag+=tmag;  
-
-                        theta = atan(tmag/abs(mom[2]));
+                bool isDarkMatter = (id == 1000022);
+                if(isDarkMatter) continue ;
+                double E = particle->getEnergy();
+                double P = particle->getMomentum().magnitude();
+                double pz = particle->getPZ();
+                double px = particle->getPX();
+                double py = particle->getPY();
+                double cos = pz/P;
+                double scalar = sqrt(px*px+py*py); 
+                bool isNeutrino = (
+                    id == 12 || id == -12 ||
+                    id == 14 || id == -14 ||
+                    id == 16 || id == -16 ||
+                    id == 18 || id == -18);
+                bool isForward = ( cos > 0.9 || cos < -0.9);               
+                scalars[0]+=scalar;
+                vectors[0][0]+=px;
+                vectors[0][1]+=py;
+                vectors[0][2]+=pz;
+                energy[0]+=E;                        
+                if(!isDarkMatter && !isNeutrino){
+                    scalars[2]+=scalar;
+                    vectors[2][0]+=px;
+                    vectors[2][1]+=py;
+                    vectors[2][2]+=pz;
+                    energy[2]+=E;
+                    if(!isForward){
+                        scalars[1]+=scalar;
+                        vectors[1][0]+=px;
+                        vectors[1][1]+=py;
+                        vectors[1][2]+=pz;      
                     }
-                    else{neutrino_counter++;}                  
-                } 
+                }
+                
+                                      
+                 
            }//end final state
         }//end for
 
         //all
-        if(_nEvt<1600000){
-            if(cos(theta)<0.9){
-                double mass = sqrt(pow(energy, 2)-pow(scatter_vec[0], 2)-pow(scatter_vec[1], 2)-pow(scatter_vec[2], 2));
-                _mass->Fill(mass);
-                cout << "Mass parameter: " << mass << endl;
+        double total_true_scalar = scalars[0];
+        double total_detected_scalar = scalars[1];
+        double total_detectable_scalar = scalars[2];
 
-                //fill scalar 
-                _scalar->Fill(mag);
-                cout << "Scalar Momentum: " << mag << endl;
-
-                //fill vector
-                double vector = sqrt(pow(scatter_vec[0], 2) + pow(scatter_vec[1], 2));
-                _vector->Fill(vector);
-                cout << "Vector Momentum: " << vector << endl;
-                  
-                
+        double total_true_mass_squared = energy[0]+energy[0]-
+            (vectors[0][0]*vectors[0][0]+vectors[0][1]vectors[0][1]+
+            vectors[0][2]*vectors[0][2]);
+        double total_true_mass = sqrt(total_true_mass_squared);
+        double total_detected_mass_squared = energy[1]*energy[1]-
+            (vectors[1][0]*vectors[1][0]+vectors[1][1]*vectors[1][1]+
+            vectors[1][2]*vectors[1][2]);
+        double total_detected_mass = sqrt(total_detected_mass_squared);
+        double total_detectable_mass_squared = energy[2]*energy[2]-
+            (vectors[2][0]*vectors[2][0]+vectors[2][1]*vectors[2][1]+
+            vectors[2][2]*vectors[2][2]);
+        cuts[0][0]+=1;
+        cuts[1][0]+=1;
+        cuts[2][0]+=1;
+        if(total_true_scalar > 0.5){
+            cuts[0][1]+=1;
+            if(total_true_mass > 0.5){
+                cuts[0][2]+=1;
+                if(total_true_scalar > 1){
+                    cuts[0][3]+=1;
+                    if(total_true_mass > 1){
+                        cuts[0][4]+=1;
+                    }
+                }
             }
-            _neutrinos->Fill(neutrino_counter);
         }
+
+        if(total_detected_scalar > 0.5){
+            cuts[1][1]+=1;
+            if(total_detected_mass > 0.5){
+                cuts[1][2]+=1;
+                if(total_detected_scalar > 1){
+                    cuts[1][3]+=1;
+                    if(total_detected_mass > 1){
+                        cuts[1][4]+=1;
+                    }
+                }
+            }
+        }
+        
+        if(total_detectable_scalar > 0.5){
+            cuts[2][1]+=1;
+            if(total_detectable_mass > 0.5){
+                cuts[2][2]+=1;
+                if(total_detectable_scalar > 1){
+                    cuts[2][3]+=1;
+                    if(total_detectable_mass > 1){
+                        cuts[2][4]+=1;
+                    }
+                }
+            }
+        }
+        
+
+        cout << "TRUE" << endl;
+        cout<< "cut_0 " << cuts[0][0] << endl;
+        cout<< "cut_1 " << cuts[0][1] << endl;
+        cout<< "cut_2 " << cuts[0][2] << endl;
+        cout<< "cut_3 " << cuts[0][3] << endl;
+        cout<< "cut_4 " << cuts[0][4] << endl; 
+        cout << "DETECTABLE" << endl;
+        cout<< "cut_0 " << cuts[2][0] << endl;
+        cout<< "cut_1 " << cuts[2][1] << endl;
+        cout<< "cut_2 " << cuts[2][2] << endl;
+        cout<< "cut_3 " << cuts[2][3] << endl;
+        cout<< "cut_4 " << cuts[2][4] << endl;
+        cout << "DETECTED" << endl;
+        cout<< "cut_0 " << cuts[1][0] << endl;
+        cout<< "cut_1 " << cuts[1][1] << endl;
+        cout<< "cut_2 " << cuts[1][2] << endl;
+        cout<< "cut_3 " << cuts[1][3] << endl;
+        cout<< "cut_4 " << cuts[1][4] << endl;
     }
     _nEvt ++ ;
 }

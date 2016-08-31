@@ -15,7 +15,7 @@
  * August 5, 2016
  */
 
-#include "Basic.h"
+#include "BhaBhaDeflectionAnalysis.h"
 #include "scipp_ilc_utilities.h"
 #include "scipp_ilc_globals.h"
 #include "polar_coords.h"
@@ -37,7 +37,7 @@ using namespace lcio;
 using namespace marlin;
 using namespace std;
 
-Basic Basic;
+BhaBhaDeflectionAnalysis BhaBhaDeflectionAnalysis;
 
 static TFile* _rootfile;
 //static TH2F* _hitmap;
@@ -48,7 +48,7 @@ static TH1F* _vector;
 static TH1F* _xSum;
 static TH1F* _ySum;
 
-Basic::Basic() : Processor("Basic") {
+BhaBhaDeflectionAnalysis::BhaBhaDeflectionAnalysis() : Processor("BhaBhaDeflectionAnalysis") {
     // modify processor description
     _description = "Protype Processor" ;
 
@@ -58,7 +58,7 @@ Basic::Basic() : Processor("Basic") {
 
 
 
-void Basic::init() { 
+void BhaBhaDeflectionAnalysis::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
     _rootfile = new TFile("eBpW_dump.root","RECREATE");
@@ -75,24 +75,28 @@ void Basic::init() {
 
 
 
-void Basic::processRunHeader( LCRunHeader* run) { 
+void BhaBhaDeflectionAnalysis::processRunHeader( LCRunHeader* run) { 
 //    _nRun++ ;
 } 
 
 
-void Basic::processEvent( LCEvent * evt ) { 
+void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
 
 
     LCCollection* col = evt->getCollection( _colName ) ;
 
+    //Lorentz transform parameters
+    double theta, out_energy, out_x;
     
     double scatter_vec[] = {0, 0, 0};
     double mag = 0;
+    double pos[] = {0, 0, 0};
     double energy = 0;
     double theta;
     int id, stat;
+    const bool doTransform = true;
 
     MCParticle* high_e;
     MCParticle* high_p;
@@ -134,12 +138,51 @@ void Basic::processEvent( LCEvent * evt ) {
         const double* mom_e = high_e->getMomentum();
         const double* mom_p = high_p->getMomentum();
         
+	
         if(stat==1){
-            if(hit!=high_e && hit!=high_p){
-                scatter_vec[0]+=mom[0];    
-                scatter_vec[1]+=mom[1];    
-                scatter_vec[2]+=mom[2];    
-            }    
+	  
+	  if (doTransform){
+	    //create position vector by ratios from known z pos and momentum
+	    pos[2] = scipp_ilc::_Beamcal_zmin;
+	    pos[1] = mom[1]*pos[2]/mom[2];
+	    pos[0] = mom[0]*pos[2]/mom[2];
+	    
+	    //collect parameters for Lorentz transform
+	    double in_x = mom[0];
+	    double in_energy = hit->getEnergy();
+	    
+	    //apply the transform
+	    scipp_ilc::transform_to_lab(in_x, in_energy, out_x, out_energy);
+
+	    //adjust the x position
+	    pos[0] = out_x*pos[2]/mom[2];
+		
+	    //shift origin to the center of the beamcal beampipe hole
+	    scipp_ilc::z_to_beam_out(pos[0], pos[1], pos[2]);
+	    
+	  }
+	  else{
+	    out_x = mom[0];
+	    out_energy = hit->getEnergy();
+	  }
+
+          if(hit!=high_e && hit!=high_p){
+	    scatter_vec[0]+=out_x;    
+	    scatter_vec[1]+=mom[1];    
+	    scatter_vec[2]+=mom[2];    
+	  }
+	  
+	  //adjust the energy to post transform
+	  energy+=out_energy;
+
+	  //find the new angle
+	  double tmag = sqrt(pow(out_x, 2)+pow(mom[1], 2));
+	  mag+=tmag;
+	  theta = atan(tmag/abs(mom[2]));
+	  
+	  //Debuggin'
+	  cout << "The particle is at (" << pos[0] << "," << pos[1] << "," << pos[2] << ")." << endl;
+
         }
         }
         //all
@@ -160,13 +203,14 @@ void Basic::processEvent( LCEvent * evt ) {
 
 
 
-void Basic::check( LCEvent * evt ) { 
+void BhaBhaDeflectionAnalysis::check( LCEvent * evt ) { 
     // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
 
 
 
-void Basic::end(){
+void BhaBhaDeflectionAnalysis::end(){
     _rootfile->Write();
+    cout << "That's all folks!" << endl;
 }
 

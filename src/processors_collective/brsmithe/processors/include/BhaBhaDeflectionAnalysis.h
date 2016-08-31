@@ -1,5 +1,5 @@
-#ifndef Basic_h
-#define Basic_h 1
+#ifndef BhaBhaDeflectionAnalysis_h
+#define BhaBhaDeflectionAnalysis_h 1
 
 #include "marlin/Processor.h"
 #include "lcio.h"
@@ -24,17 +24,17 @@ using namespace marlin ;
  * @param CollectionName Name of the MCParticle collection
  * 
  * @author F. Gaede, DESY
- * @version $Id: Basic.h,v 1.4 2005-10-11 12:57:39 gaede Exp $ 
+ * @version $Id: BhaBhaDeflectionAnalysis.h,v 1.4 2005-10-11 12:57:39 gaede Exp $ 
  */
 
-class Basic : public Processor {
+class BhaBhaDeflectionAnalysis : public Processor {
   
  public:
   
-  virtual Processor*  newProcessor() { return new Basic ; }
+  virtual Processor*  newProcessor() { return new BhaBhaDeflectionAnalysis ; }
   
   
-  Basic() ;
+  BhaBhaDeflectionAnalysis() ;
   
   /** Called at the begin of the job before anything is read.
    * Use to initialize the processor, e.g. book histograms.

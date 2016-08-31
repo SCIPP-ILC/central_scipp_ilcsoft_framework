@@ -151,7 +151,7 @@ void SummerTest::processEvent( LCEvent * evt ) {
         //--------------HADRONIC SYSTEM------------------------------------------------------//
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
-           if(is_detectable(hit)){cout << "detected" << endl;} 
+           //if(is_detectable(hit)){cout << "detected" << endl;} 
            int id = hit->getPDG(); 
            int stat = hit->getGeneratorStatus();
            
@@ -161,7 +161,7 @@ void SummerTest::processEvent( LCEvent * evt ) {
                 double in_energy = hit->getEnergy();
                 double out_energy, out_x;
                 
-                trasform_to_lab(in_x, in_energy, out_x, out_energy);
+                //trasform_to_lab(in_x, in_energy, out_x, out_energy);
 
                 //include hadronic only
                 if(hit!=high_e && hit!=high_p){

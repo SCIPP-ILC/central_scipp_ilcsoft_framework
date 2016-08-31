@@ -66,9 +66,9 @@ void MissingTransverseMomentum::init() {
     _rootfile = new TFile("predicting_eBpW.root","RECREATE");
   //  _hitmap_hi = new TH2F("high_hit","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
   //  _hitmap_had = new TH2F("hadronic_hit","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
-    _deltaX = new TH1F("x_diff", "Delta X-Pos, Predicting + High Energy Vectors", 2000.0, -10.0, 10.0)
-    _deltaY = new TH1F("y_diff", "Delta Y-Pos, Predicting + High Energy Vectors", 2000.0, -10.0, 10.0)
-    _deltaZ = new TH1F("z_diff", "Delta Z-Pos, Predicting + High Energy Vectors", 2000.0, -10.0, 10.0)
+    _deltaX = new TH1F("x_diff", "Delta X-Pos, Predicting + High Energy Vectors", 2000.0, -10.0, 10.0);
+    _deltaY = new TH1F("y_diff", "Delta Y-Pos, Predicting + High Energy Vectors", 2000.0, -10.0, 10.0);
+    _deltaZ = new TH1F("z_diff", "Delta Z-Pos, Predicting + High Energy Vectors", 2000.0, -10.0, 10.0);
     _scalar = new TH1F("scalar", "Transverse Momentum Scalar Magnitude", 2000.0, 0.0, 20.0);
     _vector = new TH1F("vector", "Transverse Momentum Vector Magnitude", 2000.0, 0.0, 20.0);
     _mass = new TH1F("mass", "Mass Parameter", 2000.0, 0.0, 20.0);
@@ -132,8 +132,8 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
     MCParticle* high_e;
     MCParticle* high_p;
 
-    const double* mom_e = {0,0,0};
-    const double* mom_p = {0,0,0};
+    const double* mom_e;
+    const double* mom_p;
 
     // this will only be entered if the collection is available
     if( col != NULL ){
@@ -276,9 +276,9 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                         theta = atan(tmag/abs(mom[2]));
 
                     //track neutrinos
-                    if(id==12 || id==14 || id==16){
-                        neutrino_counter++;
-                    }    
+                  //  if(id==12 || id==14 || id==16){
+                  //      neutrino_counter++;
+                  //  }    
                 }
            }//end final state
         }//end for
@@ -311,7 +311,6 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                 _vector->Fill(vector);
                 cout << "Vector Momentum: " << vector << endl;
                 
-            _neutrinos->Fill(neutrino_counter);
         }
     }
     _nEvt ++ ;

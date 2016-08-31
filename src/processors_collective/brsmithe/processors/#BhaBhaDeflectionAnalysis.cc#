@@ -13,9 +13,11 @@
 /*
  * author Jane Shtalenkovae
  * August 5, 2016
+ * modified by Ben Smithers
+ * August 30, 2016
  */
 
-#include "Basic.h"
+#include "BhaBhaDeflectionAnalysis.h"
 #include "scipp_ilc_utilities.h"
 #include "scipp_ilc_globals.h"
 #include "polar_coords.h"
@@ -37,7 +39,7 @@ using namespace lcio;
 using namespace marlin;
 using namespace std;
 
-Basic Basic;
+BhaBhaDeflectionAnalysis BhaBhaDeflectionAnalysis;
 
 static TFile* _rootfile;
 //static TH2F* _hitmap;
@@ -48,7 +50,7 @@ static TH1F* _vector;
 static TH1F* _xSum;
 static TH1F* _ySum;
 
-Basic::Basic() : Processor("Basic") {
+BhaBhaDeflectionAnalysis::BhaBhaDeflectionAnalysis() : Processor("BhaBhaDeflectionAnalysis") {
     // modify processor description
     _description = "Protype Processor" ;
 
@@ -58,7 +60,7 @@ Basic::Basic() : Processor("Basic") {
 
 
 
-void Basic::init() { 
+void BhaBhaDeflectionAnalysis::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
     _rootfile = new TFile("eBpW_dump.root","RECREATE");
@@ -75,12 +77,12 @@ void Basic::init() {
 
 
 
-void Basic::processRunHeader( LCRunHeader* run) { 
+void BhaBhaDeflectionAnalysis::processRunHeader( LCRunHeader* run) { 
 //    _nRun++ ;
 } 
 
 
-void Basic::processEvent( LCEvent * evt ) { 
+void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
 
@@ -115,9 +117,9 @@ void Basic::processEvent( LCEvent * evt ) {
                 if(id==11){
                     high_e = hit;
                 }
-                if(id==-11){
+                if(id==-11){https://twiki.cern.ch/twiki/bin/view/CLIC/IlcdiracRegistration
                     high_p = hit;
-                }
+		https://twiki.cern.ch/twiki/bin/view/CLIC/IlcdiracRegistrationhttps://twiki.cern.ch/twiki/bin/view/CLIC/IlcdiracRegistration                }
                 //find neutrinos 
                 //if(id==12 || id==14 || id==16){_neutrino_counter++;}
            }//end final state
@@ -160,13 +162,13 @@ void Basic::processEvent( LCEvent * evt ) {
 
 
 
-void Basic::check( LCEvent * evt ) { 
+void BhaBhaDeflectionAnalysis::check( LCEvent * evt ) { 
     // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
 
 
 
-void Basic::end(){
+void BhaBhaDeflectionAnalysis::end(){
     _rootfile->Write();
 }
 

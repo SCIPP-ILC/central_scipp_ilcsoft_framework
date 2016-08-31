@@ -1,5 +1,5 @@
-#ifndef Basic_h
-#define Basic_h 1
+#ifndef ParticleTree_h
+#define ParticleTree_h 1
 
 #include "marlin/Processor.h"
 #include "lcio.h"
@@ -24,17 +24,17 @@ using namespace marlin ;
  * @param CollectionName Name of the MCParticle collection
  * 
  * @author F. Gaede, DESY
- * @version $Id: Basic.h,v 1.4 2005-10-11 12:57:39 gaede Exp $ 
+ * @version $Id: ParticleTree.h,v 1.4 2005-10-11 12:57:39 gaede Exp $ 
  */
 
-class Basic : public Processor {
+class ParticleTree : public Processor {
   
  public:
   
-  virtual Processor*  newProcessor() { return new Basic ; }
+  virtual Processor*  newProcessor() { return new ParticleTree ; }
   
   
-  Basic() ;
+  ParticleTree() ;
   
   /** Called at the begin of the job before anything is read.
    * Use to initialize the processor, e.g. book histograms.
@@ -43,6 +43,7 @@ class Basic : public Processor {
   
   /** Called for every run.
    */
+  virtual void getChildren( MCParticle* hit , int gen );
   
   virtual void processRunHeader( LCRunHeader* run ) ;
   
@@ -50,11 +51,14 @@ class Basic : public Processor {
    */
   virtual void processEvent( LCEvent * evt ) ; 
   
+  
   virtual void check( LCEvent * evt ) ; 
+  
   
   /** Called after data processing for clean up.
    */
   virtual void end() ;
+  
   
  protected:
 
@@ -65,6 +69,12 @@ class Basic : public Processor {
   int _nRun ;
   int _nEvt ;
 
+  int _neutrino_counter;      
+  int _b_def_count;
+  int _e_def_count;
+  int _p_def_count;
+  int _zero_scatter_count;
+  int _low_scatter_count;
 } ;
 
 #endif
