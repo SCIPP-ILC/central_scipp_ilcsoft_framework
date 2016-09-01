@@ -13,13 +13,11 @@
 /*
  * author Summer Zuber
  * August 7, 2016
- * This processor counts the # of events left after 
- * a series of 5 cuts on the S and M observables 
- * it was used for SUSY events with stau mass 150 and 
- * splitting of 2 (most degenerate) 
+ * This processor analyses the distribution of S, V and M 
+ * observables of SUSY events 
  */
 
-#include "SusyCutflow.h"
+#include "SusySVMAnalysis.h"
 #include "scipp_ilc_utilities.h"
 #include <iostream>
 #include <cmath>
@@ -40,7 +38,7 @@ using namespace lcio;
 using namespace marlin;
 using namespace std;
 
-SusyCutflow SusyCutflow;
+SusySVMAnalysis SusySVMAnalysis;
 
 static TFile* _rootfile;
 static TH2F* _hitmap;
@@ -49,7 +47,7 @@ static TH1F* _scalar;
 static TH1F* _vector;
 static TH1F* _neutrinos;
 
-SusyCutflow::SusyCutflow() : Processor("SusyCutflow") {
+SusySVMAnalysis::SusySVMAnalysis() : Processor("SusySVMAnalysis") {
     // modify processor description
     _description = "Protype Processor" ;
 
@@ -59,11 +57,22 @@ SusyCutflow::SusyCutflow() : Processor("SusyCutflow") {
 
 
 
-void SusyCutflow::init() { 
+void SusySVMAnalysis::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("SusyCutflow.root","RECREATE");
+    _rootfile = new TFile("SusySVMAnalysis.root","RECREATE");
+    _V_n_C = new TH1F("V_n_C","Detected Vector",40,0,20);
+    _V_n_A = new TH1F("V_n_A","Detectable Vector",40,0,20);
+    _V_N_A = new TH1F("V_N_A","True Vector",40,0,20);
+
+    _S_n_A = new TH1F("S_n_C","Detected Scalar",40,0,20);
+    _S_n_A = new TH1F("S_n_A","Detectable Scalar",40,0,20);
+    _S_N_A = new TH1F("S_N_A","True Scalar",40,0,20);
+ 
   
+    _M_n_A = new TH1F("M_n_C","Detected Mass",40,0,20);
+    _M_n_A = new TH1F("M_n_A","Detectable Mass",40,0,20);
+    _M_N_A = new TH1F("M_N_A","True Mass",40,0,20);
     // usually a good idea to
     //printParameters() ;
 
@@ -73,13 +82,13 @@ void SusyCutflow::init() {
 
 
 
-void SusyCutflow::processRunHeader( LCRunHeader* run) { 
+void SusySVMAnalysis::processRunHeader( LCRunHeader* run) { 
 //    _nRun++ ;
 } 
 
 
 
-void SusyCutflow::processEvent( LCEvent * evt ) { 
+void SusySVMAnalysis::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
 
@@ -120,22 +129,23 @@ void SusyCutflow::processEvent( LCEvent * evt ) {
                     id == 16 || id == -16 ||
                     id == 18 || id == -18);
                 bool isForward = ( cos > 0.9 || cos < -0.9);               
-                scalars[0]+=scalar;
+                scalars[0]+=scalar; //true
                 vectors[0][0]+=px;
                 vectors[0][1]+=py;
                 vectors[0][2]+=pz;
                 energy[0]+=E;                        
-                if(!isDarkMatter && !isNeutrino){
+                if(!isDarkMatter && !isNeutrino){ //detectable
                     scalars[2]+=scalar;
                     vectors[2][0]+=px;
                     vectors[2][1]+=py;
                     vectors[2][2]+=pz;
                     energy[2]+=E;
                     if(!isForward){
-                        scalars[1]+=scalar;
+                        scalars[1]+=scalar; //detected
                         vectors[1][0]+=px;
                         vectors[1][1]+=py;
-                        vectors[1][2]+=pz;      
+                        vectors[1][2]+=pz;
+                        energy[1]+=E;      
                     }
                 }
                  
@@ -158,80 +168,26 @@ void SusyCutflow::processEvent( LCEvent * evt ) {
         double total_detectable_mass_squared = energy[2]*energy[2]-
             (vectors[2][0]*vectors[2][0]+vectors[2][1]*vectors[2][1]+
             vectors[2][2]*vectors[2][2]);
-        cuts[0][0]+=1;
-        cuts[1][0]+=1;
-        cuts[2][0]+=1;
-        if(total_true_scalar > 0.5){
-            cuts[0][1]+=1;
-            if(total_true_mass > 0.5){
-                cuts[0][2]+=1;
-                if(total_true_scalar > 1){
-                    cuts[0][3]+=1;
-                    if(total_true_mass > 1){
-                        cuts[0][4]+=1;
-                    }
-                }
-            }
-        }
-
-        if(total_detected_scalar > 0.5){
-            cuts[1][1]+=1;
-            if(total_detected_mass > 0.5){
-                cuts[1][2]+=1;
-                if(total_detected_scalar > 1){
-                    cuts[1][3]+=1;
-                    if(total_detected_mass > 1){
-                        cuts[1][4]+=1;
-                    }
-                }
-            }
-        }
-        
-        if(total_detectable_scalar > 0.5){
-            cuts[2][1]+=1;
-            if(total_detectable_mass > 0.5){
-                cuts[2][2]+=1;
-                if(total_detectable_scalar > 1){
-                    cuts[2][3]+=1;
-                    if(total_detectable_mass > 1){
-                        cuts[2][4]+=1;
-                    }
-                }
-            }
-        }
-        
-
-        cout << "TRUE" << endl;
-        cout<< "cut_0 " << cuts[0][0] << endl;
-        cout<< "cut_1 " << cuts[0][1] << endl;
-        cout<< "cut_2 " << cuts[0][2] << endl;
-        cout<< "cut_3 " << cuts[0][3] << endl;
-        cout<< "cut_4 " << cuts[0][4] << endl; 
-        cout << "DETECTABLE" << endl;
-        cout<< "cut_0 " << cuts[2][0] << endl;
-        cout<< "cut_1 " << cuts[2][1] << endl;
-        cout<< "cut_2 " << cuts[2][2] << endl;
-        cout<< "cut_3 " << cuts[2][3] << endl;
-        cout<< "cut_4 " << cuts[2][4] << endl;
-        cout << "DETECTED" << endl;
-        cout<< "cut_0 " << cuts[1][0] << endl;
-        cout<< "cut_1 " << cuts[1][1] << endl;
-        cout<< "cut_2 " << cuts[1][2] << endl;
-        cout<< "cut_3 " << cuts[1][3] << endl;
-        cout<< "cut_4 " << cuts[1][4] << endl;
+            
+        double total_true_vector = sqrt(vectors[0][0]*vectors[0][0]+vectors[0][1]*vectors[0][1]+vectors[0][2]*vectors[0][2]); 
+        double total_detected_vector = sqrt(vectors[1][0]*vectors[1][0]+vectors[1][1]*vectors[1][1]+vectors[1][2]*vectors[1][2]); 
+        double total_detectable_vector = sqrt(vectors[2][0]*vectors[2][0]+vectors[2][1]*vectors[2][1]+vectors[2][2]*vectors[2][2]); 
+        _V_n_C->Fill(total_detected_vector);
+        _V_n_A->Fill(total_detectable_vector);
+        _V_N_A->Fill(total_true_vector);
     }
     _nEvt ++ ;
 }
 
 
 
-void SusyCutflow::check( LCEvent * evt ) { 
+void SusySVMAnalysis::check( LCEvent * evt ) { 
     // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
 
 
 
-void SusyCutflow::end(){ 
+void SusySVMAnalysis::end(){ 
 
     _rootfile->Write();
 }

@@ -88,15 +88,24 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
     LCCollection* col = evt->getCollection( _colName ) ;
 
     //Lorentz transform parameters
-    double theta, out_energy, out_x;
+    double ptheta, pout_energy, pout_x;
+    double etheta, eout_energy, eout_x;
     
     double scatter_vec[] = {0, 0, 0};
-    double mag = 0;
-    double pos[] = {0, 0, 0};
-    double energy = 0;
-    double theta;
+    double pmag = 0;
+    double emag = 0;
+    double Epos[] = {0, 0, 0};
+    double Ppos[] = {0, 0, 0};
+    double Eenergy = 0;
+    double Penergy = 0;
     int id, stat;
     const bool doTransform = true;
+    
+    double ein_x, ein_energy;
+    double pin_x, pin_energy;
+
+    const double* mom_e;
+    const double* mom_p;
 
     MCParticle* high_e;
     MCParticle* high_p;
@@ -114,7 +123,7 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
     
            id = hit->getPDG(); 
            stat = hit->getGeneratorStatus();
-           
+	   
            if(stat==1){
                 if(id==11){
                     high_e = hit;
@@ -126,77 +135,102 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
                 //if(id==12 || id==14 || id==16){_neutrino_counter++;}
            }//end final state
         }//end for loop
+	
+	for (int hitIndex=0; hitIndex < nElements ; hitIndex++){
+	  MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
+	  
+	  id = hit->getPDG();
+	  stat = hit->getGeneratorStatus();
+
+	  // stat==1 means that this is a final state particle
+	  if(stat==1){
+	    if(id==11){
+	      if(hit->getEnergy()>high_e->getEnergy()){
+		high_e = hit;
+	      }
+	    }
+	    if(id==-11){
+	      if(hit->getEnergy()>high_p->getEnergy()){
+		high_p = hit;
+	      }
+	    }
+
+	  }
+	}
         
-        //create sum vector
-        for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
-           MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
-    
-        cout << "event = " << _nEvt << endl;
+	
+        //create sum vector ? 
+	
+	cout << "event = " << _nEvt << endl;
         
-        mom = hit->getMomentum();
         
-        const double* mom_e = high_e->getMomentum();
-        const double* mom_p = high_p->getMomentum();
+	mom_e = high_e->getMomentum();
+	mom_p = high_p->getMomentum();
         
 	
         if(stat==1){
 	  
 	  if (doTransform){
 	    //create position vector by ratios from known z pos and momentum
-	    pos[2] = scipp_ilc::_Beamcal_zmin;
-	    pos[1] = mom[1]*pos[2]/mom[2];
-	    pos[0] = mom[0]*pos[2]/mom[2];
+	    
+	    Epos[2] = scipp_ilc::_BeamCal_zmin;
+	    Epos[1] = mom_e[1]*Epos[2]/mom_e[2];
+	    Epos[0] = mom_e[0]*Epos[2]/mom_e[2];
+
+	    Ppos[2] = scipp_ilc::_BeamCal_zmin;
+	    Ppos[1] = mom_p[1]*Ppos[2]/mom_p[2];
+	    Ppos[0] = mom_p[0]*Ppos[2]/mom_p[2];
+	    
+	    // Making sure the transofmation is working
+	    //cout << "Initial Position" << "(" << pos[0] << "," << pos[1] << "," <<  pos[2] << ")." << endl;
 	    
 	    //collect parameters for Lorentz transform
-	    double in_x = mom[0];
-	    double in_energy = hit->getEnergy();
+	    ein_x = mom_e[0];
+	    pin_x = mom_p[0];
+	    ein_energy = high_e->getEnergy();
+	    pin_energy = high_p->getEnergy();
 	    
+	    cout << "EEnergy in: " << ein_energy << ", x momentum: " << ein_x << "." << endl;
+	    cout << "PEnergy in: " << pin_energy << ", x momentum: " << pin_x << "." << endl;
+
 	    //apply the transform
-	    scipp_ilc::transform_to_lab(in_x, in_energy, out_x, out_energy);
+	    scipp_ilc::transform_to_lab(ein_x, ein_energy, eout_x, eout_energy);
+	    scipp_ilc::transform_to_lab(pin_x, pin_energy, pout_x, pout_energy);
 
 	    //adjust the x position
-	    pos[0] = out_x*pos[2]/mom[2];
+	    Epos[0] = eout_x*Epos[2]/mom_e[2];
+	    Ppos[0] = pout_x*Ppos[2]/mom_p[2];
 		
 	    //shift origin to the center of the beamcal beampipe hole
-	    scipp_ilc::z_to_beam_out(pos[0], pos[1], pos[2]);
+	    scipp_ilc::z_to_beam_out(Epos[0], Epos[1], Epos[2]);
+	    scipp_ilc::z_to_beam_out(Ppos[0], Ppos[1], Ppos[2]);
 	    
 	  }
 	  else{
-	    out_x = mom[0];
-	    out_energy = hit->getEnergy();
-	  }
-
-          if(hit!=high_e && hit!=high_p){
-	    scatter_vec[0]+=out_x;    
-	    scatter_vec[1]+=mom[1];    
-	    scatter_vec[2]+=mom[2];    
+	    eout_x = mom_e[0];
+	    pout_x = mom_p[0];
+	    eout_energy = high_e->getEnergy();
+	    pout_energy = high_p->getEnergy();
 	  }
 	  
 	  //adjust the energy to post transform
-	  energy+=out_energy;
+	  Eenergy=eout_energy;
+	  Penergy=pout_energy;
 
 	  //find the new angle
-	  double tmag = sqrt(pow(out_x, 2)+pow(mom[1], 2));
-	  mag+=tmag;
-	  theta = atan(tmag/abs(mom[2]));
+	  double tmag_e = sqrt(pow(eout_x, 2)+pow(mom_e[1], 2));
+	  double tmag_p = sqrt(pow(pout_x, 2)+pow(mom_p[1], 2));
+	  emag+=tmag_e;
+	  pmag+=tmag_p;
+	  etheta = atan(tmag_e/abs(mom_e[2]));
+	  ptheta = atan(tmag_p/abs(mom_p[2]));
 	  
 	  //Debuggin'
-	  cout << "The particle is at (" << pos[0] << "," << pos[1] << "," << pos[2] << ")." << endl;
+	  cout << "Final Eenergy: " << Eenergy << ", final Emomentum: " << Epos[0] << endl;
+	  cout << "Final Penergy: " << Penergy << ", final Pmomentum: " << Ppos[0] << endl;
 
         }
-        }
-        //all
-        if(_nEvt<200000){
-            
-            double q_2 = pow((250.0-energy), 2) - pow(scatter_vec[0], 2) - pow(scatter_vec[1], 2) - pow((250.0-abs(scatter_vec[2])), 2);
-            double mass = sqrt(-q_2);
-            _mass->Fill(mass);
-
-            //fill vector
-            double vector = sqrt(pow(scatter_vec[0], 2) + pow(scatter_vec[1], 2));
-            _vector->Fill(vector);
-                
-        }
+	
     }//end collection
     _nEvt ++ ;
 }//end process

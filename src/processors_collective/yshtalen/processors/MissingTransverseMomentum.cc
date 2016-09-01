@@ -63,7 +63,7 @@ MissingTransverseMomentum::MissingTransverseMomentum() : Processor("MissingTrans
 void MissingTransverseMomentum::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("predicting_eBpW.root","RECREATE");
+    _rootfile = new TFile("predicting_eWpW.root","RECREATE");
   //  _hitmap_hi = new TH2F("high_hit","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
   //  _hitmap_had = new TH2F("hadronic_hit","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
     _deltaX = new TH1F("x_diff", "Delta X-Pos, Predicting + High Energy Vectors", 2000.0, -10.0, 10.0);
@@ -123,7 +123,7 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
     int h_hit_status=0;
     int p_hit_status=0;
 
-    //booleanss
+    //booleans
     int e_def=0;
     int p_def=0;
     int b_def=0;
@@ -185,11 +185,17 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
         //create high energy vector, track deflections
         mom_e = high_e->getMomentum();
         mom_p = high_p->getMomentum();
+        cout << "[" << mom_e[0] << ", " << mom_e[1] << ", " << mom_e[2] << "]" << endl;
+        cout << "[" << mom_p[0] << ", " << mom_p[1] << ", " << mom_p[2] << "]" << endl;
 
-        if(mom_e[0]!=0 || mom_e[1]!=0){
-                e_def=1;       
+        e_def=0;
+        p_def=0;
+        b_def=0;
+        
+        if(abs(mom_e[0])!=0 || abs(mom_e[1])!=0){
+                e_def=1; 
         }
-        if(mom_p[0]!=0 || mom_p[1]!=0){
+        if(abs(mom_p[0])!=0 || abs(mom_p[1])!=0){
                 p_def=1;       
         }
         if(e_def==1 && p_def==1){
@@ -197,7 +203,7 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
             p_def=0;
             b_def=1;
         }
-        if(b_def=1){
+        if(b_def==1){
             _b_def_count++;
             high_vec[0]=mom_e[0]+mom_p[0];
             high_vec[1]=mom_e[1]+mom_p[1];
@@ -218,6 +224,7 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
             }
             else{_no_def_count++;} 
         }
+
 
 
         //-------------------------HADRONIC-----------------------------------------------
@@ -297,7 +304,7 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
        
 
         //--------------------------PLOTTING------------------------------------------------------------------
-        if(_nEvt<2000){
+        if(_nEvt<100000){
                 double mass = sqrt(pow(energy, 2)-pow(scatter_vec[0], 2)-pow(scatter_vec[1], 2)-pow(scatter_vec[2], 2));
                 _mass->Fill(mass);
                 cout << "Mass parameter: " << mass << endl;
@@ -310,6 +317,11 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                 double vector = sqrt(pow(scatter_vec[0], 2) + pow(scatter_vec[1], 2));
                 _vector->Fill(vector);
                 cout << "Vector Momentum: " << vector << endl;
+                cout << endl;
+                cout << endl;
+                cout << endl;
+                cout << "Prediction Vector: [" << scatter_vec[0] << ", " << scatter_vec[1] << ", " << scatter_vec[2] << "]"  << endl;
+                cout << "High Energy Vector: [" << high_vec[0] << ", " << high_vec[1] << ", " << high_vec[2] << "]"  << endl;
                 
         }
     }
