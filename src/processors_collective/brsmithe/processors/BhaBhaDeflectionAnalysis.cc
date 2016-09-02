@@ -111,57 +111,93 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
     MCParticle* high_p;
 
     const double* mom;
-
+    
+    double electroncount = 0;
+    double positroncount = 0;
 
     // this will only be entered if the collection is available
     if( col != NULL ){
+      
+   
         int nElements = col->getNumberOfElements()  ;
-        
-        //first, find last electron and positron in the event
+        double debug;
+
+	electroncount = 0;
+	positroncount = 0;
+	
+        //first, find last electron and positron in the event. We'll use these as benchmarks to compare others to.
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
     
            id = hit->getPDG(); 
            stat = hit->getGeneratorStatus();
+	   debug = 0;
 	   
+
            if(stat==1){
-                if(id==11){
-                    high_e = hit;
-                }
-                if(id==-11){
-                    high_p = hit;
-                }
-                //find neutrinos 
-                //if(id==12 || id==14 || id==16){_neutrino_counter++;}
+	     switch(id){
+	     case 11:
+	       high_e = hit;
+	       electroncount++;
+	       break;
+	     case -11:
+	       high_p = hit;
+	       positroncount++;
+	       break;
+	     default: break;
+	     }
+             
            }//end final state
+	   
         }//end for loop
+
+	if((electroncount > 1) || (positroncount > 1)){
+	cout << "There are " << electroncount << " electrons and " << positroncount << " positrons." << endl;
+	}
 	
+
+	// For comparing during the following loop
+	double hitEnergy;
+	
+	//Now, we loop through the particles again, and at each we compare them to their energy to whatever is the most energetic of its type. 
+	//If it is more energetic than the current 'most energetic,' it becomes the new 'most energetic'
+
 	for (int hitIndex=0; hitIndex < nElements ; hitIndex++){
 	  MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
 	  
+
 	  id = hit->getPDG();
 	  stat = hit->getGeneratorStatus();
 
 	  // stat==1 means that this is a final state particle
 	  if(stat==1){
-	    if(id==11){
-	      if(hit->getEnergy()>high_e->getEnergy()){
+	    
+	    //Getting this hit's energy to compare it to the next positron/electron hit energy
+	    hitEnergy = hit->getEnergy();
+	    
+	    switch(id){
+	    case 11:
+	      // If this hit is more energetic than the most energetic, then the hit becomes the most energetic
+	      // Most energetic elecron
+	      if(hitEnergy > high_e->getEnergy()){ 
 		high_e = hit;
 	      }
-	    }
-	    if(id==-11){
-	      if(hit->getEnergy()>high_p->getEnergy()){
+	      break;
+	    case -11:
+	      // Most energetic Positron
+	      if(hitEnergy > high_p->getEnergy()){ 
 		high_p = hit;
 	      }
-	    }
+	      break;
+	    default:
+	      break;
+	    }// End switch
 
-	  }
-	}
+	  }// End status if
+	}// end for loop
         
 	
-        //create sum vector ? 
-	
-	cout << "event = " << _nEvt << endl;
+        //create sum vector ?
         
         
 	mom_e = high_e->getMomentum();
@@ -169,7 +205,9 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
         
 	
         if(stat==1){
-	  
+
+	  // I put the boolean doTransform in here earlier so that I could turn the transform on and off for debugging purposes. Later though, I just put in print statements before the transform. So it's an useless check. Need to remove, but low priority. 
+
 	  if (doTransform){
 	    //create position vector by ratios from known z pos and momentum
 	    
@@ -190,8 +228,8 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
 	    ein_energy = high_e->getEnergy();
 	    pin_energy = high_p->getEnergy();
 	    
-	    cout << "EEnergy in: " << ein_energy << ", x momentum: " << ein_x << "." << endl;
-	    cout << "PEnergy in: " << pin_energy << ", x momentum: " << pin_x << "." << endl;
+	    //cout << "EEnergy in: " << ein_energy << ", x momentum: " << ein_x << "." << endl;
+	    //cout << "PEnergy in: " << pin_energy << ", x momentum: " << pin_x << "." << endl;
 
 	    //apply the transform
 	    scipp_ilc::transform_to_lab(ein_x, ein_energy, eout_x, eout_energy);
@@ -226,9 +264,8 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
 	  ptheta = atan(tmag_p/abs(mom_p[2]));
 	  
 	  //Debuggin'
-	  cout << "Final Eenergy: " << Eenergy << ", final Emomentum: " << Epos[0] << endl;
-	  cout << "Final Penergy: " << Penergy << ", final Pmomentum: " << Ppos[0] << endl;
-
+	  //cout << "Final Eenergy: " << Eenergy << ", final Emomentum: " << Epos[0] << endl;
+	  //cout << "Final Penergy: " << Penergy << ", final Pmomentum: " << Ppos[0] << endl;
         }
 	
     }//end collection

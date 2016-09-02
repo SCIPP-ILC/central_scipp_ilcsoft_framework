@@ -43,9 +43,7 @@ MissingTransverseMomentum MissingTransverseMomentum;
 static TFile* _rootfile;
 //static TH2F* _hitmap_hi;
 //static TH2F* _hitmap_had;
-static TH1F* _deltaX;
-static TH1F* _deltaY;
-static TH1F* _deltaZ;
+static TH1F* _thetaDiff;
 static TH1F* _mass;
 static TH1F* _scalar;
 static TH1F* _vector;
@@ -63,25 +61,29 @@ MissingTransverseMomentum::MissingTransverseMomentum() : Processor("MissingTrans
 void MissingTransverseMomentum::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("predicting_eWpW.root","RECREATE");
+    _rootfile = new TFile("count_eBpB.root","RECREATE");
   //  _hitmap_hi = new TH2F("high_hit","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
   //  _hitmap_had = new TH2F("hadronic_hit","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
-    _deltaX = new TH1F("x_diff", "Delta X-Pos, Predicting + High Energy Vectors", 2000.0, -10.0, 10.0);
-    _deltaY = new TH1F("y_diff", "Delta Y-Pos, Predicting + High Energy Vectors", 2000.0, -10.0, 10.0);
-    _deltaZ = new TH1F("z_diff", "Delta Z-Pos, Predicting + High Energy Vectors", 2000.0, -10.0, 10.0);
     _scalar = new TH1F("scalar", "Transverse Momentum Scalar Magnitude", 2000.0, 0.0, 20.0);
     _vector = new TH1F("vector", "Transverse Momentum Vector Magnitude", 2000.0, 0.0, 20.0);
     _mass = new TH1F("mass", "Mass Parameter", 2000.0, 0.0, 20.0);
+    _thetaDiff = new TH1F("theta", "Difference in Angle Between Predicting and Deflected Lepton Vectors", 2000.0, 0.0, 0.1);
+    
     // usually a good idea to
     //printParameters() ;
 
     _nRun = 0 ;
     _nEvt = 0 ;
+    _eventMax = 0;
 
     _no_def_count = 0;
     _e_def_count = 0;
     _p_def_count = 0;
     _b_def_count = 0;
+
+    _correct = 0;
+    _false_pos = 0;
+    _false_neg = 0;
 }
 
 
@@ -295,33 +297,65 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
         scatter_vec[1] = -scatter_vec[1];
         scatter_vec[2] = sqrt(pow(250.0-energy, 2) - pow(mag, 2));
 
-        //fill delta maps
-
-        //determine prediction vector hit status
-
-        //determine deflected high energy particle hit status
-
-       
-
         //--------------------------PLOTTING------------------------------------------------------------------
         if(_nEvt<100000){
-                double mass = sqrt(pow(energy, 2)-pow(scatter_vec[0], 2)-pow(scatter_vec[1], 2)-pow(scatter_vec[2], 2));
-                _mass->Fill(mass);
-                cout << "Mass parameter: " << mass << endl;
+            //vector magnitudes and theta calculation
+            double mag_scatter = sqrt(pow(scatter_vec[0], 2)+pow(scatter_vec[1], 2)+pow(scatter_vec[2], 2));
+            double mag_high = sqrt(pow(high_vec[0], 2)+pow(high_vec[1], 2)+pow(high_vec[2], 2));
+            double dot = scatter_vec[0]*high_vec[0]+scatter_vec[1]*high_vec[1]+scatter_vec[2]*high_vec[2];
+            double theta = acos(dot/(mag_scatter*mag_high));
 
-                //fill scalar 
-                _scalar->Fill(mag);
-                cout << "Scalar Momentum: " << mag << endl;
+            _thetaDiff->Fill(theta);
 
-                //fill vector
-                double vector = sqrt(pow(scatter_vec[0], 2) + pow(scatter_vec[1], 2));
-                _vector->Fill(vector);
-                cout << "Vector Momentum: " << vector << endl;
-                cout << endl;
-                cout << endl;
-                cout << endl;
-                cout << "Prediction Vector: [" << scatter_vec[0] << ", " << scatter_vec[1] << ", " << scatter_vec[2] << "]"  << endl;
-                cout << "High Energy Vector: [" << high_vec[0] << ", " << high_vec[1] << ", " << high_vec[2] << "]"  << endl;
+            
+            double scatter_pos_x = scatter_vec[0]*pos[2]/scatter_vec[2];
+            double scatter_pos_y = scatter_vec[1]*pos[2]/scatter_vec[2];
+            double high_pos_x = high_vec[0]*pos[2]/high_vec[2];
+            double high_pos_y = high_vec[1]*pos[2]/high_vec[2];
+            
+
+            //determine prediction and high energy vector hit status
+            int hit_scatter = scipp_ilc::get_hitStatus(scatter_pos_x, scatter_pos_y);
+            int hit_high = scipp_ilc::get_hitStatus(high_pos_x, high_pos_y);
+
+
+            if(hit_scatter!=2&&hit_high!=2){
+                _eventMax++;
+                if(hit_scatter==hit_high){
+                    _correct++;
+                    cout << "CORRECT" << endl;
+                }
+                else{
+                    if(hit_scatter==1&&hit_high!=1){
+                        _false_pos++;
+                        cout << "FALSE POSITIVE" << endl;
+                        }
+                    if(hit_scatter!=1&&hit_high==1){
+                        _false_neg++; 
+                        cout << "FALSE NEGATIVE" << endl;
+                        }
+                }
+            }
+       
+
+
+            double mass = sqrt(pow(energy, 2)-pow(scatter_vec[0], 2)-pow(scatter_vec[1], 2)-pow(scatter_vec[2], 2));
+            _mass->Fill(mass);
+            cout << "Mass parameter: " << mass << endl;
+
+            //fill scalar 
+            _scalar->Fill(mag);
+            cout << "Scalar Momentum: " << mag << endl;
+
+            //fill vector
+            double vector = sqrt(pow(scatter_vec[0], 2) + pow(scatter_vec[1], 2));
+            _vector->Fill(vector);
+            cout << "Vector Momentum: " << vector << endl;
+            cout << endl;
+            cout << endl;
+            cout << endl;
+            cout << "Prediction Vector: [" << scatter_vec[0] << ", " << scatter_vec[1] << ", " << scatter_vec[2] << "]"  << endl;
+            cout << "High Energy Vector: [" << high_vec[0] << ", " << high_vec[1] << ", " << high_vec[2] << "]"  << endl;
                 
         }
     }
@@ -337,6 +371,13 @@ void MissingTransverseMomentum::check( LCEvent * evt ) {
 
 
 void MissingTransverseMomentum::end(){ 
-
+    cout << "Events in Beamcal radius: " << _eventMax << endl;
+    double correct = (double)_correct / (double)_eventMax;
+    cout << "Ratio correctly identified: " << correct  << endl; 
+    double positive =  (double)_false_pos / (double)_eventMax;
+    cout << "Ratio false positive: " << positive << endl; 
+    double negative = (double)_false_neg / (double)_eventMax;
+    cout << "Ratio false negative: " << negative << endl; 
     _rootfile->Write();
 }
+

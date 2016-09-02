@@ -69,7 +69,7 @@ class SusySVMAnalysis : public Processor {
   double _no_def_count;
   double _e_def_count;
   double _p_def_count;
-  double[][] cuts = {{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0}};
+
 } ;
 
 #endif

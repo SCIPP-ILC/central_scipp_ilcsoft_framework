@@ -43,11 +43,6 @@ using namespace std;
 SusyCutflow SusyCutflow;
 
 static TFile* _rootfile;
-static TH2F* _hitmap;
-static TH1F* _mass;
-static TH1F* _scalar;
-static TH1F* _vector;
-static TH1F* _neutrinos;
 
 SusyCutflow::SusyCutflow() : Processor("SusyCutflow") {
     // modify processor description
@@ -108,11 +103,12 @@ void SusyCutflow::processEvent( LCEvent * evt ) {
                 bool isDarkMatter = (id == 1000022);
                 if(isDarkMatter) continue ;
                 double E = particle->getEnergy();
-                double P = particle->getMomentum().magnitude();
-                double pz = particle->getPZ();
-                double px = particle->getPX();
-                double py = particle->getPY();
-                double cos = pz/P;
+                const double* P = particle->getMomentum();
+                double px = P[0];
+                double py = P[1];
+                double pz = P[2];
+                double Pmag = sqrt(px*px+py*py+pz*pz);
+                double cos = pz/Pmag;
                 double scalar = sqrt(px*px+py*py); 
                 bool isNeutrino = (
                     id == 12 || id == -12 ||
@@ -121,21 +117,21 @@ void SusyCutflow::processEvent( LCEvent * evt ) {
                     id == 18 || id == -18);
                 bool isForward = ( cos > 0.9 || cos < -0.9);               
                 scalars[0]+=scalar;
-                vectors[0][0]+=px;
-                vectors[0][1]+=py;
-                vectors[0][2]+=pz;
+                vec[0][0]+=px;
+                vec[0][1]+=py;
+                vec[0][2]+=pz;
                 energy[0]+=E;                        
                 if(!isDarkMatter && !isNeutrino){
                     scalars[2]+=scalar;
-                    vectors[2][0]+=px;
-                    vectors[2][1]+=py;
-                    vectors[2][2]+=pz;
+                    vec[2][0]+=px;
+                    vec[2][1]+=py;
+                    vec[2][2]+=pz;
                     energy[2]+=E;
                     if(!isForward){
                         scalars[1]+=scalar;
-                        vectors[1][0]+=px;
-                        vectors[1][1]+=py;
-                        vectors[1][2]+=pz;      
+                        vec[1][0]+=px;
+                        vec[1][1]+=py;
+                        vec[1][2]+=pz;      
                     }
                 }
                  
@@ -147,17 +143,18 @@ void SusyCutflow::processEvent( LCEvent * evt ) {
         double total_detected_scalar = scalars[1];
         double total_detectable_scalar = scalars[2];
 
-        double total_true_mass_squared = energy[0]+energy[0]-
-            (vectors[0][0]*vectors[0][0]+vectors[0][1]vectors[0][1]+
-            vectors[0][2]*vectors[0][2]);
+        double total_true_mass_squared = energy[0]*energy[0]-
+            (vec[0][0]*vec[0][0]+vec[0][1]*vec[0][1]+
+            vec[0][2]*vec[0][2]);
         double total_true_mass = sqrt(total_true_mass_squared);
         double total_detected_mass_squared = energy[1]*energy[1]-
-            (vectors[1][0]*vectors[1][0]+vectors[1][1]*vectors[1][1]+
-            vectors[1][2]*vectors[1][2]);
+            (vec[1][0]*vec[1][0]+vec[1][1]*vec[1][1]+
+            vec[1][2]*vec[1][2]);
         double total_detected_mass = sqrt(total_detected_mass_squared);
         double total_detectable_mass_squared = energy[2]*energy[2]-
-            (vectors[2][0]*vectors[2][0]+vectors[2][1]*vectors[2][1]+
-            vectors[2][2]*vectors[2][2]);
+            (vec[2][0]*vec[2][0]+vec[2][1]*vec[2][1]+
+            vec[2][2]*vec[2][2]);
+        double total_detectable_mass = sqrt(total_detectable_mass_squared);
         cuts[0][0]+=1;
         cuts[1][0]+=1;
         cuts[2][0]+=1;

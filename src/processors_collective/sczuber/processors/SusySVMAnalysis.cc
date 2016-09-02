@@ -41,11 +41,16 @@ using namespace std;
 SusySVMAnalysis SusySVMAnalysis;
 
 static TFile* _rootfile;
-static TH2F* _hitmap;
-static TH1F* _mass;
-static TH1F* _scalar;
-static TH1F* _vector;
-static TH1F* _neutrinos;
+
+static TH1F* _V_n_C;
+static TH1F* _V_n_A;
+static TH1F* _V_N_A;
+static TH1F* _S_n_C;
+static TH1F* _S_n_A;
+static TH1F* _S_N_A;
+static TH1F* _M_n_C;
+static TH1F* _M_n_A;
+static TH1F* _M_N_A;
 
 SusySVMAnalysis::SusySVMAnalysis() : Processor("SusySVMAnalysis") {
     // modify processor description
@@ -65,12 +70,12 @@ void SusySVMAnalysis::init() {
     _V_n_A = new TH1F("V_n_A","Detectable Vector",40,0,20);
     _V_N_A = new TH1F("V_N_A","True Vector",40,0,20);
 
-    _S_n_A = new TH1F("S_n_C","Detected Scalar",40,0,20);
+    _S_n_C = new TH1F("S_n_C","Detected Scalar",40,0,20);
     _S_n_A = new TH1F("S_n_A","Detectable Scalar",40,0,20);
     _S_N_A = new TH1F("S_N_A","True Scalar",40,0,20);
  
   
-    _M_n_A = new TH1F("M_n_C","Detected Mass",40,0,20);
+    _M_n_C = new TH1F("M_n_C","Detected Mass",40,0,20);
     _M_n_A = new TH1F("M_n_A","Detectable Mass",40,0,20);
     _M_N_A = new TH1F("M_N_A","True Mass",40,0,20);
     // usually a good idea to
@@ -117,12 +122,10 @@ void SusySVMAnalysis::processEvent( LCEvent * evt ) {
                 bool isDarkMatter = (id == 1000022);
                 if(isDarkMatter) continue ;
                 double E = particle->getEnergy();
-                double P = particle->getMomentum().magnitude();
-                double pz = particle->getPZ();
-                double px = particle->getPX();
-                double py = particle->getPY();
-                double cos = pz/P;
-                double scalar = sqrt(px*px+py*py); 
+                const double* P = particle->getMomentum();
+                double Pmag = sqrt(P[0]*P[0]+P[1]*P[1]+P[2]*P[2]);
+                double cos = P[2]/Pmag;
+                double scalar = sqrt(P[0]*P[0]+P[1]*P[1]); 
                 bool isNeutrino = (
                     id == 12 || id == -12 ||
                     id == 14 || id == -14 ||
@@ -130,21 +133,21 @@ void SusySVMAnalysis::processEvent( LCEvent * evt ) {
                     id == 18 || id == -18);
                 bool isForward = ( cos > 0.9 || cos < -0.9);               
                 scalars[0]+=scalar; //true
-                vectors[0][0]+=px;
-                vectors[0][1]+=py;
-                vectors[0][2]+=pz;
+                vec[0][0]+=P[0];
+                vec[0][1]+=P[1];
+                vec[0][2]+=P[2];
                 energy[0]+=E;                        
                 if(!isDarkMatter && !isNeutrino){ //detectable
                     scalars[2]+=scalar;
-                    vectors[2][0]+=px;
-                    vectors[2][1]+=py;
-                    vectors[2][2]+=pz;
+                    vec[2][0]+=P[0];
+                    vec[2][1]+=P[1];
+                    vec[2][2]+=P[2];
                     energy[2]+=E;
                     if(!isForward){
                         scalars[1]+=scalar; //detected
-                        vectors[1][0]+=px;
-                        vectors[1][1]+=py;
-                        vectors[1][2]+=pz;
+                        vec[1][0]+=P[0];
+                        vec[1][1]+=P[1];
+                        vec[1][2]+=P[2];
                         energy[1]+=E;      
                     }
                 }
@@ -158,20 +161,20 @@ void SusySVMAnalysis::processEvent( LCEvent * evt ) {
         double total_detectable_scalar = scalars[2];
 
         double total_true_mass_squared = energy[0]+energy[0]-
-            (vectors[0][0]*vectors[0][0]+vectors[0][1]vectors[0][1]+
-            vectors[0][2]*vectors[0][2]);
+            (vec[0][0]*vec[0][0]+vec[0][1]*vec[0][1]+
+            vec[0][2]*vec[0][2]);
         double total_true_mass = sqrt(total_true_mass_squared);
         double total_detected_mass_squared = energy[1]*energy[1]-
-            (vectors[1][0]*vectors[1][0]+vectors[1][1]*vectors[1][1]+
-            vectors[1][2]*vectors[1][2]);
+            (vec[1][0]*vec[1][0]+vec[1][1]*vec[1][1]+
+            vec[1][2]*vec[1][2]);
         double total_detected_mass = sqrt(total_detected_mass_squared);
         double total_detectable_mass_squared = energy[2]*energy[2]-
-            (vectors[2][0]*vectors[2][0]+vectors[2][1]*vectors[2][1]+
-            vectors[2][2]*vectors[2][2]);
+            (vec[2][0]*vec[2][0]+vec[2][1]*vec[2][1]+
+            vec[2][2]*vec[2][2]);
             
-        double total_true_vector = sqrt(vectors[0][0]*vectors[0][0]+vectors[0][1]*vectors[0][1]+vectors[0][2]*vectors[0][2]); 
-        double total_detected_vector = sqrt(vectors[1][0]*vectors[1][0]+vectors[1][1]*vectors[1][1]+vectors[1][2]*vectors[1][2]); 
-        double total_detectable_vector = sqrt(vectors[2][0]*vectors[2][0]+vectors[2][1]*vectors[2][1]+vectors[2][2]*vectors[2][2]); 
+        double total_true_vector = sqrt(vec[0][0]*vec[0][0]+vec[0][1]*vec[0][1]+vec[0][2]*vec[0][2]); 
+        double total_detected_vector = sqrt(vec[1][0]*vec[1][0]+vec[1][1]*vec[1][1]+vec[1][2]*vec[1][2]); 
+        double total_detectable_vector = sqrt(vec[2][0]*vec[2][0]+vec[2][1]*vec[2][1]+vec[2][2]*vec[2][2]); 
         _V_n_C->Fill(total_detected_vector);
         _V_n_A->Fill(total_detectable_vector);
         _V_N_A->Fill(total_true_vector);
