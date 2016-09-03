@@ -64,6 +64,10 @@ class BhaBhaDeflectionAnalysis : public Processor {
 
   int _nRun ;
   int _nEvt ;
+  int _nHitHit;
+  int _nPHitEMiss;
+  int _nEHitPMiss;
+  int _nMissMiss;
 
 } ;
 

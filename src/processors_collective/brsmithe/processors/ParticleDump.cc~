@@ -68,7 +68,7 @@ void ParticleDump::init() {
     _vector = new TH1F("vector", "Deflected Particle Momentum Magnitude, sqrt(pX^2+pY^2)", 2000.0, 0.0, 20.0);
     _mass = new TH1F("mass", "Deflected Particle sqrt(Q^2) = sqrt(E^2 - <del_p>^2)", 2000.0, 0.0, 3.0);
     _endpoints = new TH1F("endpoints", "Endpoint Distribution", 4000.0, -2000.0, 2000.0);
-    _hitmap = new TH2F("hitmap", "Hitmap Distribution", 200.0, -10.0, 10.0, 200.0, -10.0, 10.0);
+    _hitmap = new TH2F("hitmap", "Hitmap Distribution", 2000.0, -100.0, 100.0, 2000.0, -100.0, 100.0);
 
     // usually a good idea to
     //printParameters() ;

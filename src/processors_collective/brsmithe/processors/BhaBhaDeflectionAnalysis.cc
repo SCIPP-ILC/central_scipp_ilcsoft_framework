@@ -71,6 +71,11 @@ void BhaBhaDeflectionAnalysis::init() {
     _nRun = 0 ;
     _nEvt = 0 ;
 
+    _nHitHit = 0;
+    _nEHitPMiss = 0;
+    _nPHitEMiss = 0;
+    _nMissMiss = 0;
+
 }
 
 
@@ -263,9 +268,7 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
 	  etheta = atan(tmag_e/abs(mom_e[2]));
 	  ptheta = atan(tmag_p/abs(mom_p[2]));
 	  
-	  //Debuggin'
-	  //cout << "Final Eenergy: " << Eenergy << ", final Emomentum: " << Epos[0] << endl;
-	  //cout << "Final Penergy: " << Penergy << ", final Pmomentum: " << Ppos[0] << endl;
+	  
         }
 	
     }//end collection
