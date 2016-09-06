@@ -1,10 +1,10 @@
-#ifndef BhaBhaDeflectionAnalysis_h
-#define BhaBhaDeflectionAnalysis_h 1
+#ifndef Thrust_h
+#define Thrust_h 1
 
 #include "marlin/Processor.h"
 #include "lcio.h"
 #include <string>
-#include <EVENT/MCParticle.h>
+
 
 using namespace lcio ;
 using namespace marlin ;
@@ -24,17 +24,17 @@ using namespace marlin ;
  * @param CollectionName Name of the MCParticle collection
  * 
  * @author F. Gaede, DESY
- * @version $Id: BhaBhaDeflectionAnalysis.h,v 1.4 2005-10-11 12:57:39 gaede Exp $ 
+ * @version $Id: Thrust.h,v 1.4 2005-10-11 12:57:39 gaede Exp $ 
  */
 
-class BhaBhaDeflectionAnalysis : public Processor {
+class Thrust : public Processor {
   
  public:
   
-  virtual Processor*  newProcessor() { return new BhaBhaDeflectionAnalysis ; }
+  virtual Processor*  newProcessor() { return new Thrust ; }
   
   
-  BhaBhaDeflectionAnalysis() ;
+  Thrust() ;
   
   /** Called at the begin of the job before anything is read.
    * Use to initialize the processor, e.g. book histograms.
@@ -43,18 +43,20 @@ class BhaBhaDeflectionAnalysis : public Processor {
   
   /** Called for every run.
    */
-  
   virtual void processRunHeader( LCRunHeader* run ) ;
   
   /** Called for every event - the working horse.
    */
   virtual void processEvent( LCEvent * evt ) ; 
   
+  
   virtual void check( LCEvent * evt ) ; 
+  
   
   /** Called after data processing for clean up.
    */
   virtual void end() ;
+  
   
  protected:
 
@@ -64,14 +66,10 @@ class BhaBhaDeflectionAnalysis : public Processor {
 
   int _nRun ;
   int _nEvt ;
-  int _nHitHit;
-  int _nPHitEMiss;
-  int _nEHitPMiss;
-  int _nMissMiss;
-  int _nTotal;
+  double _no_def_count;
+  double _e_def_count;
+  double _p_def_count;
 
-  double _BeamCalz;
-  double _BeamCalr;
 } ;
 
 #endif

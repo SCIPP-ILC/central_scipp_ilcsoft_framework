@@ -64,17 +64,17 @@ ParticleDump::ParticleDump() : Processor("ParticleDump") {
 void ParticleDump::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("eBpW_dump.root","RECREATE");
+    _rootfile = new TFile("ParticleDump.root","RECREATE");
     _vector = new TH1F("vector", "Deflected Particle Momentum Magnitude, sqrt(pX^2+pY^2)", 2000.0, 0.0, 20.0);
     _mass = new TH1F("mass", "Deflected Particle sqrt(Q^2) = sqrt(E^2 - <del_p>^2)", 2000.0, 0.0, 3.0);
     _endpoints = new TH1F("endpoints", "Endpoint Distribution", 4000.0, -2000.0, 2000.0);
-    _hitmap = new TH2F("hitmap", "Hitmap Distribution", 200.0, -10.0, 10.0, 200.0, -10.0, 10.0);
+    _hitmap = new TH2F("hitmap", "Hit Distribution", 200.0, -10.0, 10.0, 200.0, -10.0, 10.0);
 
     // usually a good idea to
     //printParameters() ;
 
     _nRun = 0 ;
-    _nEvt = 0 ;
+    _nEvt = 0;
 
 }
 
@@ -100,8 +100,12 @@ void ParticleDump::processEvent( LCEvent * evt ) {
     int id, stat;
     
     const double* mom;
-    const double* pos;
+    
+    const bool onlyleptons = true;
 
+    bool leftDetector;
+    
+    double Zero = 0.000000001;
 
     // this will only be entered if the collection is available
     if( col != NULL ){
@@ -113,17 +117,24 @@ void ParticleDump::processEvent( LCEvent * evt ) {
     
            id = hit->getPDG(); 
            stat = hit->getGeneratorStatus();
-	   energy = hit->getEnergy();
+   
+	   
 
-	   pos = hit->getEndpoint();
 
            if(stat==1){
 	     if( id==11 || id ==-11 ){
-	       if( (pos[0]!=0) || (pos[1]!=0)){cout << pos[0] <<", " << pos[1] << endl;}
-	       _endpoints->Fill(pos[2]);
-	       _hitmap->Fill(pos[0],pos[1]);
+	       const double * mom = hit->getMomentum();
+	       leftDetector = hit->hasLeftDetector();
+	       
+	       if(leftDetector){}
+
 	     }
+	     
+	     
+	     
            }//end final state
+	   
+	   
         }//end for loop
         
     }//end collection
@@ -141,4 +152,5 @@ void ParticleDump::check( LCEvent * evt ) {
 void ParticleDump::end(){
     _rootfile->Write();
 }
+
 

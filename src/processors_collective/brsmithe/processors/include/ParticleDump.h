@@ -64,6 +64,7 @@ class ParticleDump : public Processor {
 
   int _nRun ;
   int _nEvt ;
+  bool _AnyLeave;
 
 } ;
 
