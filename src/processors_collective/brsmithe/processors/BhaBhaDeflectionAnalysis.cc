@@ -45,10 +45,15 @@ static TH1F* _mass;
 //static TH1F* _scalar;
 static TH1F* _vector;
 static TH2F* _hitmap;
-static TH1F* _Zpos;
 
 static TH1F* _xSum;
 static TH1F* _ySum;
+
+static TH2F* _HitHitAnglevAngle;
+static TH2F* _EHitAnglevAngle;
+static TH2F* _PHitAnglevAngle;
+static TH2F* _MissMissAnglevAngle;
+
 
 BhaBhaDeflectionAnalysis::BhaBhaDeflectionAnalysis() : Processor("BhaBhaDeflectionAnalysis") {
     // modify processor description
@@ -67,7 +72,11 @@ void BhaBhaDeflectionAnalysis::init() {
     _vector = new TH1F("vector", "Deflected Particle Momentum Magnitude, sqrt(pX^2+pY^2)", 2000.0, 0.0, 20.0);
     _mass = new TH1F("mass", "Deflected Particle sqrt(Q^2) = sqrt(E^2 - <del_p>^2)", 2000.0, 0.0, 3.0);
     _hitmap = new TH2F("hitmap", "Hitmap of Final State Particles", 2000.0, -400.0, 400.0, 2000.0, -400.0, 400.0);
-    _Zpos = new TH1F("Zpos", "Locations on the Z axis", 2000.0, 0.0, 4000.0);
+
+    _HitHitAnglevAngle = new TH2F("HitHit","Relative Angle in Hit-Hit Scenario", 1000.0, 0.0, 0.2, 1000.0, 0.0, 0.2);
+    _EHitAnglevAngle = new TH2F("EHitMiss","Relative Angles in Hit-Miss, e- hit", 1000.0, 0.0, 0.2, 1000.0, 0.0, 0.2);
+    _PHitAnglevAngle = new TH2F("PHitMiss","Relative Angles in Hit-Miss, e+ hit", 1000.0, 0.0, 0.2, 1000.0, 0.0, 0.2);
+    _MissMissAnglevAngle = new TH2F("MissMiss","Relavive Angles in Miss-Miss Scenario", 1000.0, 0.0, 0.2, 1000.0, 0.0, 0.2);
 
     // usually a good idea to
     //printParameters() ;
@@ -95,8 +104,9 @@ void BhaBhaDeflectionAnalysis::processRunHeader( LCRunHeader* run) {
 void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
-
-
+    
+    // As a general rule of thumb, E refers to electron and P to positron. 
+  
     LCCollection* col = evt->getCollection( _colName ) ;
 
     //Lorentz transform parameters
@@ -122,8 +132,12 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
     MCParticle* high_e;
     MCParticle* high_p;
     
+    //True means particle is detected. False means it wasn't 
     bool Phit_status;
     bool Ehit_status;
+
+    //0 - HitHit, 1 - PHitEMiss, 2 - EHitPMiss, 3 - MissMiss
+    int BhaBhaStatus;
 
 
     // this will only be entered if the collection is available
@@ -196,16 +210,19 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
 
 	  }// End status if
 	}// end for loop
-        
-        
-        
-	mom_e = high_e->getMomentum();
-	mom_p = high_p->getMomentum();
+      
         
 	
         if(stat == 1){
 	  //create position vector by ratios from known z pos and momentum
-	    
+	  // Similar triangles method. 
+
+	  // Based on Yevgeniya Shtalenkova's (yshtalen) method from MissingTransverseMomentum.cc
+
+	  mom_e = high_e->getMomentum();
+	  mom_p = high_p->getMomentum();
+	  
+
 	  Epos[2] = _BeamCalz;
 	  Epos[1] = mom_e[1]*Epos[2]/mom_e[2];
 	  Epos[0] = mom_e[0]*Epos[2]/mom_e[2];
@@ -214,7 +231,7 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
 	  Ppos[1] = mom_p[1]*Ppos[2]/mom_p[2];
 	  Ppos[0] = mom_p[0]*Ppos[2]/mom_p[2];
 	  
-	  // Making sure the transofmation is working
+	  // Debugging
 	  //cout << "Initial Position" << "(" << pos[0] << "," << pos[1] << "," <<  pos[2] << ")." << endl;
 	  
 	  //collect parameters for Lorentz transform
@@ -223,10 +240,11 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
 	  ein_energy = high_e->getEnergy();
 	  pin_energy = high_p->getEnergy();
 	  
+	  //Degugging Code
 	  //cout << "EEnergy in: " << ein_energy << ", x momentum: " << ein_x << "." << endl;
 	  //cout << "PEnergy in: " << pin_energy << ", x momentum: " << pin_x << "." << endl;
 	  
-	  //apply the transform
+	  //apply the first transform. Lorenz? Shifts to the center-of-mass frame 
 	  scipp_ilc::transform_to_lab(ein_x, ein_energy, eout_x, eout_energy);
 	  scipp_ilc::transform_to_lab(pin_x, pin_energy, pout_x, pout_energy);
 	  
@@ -244,40 +262,80 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
 	  Penergy=pout_energy;
 
 	  //find the new angle
-	  double tmag_e = sqrt(pow(eout_x, 2)+pow(mom_e[1], 2));
+	  double tmag_e = sqrt(pow(eout_x, 2)+pow(mom_e[1], 2)); //magnitude of the xy momentum vector
 	  double tmag_p = sqrt(pow(pout_x, 2)+pow(mom_p[1], 2));
+	  
+	  //Not Sure what this is used for. 
 	  emag+=tmag_e;
 	  pmag+=tmag_p;
+
+	  //Calculating angle momentum makes from the Z-axis. Value in radians. Will be used later in plotting. 
 	  etheta = atan(tmag_e/abs(mom_e[2]));
 	  ptheta = atan(tmag_p/abs(mom_p[2]));
 	  
 	  //Filling in the endpoints (Z) and hitmap (x,y) plots.
 	  _hitmap->Fill(Epos[0],Epos[1]);
-	  _Zpos->Fill(Epos[2]);
 	  _hitmap->Fill(Ppos[0],Ppos[1]);
-	  _Zpos->Fill(Ppos[2]);
 
-	  //TENTATIVE. Getting the hit status of the e- and e+
 	  
+	  //Checking if these particles land on the BeamCal face. 
 	  int Estatus = scipp_ilc::get_hitStatus(Epos[0],Epos[1]);
 	  int Pstatus = scipp_ilc::get_hitStatus(Ppos[0],Ppos[1]);
 	  
+	  //Converting the statuses into handy little booleans. Ostensibly unnecessry, but it becomes easier to follow.
 	  if(Estatus==1){Ehit_status=true;}else{Ehit_status=false;}
 	  if(Pstatus==1){Phit_status=true;}else{Phit_status=false;}
 	  
-	  //Increasing the counters
-	  if(Phit_status){
-	    if(Ehit_status){_nHitHit++;
-	    }else{_nPHitEMiss++;}
-	  }else{
-	    if(Ehit_status){_nEHitPMiss++;
-	    }else{_nMissMiss++;}
+	  //Assigning an arbitrary value. Shouldn't matter, but could cause problems in the switch otherwise (maybe?)
+	  BhaBhaStatus=-1;
+
+	  //Increasing the various counters. We check which type of event it was and act accordingly. 
+	  if(Phit_status){ 
+	    //P HIT
+	    if(Ehit_status){
+	      _nHitHit++;
+	      BhaBhaStatus=0;
+	    }else{
+	      _nPHitEMiss++;
+	      BhaBhaStatus=1;
+	    }
+	  }else{ // P MISSED
+	    if(Ehit_status){
+	      _nEHitPMiss++;
+	      BhaBhaStatus=2;
+	    }else{
+	      _nMissMiss++;
+	      BhaBhaStatus=3;
+	    }
+	  }//End the check
+
+	  //This <i> could </i> be combined with the above, but since runtime isn't an issue I want to separate blocks that perform
+	  //    different actions. 
+
+	  //Plot based on the BhaBhaStatus. 
+	  switch(BhaBhaStatus){
+	  case 0: //Both Hit
+	    _HitHitAnglevAngle->Fill(etheta,ptheta);
+	    break;
+	  case 1: //e+ hit, e- miss
+	    _PHitAnglevAngle->Fill(etheta,ptheta);
+	    break;
+	  case 2: //e- hit, e+ miss
+	    _EHitAnglevAngle->Fill(etheta,ptheta);
+	    break;
+	  case 3: //Both miss
+	    _MissMissAnglevAngle->Fill(etheta,ptheta);
+	    break;
+	  default: //If it's an unidentified status, do nothing. 
+	    break;
 	  }
+
+	  //Increase the counter 
 	  _nTotal++;
 
 	  
 	  
-        }
+        } // End the final-status checker
 	
     }//end collection
     _nEvt ++ ;

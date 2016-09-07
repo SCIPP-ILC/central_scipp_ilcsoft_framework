@@ -105,7 +105,10 @@ void SusySVMAnalysis::processEvent( LCEvent * evt ) {
     
     double vec[4][3];
     double scalars[4];
-    double energy[4]; 
+    double energy[4];
+    
+    //particle identifiers
+    int id, stat; 
 
     // this will only be entered if the collection is available
     if( col != NULL ){
@@ -115,10 +118,12 @@ void SusySVMAnalysis::processEvent( LCEvent * evt ) {
         for(int particleIndex = 0; particleIndex < nElements ; particleIndex++){
            MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(particleIndex) );
             
-           int id = particle->getPDG(); 
-           int stat = particle->getGeneratorStatus();
+          
+           id = particle->getPDG(); 
+           stat = particle->getGeneratorStatus();
            // If Particle is FINAL-STATE 
            if(stat==1){
+
                 bool isDarkMatter = (id == 1000022);
                 if(isDarkMatter) continue ;
                 double E = particle->getEnergy();
