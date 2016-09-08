@@ -21,6 +21,7 @@
 
 #include "SusyCutflow.h"
 #include "scipp_ilc_utilities.h"
+#include "scipp_ilc_globals.h"
 #include <iostream>
 #include <cmath>
 
@@ -86,7 +87,9 @@ void SusyCutflow::processEvent( LCEvent * evt ) {
     
     double vec[4][3];
     double scalars[4];
-    double energy[4]; 
+    double energy[4];
+    
+    int id, stat; 
 
     // this will only be entered if the collection is available
     if( col != NULL ){
@@ -96,8 +99,8 @@ void SusyCutflow::processEvent( LCEvent * evt ) {
         for(int particleIndex = 0; particleIndex < nElements ; particleIndex++){
            MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(particleIndex) );
             
-           int id = particle->getPDG(); 
-           int stat = particle->getGeneratorStatus();
+           id = particle->getPDG(); 
+           stat = particle->getGeneratorStatus();
            // If Particle is FINAL-STATE 
            if(stat==1){
                 bool isDarkMatter = (id == 1000022);

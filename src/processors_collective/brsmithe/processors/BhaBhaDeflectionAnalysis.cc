@@ -73,10 +73,10 @@ void BhaBhaDeflectionAnalysis::init() {
     _mass = new TH1F("mass", "Deflected Particle sqrt(Q^2) = sqrt(E^2 - <del_p>^2)", 2000.0, 0.0, 3.0);
     _hitmap = new TH2F("hitmap", "Hitmap of Final State Particles", 2000.0, -400.0, 400.0, 2000.0, -400.0, 400.0);
 
-    _HitHitAnglevAngle = new TH2F("HitHit","Relative Angle in Hit-Hit Scenario", 1000.0, 0.0, 0.2, 1000.0, 0.0, 0.2);
-    _EHitAnglevAngle = new TH2F("EHitMiss","Relative Angles in Hit-Miss, e- hit", 1000.0, 0.0, 0.2, 1000.0, 0.0, 0.2);
-    _PHitAnglevAngle = new TH2F("PHitMiss","Relative Angles in Hit-Miss, e+ hit", 1000.0, 0.0, 0.2, 1000.0, 0.0, 0.2);
-    _MissMissAnglevAngle = new TH2F("MissMiss","Relavive Angles in Miss-Miss Scenario", 1000.0, 0.0, 0.2, 1000.0, 0.0, 0.2);
+    _HitHitAnglevAngle = new TH2F("HitHit","Relative Angle in Hit-Hit Scenario", 2000.0, 0.0, 0.05, 2000.0, 0.0, 0.05);
+    _EHitAnglevAngle = new TH2F("EHitMiss","Relative Angles in Hit-Miss, e- hit", 2000.0, 0.0, 0.2, 2000.0, 0.0, 0.2);
+    _PHitAnglevAngle = new TH2F("PHitMiss","Relative Angles in Hit-Miss, e+ hit", 2000.0, 0.0, 0.2, 2000.0, 0.0, 0.2);
+    _MissMissAnglevAngle = new TH2F("MissMiss","Relavive Angles in Miss-Miss Scenario", 2000.0, 0.0, 0.2, 2000.0, 0.0, 0.2);
 
     // usually a good idea to
     //printParameters() ;
@@ -278,7 +278,7 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
 	  _hitmap->Fill(Ppos[0],Ppos[1]);
 
 	  
-	  //Checking if these particles land on the BeamCal face. 
+	  //Checking if these particles land on the BeamCal.
 	  int Estatus = scipp_ilc::get_hitStatus(Epos[0],Epos[1]);
 	  int Pstatus = scipp_ilc::get_hitStatus(Ppos[0],Ppos[1]);
 	  
