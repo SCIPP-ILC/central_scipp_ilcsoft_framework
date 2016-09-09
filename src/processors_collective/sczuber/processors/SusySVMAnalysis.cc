@@ -159,7 +159,8 @@ void SusySVMAnalysis::processEvent( LCEvent * evt ) {
                  
            }//end final state
         }//end for
-
+        
+        cout << "event 0 finished " << endl;
         //all
         double total_true_scalar = scalars[0];
         double total_detected_scalar = scalars[1];
