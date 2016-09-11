@@ -118,9 +118,13 @@ void SusySVMAnalysis::processEvent( LCEvent * evt ) {
         for(int particleIndex = 0; particleIndex < nElements ; particleIndex++){
            MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(particleIndex) );
             
-          
-           id = particle->getPDG(); 
-           stat = particle->getGeneratorStatus();
+           try{ 
+            id = particle->getPDG(); 
+            stat = particle->getGeneratorStatus();
+           }
+           catch(const std::exception& e){
+               cout << "exception caught with message " << e.what() << "\n";
+           }
            // If Particle is FINAL-STATE 
            if(stat==1){
 
@@ -160,7 +164,7 @@ void SusySVMAnalysis::processEvent( LCEvent * evt ) {
            }//end final state
         }//end for
         
-        cout << "event 0 finished " << endl;
+        cout << "event "<< _nEvt <<" finished " << endl;
         //all
         double total_true_scalar = scalars[0];
         double total_detected_scalar = scalars[1];

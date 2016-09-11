@@ -261,7 +261,7 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
 	  Eenergy=eout_energy;
 	  Penergy=pout_energy;
 
-	  //find the new angle
+	  //find the new angle. First we find the distance from the z axis
 	  double tmag_e = sqrt(pow(eout_x, 2)+pow(mom_e[1], 2)); //magnitude of the xy momentum vector
 	  double tmag_p = sqrt(pow(pout_x, 2)+pow(mom_p[1], 2));
 	  

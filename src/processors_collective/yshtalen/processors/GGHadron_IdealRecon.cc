@@ -66,7 +66,7 @@ GGHadron_IdealRecon::GGHadron_IdealRecon() : Processor("GGHadron_IdealRecon") {
 void GGHadron_IdealRecon::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("hitmapeBpW.root","RECREATE");
+    _rootfile = new TFile("hitmapeBpB.root","RECREATE");
     _hitmap = new TH2F("hitmap","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _scalar = new TH1F("scalar", "Transverse Momentum Scalar Magnitude", 2000.0, 0.0, 20.0);
     _vector = new TH1F("vector", "Transverse Momentum Vector Magnitude", 2000.0, 0.0, 20.0);
@@ -129,7 +129,7 @@ void GGHadron_IdealRecon::processEvent( LCEvent * evt ) {
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
         
-        
+        //get finals electron and positron        
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
     
@@ -146,6 +146,7 @@ void GGHadron_IdealRecon::processEvent( LCEvent * evt ) {
            }//end final state
         }//end for loop
         
+        //get highest energy electron and positron
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
     

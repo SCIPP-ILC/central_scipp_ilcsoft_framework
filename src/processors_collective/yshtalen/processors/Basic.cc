@@ -61,8 +61,8 @@ Basic::Basic() : Processor("Basic") {
 void Basic::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("eBpW_dump.root","RECREATE");
-    _vector = new TH1F("vector", "Deflected Particle Momentum Magnitude, sqrt(pX^2+pY^2)", 2000.0, 0.0, 20.0);
+    _rootfile = new TFile("eBpB_vector.root","RECREATE");
+    _vector = new TH1F("vector", "Scatter Transverse Momentum Vector Magnitude", 2000.0, 0.0, 20.0);
     _mass = new TH1F("mass", "Deflected Particle sqrt(Q^2) = sqrt(E^2 - <del_p>^2)", 2000.0, 0.0, 3.0);
     
     // usually a good idea to
@@ -122,28 +122,58 @@ void Basic::processEvent( LCEvent * evt ) {
                 //if(id==12 || id==14 || id==16){_neutrino_counter++;}
            }//end final state
         }//end for loop
-        
-        //create sum vector
+       
+        //find last electron and positron in the event
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
     
-        cout << "event = " << _nEvt << endl;
+           id = hit->getPDG(); 
+           stat = hit->getGeneratorStatus();
+           
+           if(stat==1){
+                if(id==11){
+                    if(hit->getEnergy()>high_e->getEnergy()){
+                        high_e = hit;
+                    }
+                }
+                if(id==-11){
+                    if(hit->getEnergy()>high_p->getEnergy()){
+                        high_p = hit;
+                    }
+                }
+                //find neutrinos 
+                //if(id==12 || id==14 || id==16){_neutrino_counter++;}
+           }//end final state
+        }//end for loop
         
-        mom = hit->getMomentum();
-        
-        const double* mom_e = high_e->getMomentum();
-        const double* mom_p = high_p->getMomentum();
-        
-        if(stat==1){
-            if(hit!=high_e && hit!=high_p){
-                scatter_vec[0]+=mom[0];    
-                scatter_vec[1]+=mom[1];    
-                scatter_vec[2]+=mom[2];    
-            }    
-        }
+        //create sum vector
+        for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
+            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
+    
+            cout << "event = " << _nEvt << endl;
+            
+            mom = hit->getMomentum();
+            
+            const double* mom_e = high_e->getMomentum();
+            const double* mom_p = high_p->getMomentum();
+           
+            //final state excluding high energy electron/positron 
+            if(stat==1){
+                if(hit!=high_e && hit!=high_p){
+                    if(abs(mom[0])>0){
+                        scatter_vec[0]+=mom[0];
+                    }
+                    if(abs(mom[1])>0){    
+                        scatter_vec[1]+=mom[1];
+                    }
+                    if(abs(mom[2])>0){
+                        scatter_vec[2]+=mom[2];
+                    }    
+                }    
+            }
         }
         //all
-        if(_nEvt<200000){
+        if(_nEvt<1600000){
             
             double q_2 = pow((250.0-energy), 2) - pow(scatter_vec[0], 2) - pow(scatter_vec[1], 2) - pow((250.0-abs(scatter_vec[2])), 2);
             double mass = sqrt(-q_2);
