@@ -11,8 +11,8 @@
  */
 
 /*
- * author Christopher Milke
- * April 5, 2016
+ * authored by Jane Shtalenkova
+ * August 5, 2016
  */
 
 #include "MissingTransverseMomentum.h"
@@ -61,7 +61,7 @@ MissingTransverseMomentum::MissingTransverseMomentum() : Processor("MissingTrans
 void MissingTransverseMomentum::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("count_eBpW.root","RECREATE");
+    _rootfile = new TFile("count_eWpW.root","RECREATE");
   //  _hitmap_hi = new TH2F("high_hit","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
   //  _hitmap_had = new TH2F("hadronic_hit","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
     _scalar = new TH1F("scalar", "Transverse Momentum Scalar Magnitude", 2000.0, 0.0, 20.0);
@@ -205,25 +205,31 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
             p_def=0;
             b_def=1;
         }
+
+        //both particles deflected
         if(b_def==1){
             _b_def_count++;
             high_vec[0]=mom_e[0]+mom_p[0];
             high_vec[1]=mom_e[1]+mom_p[1];
             high_vec[2]=mom_e[2]+mom_p[2];
         }
+        
         else{
+            //electron deflection
             if(e_def==1){
                 _e_def_count++;
                 high_vec[0]=mom_e[0];
                 high_vec[1]=mom_e[1];
                 high_vec[2]=mom_e[2];
             }
+            //positron deflection
             else if(p_def==1){
                 _p_def_count++;
                 high_vec[0]=mom_p[0];
                 high_vec[1]=mom_p[1];
                 high_vec[2]=mom_p[2];
             }
+            //no deflection
             else{_no_def_count++;} 
         }
 
@@ -307,7 +313,7 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
 
             _thetaDiff->Fill(theta);
 
-            
+            //scatter composite and high energy particles position on BeamCal face
             double scatter_pos_x = scatter_vec[0]*pos[2]/scatter_vec[2];
             double scatter_pos_y = scatter_vec[1]*pos[2]/scatter_vec[2];
             double high_pos_x = high_vec[0]*pos[2]/high_vec[2];
@@ -318,7 +324,8 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
             int hit_scatter = scipp_ilc::get_hitStatus(scatter_pos_x, scatter_pos_y);
             int hit_high = scipp_ilc::get_hitStatus(high_pos_x, high_pos_y);
 
-
+            //determine vector hit status
+            //exclude events outside the Beamcal
             if(hit_scatter!=2&&hit_high!=2){
                 _eventMax++;
                 if(hit_scatter==hit_high){
