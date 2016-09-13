@@ -62,6 +62,7 @@ class Basic : public Processor {
    */
   std::string _colName ;
 
+  int _neutrino_counter ; 
   int _nRun ;
   int _nEvt ;
 

@@ -61,13 +61,14 @@ Basic::Basic() : Processor("Basic") {
 void Basic::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("eBpB_vector.root","RECREATE");
+    _rootfile = new TFile("eBpB_check.root","RECREATE");
     _vector = new TH1F("vector", "Scatter Transverse Momentum Vector Magnitude", 2000.0, 0.0, 20.0);
     _mass = new TH1F("mass", "Deflected Particle sqrt(Q^2) = sqrt(E^2 - <del_p>^2)", 2000.0, 0.0, 3.0);
     
     // usually a good idea to
     //printParameters() ;
 
+    _neutrino_counter = 0;
     _nRun = 0 ;
     _nEvt = 0 ;
 
@@ -119,7 +120,7 @@ void Basic::processEvent( LCEvent * evt ) {
                     high_p = hit;
                 }
                 //find neutrinos 
-                //if(id==12 || id==14 || id==16){_neutrino_counter++;}
+                if(id==12 || id==14 || id==16){_neutrino_counter++;}
            }//end final state
         }//end for loop
        
@@ -156,10 +157,12 @@ void Basic::processEvent( LCEvent * evt ) {
             
             const double* mom_e = high_e->getMomentum();
             const double* mom_p = high_p->getMomentum();
-           
+            //int stat_std = getISTHEP(col->getElementAt(hitIndex));
             //final state excluding high energy electron/positron 
             if(stat==1){
                 if(hit!=high_e && hit!=high_p){
+                    cout << "id: " << hit->getPDG() << "     mom: [" << mom[0] << ", " << mom[1] << ", " << mom[2] << "]     energy: " << hit->getEnergy() << endl;
+                    
                     if(abs(mom[0])>0){
                         scatter_vec[0]+=mom[0];
                     }
@@ -181,6 +184,10 @@ void Basic::processEvent( LCEvent * evt ) {
 
             //fill vector
             double vector = sqrt(pow(scatter_vec[0], 2) + pow(scatter_vec[1], 2));
+            cout << "VECTOR SUM: " << vector << endl;
+            cout << endl;
+            cout << endl;
+            cout << endl;
             _vector->Fill(vector);
                 
         }
