@@ -361,6 +361,8 @@ void BhaBhaDeflectionAnalysis::end(){
       cout << "Percent P-hit E-miss: %" << Pphem << endl;
       cout << "Percent E-hit P-miss: %" << Pehpm << endl;
       cout << "Percent miss-miss: %" <<Pmm << endl;
+      cout << endl;
+      cout << "TOTAL EVENTS: " << _nTotal << endl;
     }
     cout << "That's all folks!" << endl;
 }
