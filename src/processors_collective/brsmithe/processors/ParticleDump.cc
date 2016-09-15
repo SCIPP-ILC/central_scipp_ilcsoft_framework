@@ -51,6 +51,9 @@ static TH2F* _hitmap;
 static TH1F* _xSum;
 static TH1F* _ySum;
 
+static TH1F* _ecount;
+static TH1F* _pcount;
+
 ParticleDump::ParticleDump() : Processor("ParticleDump") {
     // modify processor description
     _description = "Protype Processor" ;
@@ -69,6 +72,10 @@ void ParticleDump::init() {
     _mass = new TH1F("mass", "Deflected Particle sqrt(Q^2) = sqrt(E^2 - <del_p>^2)", 2000.0, 0.0, 3.0);
     _endpoints = new TH1F("endpoints", "Endpoint Distribution", 4000.0, -2000.0, 2000.0);
     _hitmap = new TH2F("hitmap", "Hit Distribution", 200.0, -10.0, 10.0, 200.0, -10.0, 10.0);
+    
+    _ecount = new TH1F("ecount","Electron Count per Event", 11.0, 0.0, 10.0);
+    _pcount = new TH1F("pcount","Positron Count per Event", 11.0, 0.0, 10.0);
+
 
     // usually a good idea to
     //printParameters() ;
@@ -94,7 +101,6 @@ void ParticleDump::processEvent( LCEvent * evt ) {
 
     
     double scatter_vec[] = {0, 0, 0};
-    double mag = 0;
     double energy = 0;
     double theta;
     int id, stat;
@@ -107,37 +113,57 @@ void ParticleDump::processEvent( LCEvent * evt ) {
     
     double Zero = 0.000000001;
 
+    bool NOTuseGenSt = true;
+
+
+    int ecount=0;
+    int pcount=0;
+
     // this will only be entered if the collection is available
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
-        
+	ecount = 0;
+	pcount = 0;
+     
+	
         //first, find last electron and positron in the event
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
     
            id = hit->getPDG(); 
            stat = hit->getGeneratorStatus();
-   
-	   
 
+           if(stat==1 || NOTuseGenSt){
+	     
+	     mom = hit->getMomentum();
+	     energy = hit->getEnergy();
 
-           if(stat==1){
-	     if( id==11 || id ==-11 ){
-	       const double * mom = hit->getMomentum();
-	       leftDetector = hit->hasLeftDetector();
+	     switch(id){
+	     case 11:
+	       // cout << "Electron!" << endl;
+	       ecount++;
+	       break;
+	     case -11:
+	       // cout << "Positron!" << endl;
+	       pcount++;
+	     default:
+	       break;
 	       
-	       if(leftDetector){}
-
-	     }
+	     }//End switch
 	     
-	     
+	     cout<< "event = " << _nEvt << endl;
+	     cout<< "id: " << id << "    " << "mom: [" << mom[0] << ", " << mom[1] << ", " << mom[2] <<"]   energy: " << energy << endl;
 	     
            }//end final state
 	   
 	   
         }//end for loop
         
+	_ecount->Fill(ecount);
+	_pcount->Fill(pcount);
+
     }//end collection
+    //cout << "Event end" << endl;
     _nEvt ++ ;
 }//end process
 
@@ -151,6 +177,7 @@ void ParticleDump::check( LCEvent * evt ) {
 
 void ParticleDump::end(){
     _rootfile->Write();
+    cout << "End" << endl;
 }
 
 

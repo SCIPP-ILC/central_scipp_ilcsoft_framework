@@ -79,7 +79,7 @@ void BhaBhaDeflectionAnalysis::init() {
     _PHitAnglevAngle = new TH2F("PHitMiss","Relative Angles in Hit-Miss, e+ hit", 2000.0, 0.0, 0.2, 2000.0, 0.0, 0.2);
     _MissMissAnglevAngle = new TH2F("MissMiss","Relavive Angles in Miss-Miss Scenario", 2000.0, 0.0, 0.2, 2000.0, 0.0, 0.2);
     
-    _AngleDelta = new TH1F("AngleDif", "Etheta - Ptheta", 2000.0, -0.1,1.0);
+    _AngleDelta = new TH1F("AngleDif", "Etheta - Ptheta", 2000.0, -0.1,0.5);
 
     // usually a good idea to
     //printParameters() ;
