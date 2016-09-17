@@ -11,8 +11,8 @@
  */
 
 /*
- * author Jane Shtalenkovae
- * August 5, 2016
+ * author Benjamin Smithers
+ * August September 10, 2016
  */
 
 #include "BhaBhaDeflectionAnalysis.h"

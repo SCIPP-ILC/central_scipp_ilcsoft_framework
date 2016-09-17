@@ -40,10 +40,10 @@ using namespace std;
 ParticleDump ParticleDump;
 
 static TFile* _rootfile;
-//static TH2F* _hitmap;
-static TH1F* _mass;
-//static TH1F* _scalar;
-static TH1F* _vector;
+
+static TH2F* _Pmom;
+static TH2F* _Emom;
+
 //static TH2F* _hitmap
 static TH1F* _endpoints;
 static TH2F* _hitmap;
@@ -68,8 +68,8 @@ void ParticleDump::init() {
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
     _rootfile = new TFile("ParticleDump.root","RECREATE");
-    _vector = new TH1F("vector", "Deflected Particle Momentum Magnitude, sqrt(pX^2+pY^2)", 2000.0, 0.0, 20.0);
-    _mass = new TH1F("mass", "Deflected Particle sqrt(Q^2) = sqrt(E^2 - <del_p>^2)", 2000.0, 0.0, 3.0);
+    _Pmom = new TH2F("Pmom", "Positron XY momentums", 2000.0, -200.0, 200.0, 2000.0, -200.0, 200.0);
+    _Emom = new TH2F("Emom", "Electron XY momentums", 2000.0, -200.0, 200.0, 2000.0, -200.0, 200.0);
     _endpoints = new TH1F("endpoints", "Endpoint Distribution", 4000.0, -2000.0, 2000.0);
     _hitmap = new TH2F("hitmap", "Hit Distribution", 200.0, -10.0, 10.0, 200.0, -10.0, 10.0);
     
@@ -140,21 +140,19 @@ void ParticleDump::processEvent( LCEvent * evt ) {
 
 	     switch(id){
 	     case 11:
-	       // cout << "Electron!" << endl;
+	       //cout << "Electron has momentum (" << mom[0] << ", " << mom[1] << ", " << mom[2] << ")" <<  endl;
 	       ecount++;
+	       _Emom->Fill(mom[0],mom[1]);
 	       break;
 	     case -11:
-	       // cout << "Positron!" << endl;
+	       //cout << "Positron has momentum (" << mom[0] << ", " << mom[2] << ", " << mom[2] << ")"  << endl;
 	       pcount++;
+	       _Pmom->Fill(mom[0],mom[1]);
 	     default:
 	       break;
 	       
 	     }//End switch
-	     
-	     cout<< "event = " << _nEvt << endl;
-	     cout<< "id: " << id << "    " << "mom: [" << mom[0] << ", " << mom[1] << ", " << mom[2] <<"]   energy: " << energy << endl;
-	     
-           }//end final state
+	   }//end final state
 	   
 	   
         }//end for loop

@@ -11,8 +11,8 @@
  */
 
 /*
- * author Jane Shtalenkovae
- * August 5, 2016
+ * author Benjamin Smithers
+ * August September 10, 2016
  */
 
 #include "BhaBhaDeflectionAnalysis.h"
@@ -79,7 +79,7 @@ void BhaBhaDeflectionAnalysis::init() {
     _PHitAnglevAngle = new TH2F("PHitMiss","Relative Angles in Hit-Miss, e+ hit", 2000.0, 0.0, 0.2, 2000.0, 0.0, 0.2);
     _MissMissAnglevAngle = new TH2F("MissMiss","Relavive Angles in Miss-Miss Scenario", 2000.0, 0.0, 0.2, 2000.0, 0.0, 0.2);
     
-    _AngleDelta = new TH1F("AngleDif", "Etheta - Ptheta", 2000.0, -0.1,0.5);
+    _AngleDelta = new TH1F("AngleDif", "Etheta - Ptheta", 2000.0, -0.1,1.0);
 
     // usually a good idea to
     //printParameters() ;
@@ -267,8 +267,8 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
 	  //cout << "PEnergy in: " << pin_energy << ", x momentum: " << pin_x << "." << endl;
 	  
 	  //apply the first transform. Lorenz? Shifts to the center-of-mass frame 
-	  scipp_ilc::transform_to_lab(ein_x, ein_energy, eout_x, eout_energy);
-	  scipp_ilc::transform_to_lab(pin_x, pin_energy, pout_x, pout_energy);
+	  scipp_ilc::transform_to_cm(ein_x, ein_energy, eout_x, eout_energy);
+	  scipp_ilc::transform_to_cm(pin_x, pin_energy, pout_x, pout_energy);
 	  
 	  //adjust the x position
 	  Epos[0] = eout_x*Epos[2]/mom_e[2];
