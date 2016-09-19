@@ -54,7 +54,7 @@ static TH2F* _EHitAnglevAngle;
 static TH2F* _PHitAnglevAngle;
 static TH2F* _MissMissAnglevAngle;
 static TH1F* _AngleDelta;
-
+static TH1F* _AngleDeltaPT;
 
 BhaBhaDeflectionAnalysis::BhaBhaDeflectionAnalysis() : Processor("BhaBhaDeflectionAnalysis") {
     // modify processor description
@@ -79,7 +79,8 @@ void BhaBhaDeflectionAnalysis::init() {
     _PHitAnglevAngle = new TH2F("PHitMiss","Relative Angles in Hit-Miss, e+ hit", 2000.0, 0.0, 0.2, 2000.0, 0.0, 0.2);
     _MissMissAnglevAngle = new TH2F("MissMiss","Relavive Angles in Miss-Miss Scenario", 2000.0, 0.0, 0.2, 2000.0, 0.0, 0.2);
     
-    _AngleDelta = new TH1F("AngleDif", "Etheta - Ptheta", 2000.0, -0.1,1.0);
+    _AngleDelta = new TH1F("AngleDif", "Etheta - Ptheta", 2000.0, -0.5,1.0);
+    _AngleDeltaPT = new TH1F("AnglePT", "Etheta - Ptheta PT", 2000.0, -0.5,1.0);
 
     // usually a good idea to
     //printParameters() ;
@@ -245,8 +246,11 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
 	  //Plotting Angle Difference
 	  mag_e = pow(mom_e[0],2.0) + pow(mom_e[1],2.0);
 	  mag_p = pow(mom_p[0],2.0) + pow(mom_e[1],2.0);
-	  anglee = atan(mag_e / mom_e[2]);
-	  anglep = atan(mag_p / mom_p[2]);
+
+	  anglee = atan(mag_e / abs(mom_e[2]));
+	  anglep = atan(mag_p / abs(mom_p[2]));
+
+	  
 	  //cout << angle << endl;
 
 	  _AngleDelta->Fill(anglee - anglep);
@@ -266,7 +270,7 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
 	  //cout << "EEnergy in: " << ein_energy << ", x momentum: " << ein_x << "." << endl;
 	  //cout << "PEnergy in: " << pin_energy << ", x momentum: " << pin_x << "." << endl;
 	  
-	  //apply the first transform. Lorenz? Shifts to the center-of-mass frame 
+	  //apply the first transform. Lorenz? Shifts to the lab frame.
 	  scipp_ilc::transform_to_lab(ein_x, ein_energy, eout_x, eout_energy);
 	  scipp_ilc::transform_to_lab(pin_x, pin_energy, pout_x, pout_energy);
 	  
@@ -284,29 +288,31 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
 	  Penergy=pout_energy;
 
 	  //find the new angle. First we find the distance from the z axis
-	  double tmag_e = sqrt(pow(Epos[0], 2)+pow(Epos[1], 2)); //magnitude of the xy momentum vector
+	  double tmag_e = sqrt(pow(Epos[0], 2)+pow(Epos[1], 2)); //magnitude of the xy position vector
 	  double tmag_p = sqrt(pow(Ppos[0], 2)+pow(Ppos[1], 2));
 	  
-	  //Not Sure what this is used for. 
-	  emag+=tmag_e;
-	  pmag+=tmag_p;
-
+	  
 	  //Calculating angle momentum makes from the Z-axis. Value in radians. Will be used later in plotting. 
 	  etheta = atan(tmag_e/abs(Epos[2]));
 	  ptheta = atan(tmag_p/abs(Ppos[2]));
 	  
-	  //Filling in the endpoints (Z) and hitmap (x,y) plots.
-	  _hitmap->Fill(Epos[0],Epos[1]);
-	  _hitmap->Fill(Ppos[0],Ppos[1]);
-
+	  //Plot the post-transform angles
+	  _AngleDeltaPT->Fill(etheta - ptheta);
 	  
-	  //Checking if these particles land on the BeamCal.
+	  //Checking if these particles land on the BeamCal. 
+	  //I know this part works!
 	  int Estatus = scipp_ilc::get_hitStatus(Epos[0],Epos[1]);
 	  int Pstatus = scipp_ilc::get_hitStatus(Ppos[0],Ppos[1]);
-	  
+       
+
+
 	  //Converting the statuses into handy little booleans. Ostensibly unnecessry, but it becomes easier to follow.
 	  if(Estatus==1){Ehit_status=true;}else{Ehit_status=false;}
 	  if(Pstatus==1){Phit_status=true;}else{Phit_status=false;}
+
+	  //If the particles hit, then we add their positions to the hitmap.
+	  if(Ehit_status){_hitmap->Fill(Epos[0],Epos[1]);}
+	  if(Phit_status){_hitmap->Fill(Ppos[0],Ppos[1]);}
 	  
 	  //Assigning an arbitrary value. Shouldn't matter, but could cause problems in the switch otherwise (maybe?)
 	  BhaBhaStatus=-1;
@@ -315,17 +321,21 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
 	  if(Phit_status){ 
 	    //P HIT
 	    if(Ehit_status){
+	      //P HIT, E HIT
 	      _nHitHit++;
 	      BhaBhaStatus=0;
 	    }else{
+	      //P HIT, E MISS
 	      _nPHitEMiss++;
 	      BhaBhaStatus=1;
 	    }
 	  }else{ // P MISSED
 	    if(Ehit_status){
+	      //P MISSED, E HIT
 	      _nEHitPMiss++;
 	      BhaBhaStatus=2;
 	    }else{
+	      //P MISSED, E MISSED
 	      _nMissMiss++;
 	      BhaBhaStatus=3;
 	    }
@@ -339,10 +349,10 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
 	  case 0: //Both Hit
 	    _HitHitAnglevAngle->Fill(etheta,ptheta);
 	    break;
-	  case 1: //e+ hit, e- miss
+	  case 1: //P hit, E miss
 	    _PHitAnglevAngle->Fill(etheta,ptheta);
 	    break;
-	  case 2: //e- hit, e+ miss
+	  case 2: //E hit, P miss
 	    _EHitAnglevAngle->Fill(etheta,ptheta);
 	    break;
 	  case 3: //Both miss
