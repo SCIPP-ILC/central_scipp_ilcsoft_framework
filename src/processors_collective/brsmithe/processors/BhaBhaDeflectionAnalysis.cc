@@ -55,6 +55,7 @@ static TH2F* _PHitAnglevAngle;
 static TH2F* _MissMissAnglevAngle;
 static TH1F* _AngleDelta;
 static TH1F* _AngleDeltaPT;
+static TH2F* _AnglevAngleBT;
 
 BhaBhaDeflectionAnalysis::BhaBhaDeflectionAnalysis() : Processor("BhaBhaDeflectionAnalysis") {
     // modify processor description
@@ -81,6 +82,8 @@ void BhaBhaDeflectionAnalysis::init() {
     
     _AngleDelta = new TH1F("AngleDif", "Etheta - Ptheta", 2000.0, -0.5,1.0);
     _AngleDeltaPT = new TH1F("AnglePT", "Etheta - Ptheta PT", 2000.0, -0.5,1.0);
+    _AnglevAngleBT = new TH2F("AngleBT", "Angles of e- vs e+ relative to forward dir", 2000.0, 0.0, 0.005, 2000.0, 0.0, 0.005);
+
 
     // usually a good idea to
     //printParameters() ;
@@ -298,7 +301,8 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
 	  
 	  //Plot the post-transform angles
 	  _AngleDeltaPT->Fill(etheta - ptheta);
-	  
+	  _AnglevAngleBT->Fill(etheta, ptheta);  
+	
 	  //Checking if these particles land on the BeamCal. 
 	  //I know this part works!
 	  int Estatus = scipp_ilc::get_hitStatus(Epos[0],Epos[1]);

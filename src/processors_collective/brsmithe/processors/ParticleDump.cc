@@ -125,33 +125,60 @@ void ParticleDump::processEvent( LCEvent * evt ) {
 	ecount = 0;
 	pcount = 0;
      
-	
+        cout << endl;
+        cout << endl;
+        cout << endl;
+	cout << _nEvt << endl;	
         //first, find last electron and positron in the event
+        
+	cout << "ALL PARTICLES" << endl;
+	for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
+           MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
+    
+           id = hit->getPDG(); 
+           stat = hit->getGeneratorStatus();
+
+           //if(stat==1 || NOTuseGenSt){
+	     
+	     mom = hit->getMomentum();
+	     energy = hit->getEnergy();
+
+	     cout << "id: " << id << "   stat: " << stat << "   mom: [" << mom[0] << ", " << mom[1] << ", " << mom[2] << "]   energy: " << energy << endl;
+	     
+	     switch(id){
+	     	case 11:
+			//cout << "Electron has momentum (" << mom[0] << ", " << mom[1] << ", " << mom[2] << ")" <<  endl;
+			ecount++;
+			_Emom->Fill(mom[0],mom[1]);
+			break;
+	        case -11:
+		       //cout << "Positron has momentum (" << mom[0] << ", " << mom[2] << ", " << mom[2] << ")"  << endl;
+		       pcount++;
+		       _Pmom->Fill(mom[0],mom[1]);
+	        default:
+	       	       break;
+	       
+	     }//End switch
+	   //}//end final state
+	   
+	   
+        }//end for loop
+
+	cout << endl;
+	cout << "FINAL STATE ONLY" << endl;
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
     
            id = hit->getPDG(); 
            stat = hit->getGeneratorStatus();
 
-           if(stat==1 || NOTuseGenSt){
+           if(stat==1){
 	     
 	     mom = hit->getMomentum();
 	     energy = hit->getEnergy();
 
-	     switch(id){
-	     case 11:
-	       //cout << "Electron has momentum (" << mom[0] << ", " << mom[1] << ", " << mom[2] << ")" <<  endl;
-	       ecount++;
-	       _Emom->Fill(mom[0],mom[1]);
-	       break;
-	     case -11:
-	       //cout << "Positron has momentum (" << mom[0] << ", " << mom[2] << ", " << mom[2] << ")"  << endl;
-	       pcount++;
-	       _Pmom->Fill(mom[0],mom[1]);
-	     default:
-	       break;
-	       
-	     }//End switch
+	     cout << "id: " << id << "   stat: " << stat << "   mom: [" << mom[0] << ", " << mom[1] << ", " << mom[2] << "]   energy: " << energy << endl;
+	     
 	   }//end final state
 	   
 	   
