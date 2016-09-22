@@ -104,11 +104,11 @@ void Basic::processEvent( LCEvent * evt ) {
     // this will only be entered if the collection is available
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
-        
+    
         //first, find last electron and positron in the event
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
-    
+  
            id = hit->getPDG(); 
            stat = hit->getGeneratorStatus();
            
@@ -147,21 +147,21 @@ void Basic::processEvent( LCEvent * evt ) {
            }//end final state
         }//end for loop
         
+        cout << "event = " << _nEvt << endl;
         //create sum vector
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
             MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
-    
-            cout << "event = " << _nEvt << endl;
             
+            cout << "stat: " << stat << " id: " << hit->getPDG() << "     mom: [" << mom[0] << ", " << mom[1] << ", " << mom[2] << "]     energy: " << hit->getEnergy() << endl;
             mom = hit->getMomentum();
             
             const double* mom_e = high_e->getMomentum();
             const double* mom_p = high_p->getMomentum();
             //int stat_std = getISTHEP(col->getElementAt(hitIndex));
             //final state excluding high energy electron/positron 
-            if(stat==1){
-                if(hit!=high_e && hit!=high_p){
-                    cout << "id: " << hit->getPDG() << "     mom: [" << mom[0] << ", " << mom[1] << ", " << mom[2] << "]     energy: " << hit->getEnergy() << endl;
+            //if(stat==1){
+                //if(hit!=high_e && hit!=high_p){
+
                     
                     if(abs(mom[0])>0){
                         scatter_vec[0]+=mom[0];
@@ -172,8 +172,8 @@ void Basic::processEvent( LCEvent * evt ) {
                     if(abs(mom[2])>0){
                         scatter_vec[2]+=mom[2];
                     }    
-                }    
-            }
+                //}//end electronic system    
+           //}//end final state
         }
         //all
         if(_nEvt<1600000){

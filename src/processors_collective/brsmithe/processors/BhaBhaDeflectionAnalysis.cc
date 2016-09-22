@@ -54,7 +54,7 @@ static TH2F* _EHitAnglevAngle;
 static TH2F* _PHitAnglevAngle;
 static TH2F* _MissMissAnglevAngle;
 static TH1F* _AngleDelta;
-static TH1F* _AngleDeltaPT;
+static TH2F* _AngleDeltaPT;
 static TH2F* _AnglevAngleBT;
 
 BhaBhaDeflectionAnalysis::BhaBhaDeflectionAnalysis() : Processor("BhaBhaDeflectionAnalysis") {
@@ -81,8 +81,8 @@ void BhaBhaDeflectionAnalysis::init() {
     _MissMissAnglevAngle = new TH2F("MissMiss","Relavive Angles in Miss-Miss Scenario", 2000.0, 0.0, 0.2, 2000.0, 0.0, 0.2);
     
     _AngleDelta = new TH1F("AngleDif", "Etheta - Ptheta", 2000.0, -0.5,1.0);
-    _AngleDeltaPT = new TH1F("AnglePT", "Etheta - Ptheta PT", 2000.0, -0.5,1.0);
-    _AnglevAngleBT = new TH2F("AngleBT", "Angles of e- vs e+ relative to forward dir", 2000.0, 0.0, 0.005, 2000.0, 0.0, 0.005);
+    _AngleDeltaPT = new TH2F("AnglePT", "Etheta - Ptheta PT", 2000.0, 0.0,0.2,2000.0,0.0,0.2);
+    _AnglevAngleBT = new TH2F("AngleBT", "Angles of e- vs e+ relative to forward dir", 2000.0, 0.0, 0.2, 2000.0, 0.0, 0.2);
 
 
     // usually a good idea to
@@ -257,7 +257,7 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
 	  //cout << angle << endl;
 
 	  _AngleDelta->Fill(anglee - anglep);
-	  
+	  _AnglevAngleBT->Fill(anglee,anglep); 
 	  
 	  
 	  // Debugging
@@ -282,8 +282,8 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
 	  Ppos[0] = pout_x*Ppos[2]/mom_p[2];
 	  
 	  //shift origin to the center of the beamcal beampipe hole
-	  scipp_ilc::z_to_beam_out(Epos[0], Epos[1], Epos[2]);
-	  scipp_ilc::z_to_beam_out(Ppos[0], Ppos[1], Ppos[2]);
+	  //scipp_ilc::z_to_beam_out(Epos[0], Epos[1], Epos[2]);
+	  //scipp_ilc::z_to_beam_out(Ppos[0], Ppos[1], Ppos[2]);
 	  
 	  
 	  //adjust the energy to post transform
@@ -300,8 +300,8 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
 	  ptheta = atan(tmag_p/abs(Ppos[2]));
 	  
 	  //Plot the post-transform angles
-	  _AngleDeltaPT->Fill(etheta - ptheta);
-	  _AnglevAngleBT->Fill(etheta, ptheta);  
+	  _AngleDeltaPT->Fill(etheta, ptheta);
+	  //_AnglevAngleBT->Fill(etheta, ptheta);  
 	
 	  //Checking if these particles land on the BeamCal. 
 	  //I know this part works!
