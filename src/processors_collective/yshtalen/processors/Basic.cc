@@ -152,11 +152,24 @@ void Basic::processEvent( LCEvent * evt ) {
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
             MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
             
-            cout << "stat: " << stat << " id: " << hit->getPDG() << "     mom: [" << mom[0] << ", " << mom[1] << ", " << mom[2] << "]     energy: " << hit->getEnergy() << endl;
+
             mom = hit->getMomentum();
             
             const double* mom_e = high_e->getMomentum();
             const double* mom_p = high_p->getMomentum();
+            
+            double e_pt = sqrt(pow(mom_e[0], 2)+ pow(mom_e[1], 2));
+            double p_pt = sqrt(pow(mom_p[0], 2)+ pow(mom_p[1], 2));
+
+            double theta_e = atan(e_pt/mom_e[2]);
+            double theta_p = atan(p_pt/mom_p[2]);
+
+            if(theta_p > 0.1){
+                if(theta_e < 0.01) {
+                    cout << "stat: " << stat << " id: " << hit->getPDG() << "     mom: [" << mom[0] << ", " << mom[1] << ", " << mom[2] << "]     energy: " << hit->getEnergy() << endl;
+                }   
+            }
+
             //int stat_std = getISTHEP(col->getElementAt(hitIndex));
             //final state excluding high energy electron/positron 
             //if(stat==1){
@@ -184,9 +197,9 @@ void Basic::processEvent( LCEvent * evt ) {
 
             //fill vector
             double vector = sqrt(pow(scatter_vec[0], 2) + pow(scatter_vec[1], 2));
-            cout << "VECTOR SUM: " << vector << endl;
-            cout << endl;
-            cout << endl;
+            //cout << "VECTOR SUM: " << vector << endl;
+            //cout << endl;
+            //cout << endl;
             cout << endl;
             _vector->Fill(vector);
                 

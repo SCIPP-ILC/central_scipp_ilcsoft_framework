@@ -56,6 +56,7 @@ static TH2F* _MissMissAnglevAngle;
 static TH1F* _AngleDelta;
 static TH2F* _AngleDeltaPT;
 static TH2F* _AnglevAngleBT;
+static TH1F* _AngleDifPT;
 
 BhaBhaDeflectionAnalysis::BhaBhaDeflectionAnalysis() : Processor("BhaBhaDeflectionAnalysis") {
     // modify processor description
@@ -80,8 +81,9 @@ void BhaBhaDeflectionAnalysis::init() {
     _PHitAnglevAngle = new TH2F("PHitMiss","Relative Angles in Hit-Miss, e+ hit", 2000.0, 0.0, 0.2, 2000.0, 0.0, 0.2);
     _MissMissAnglevAngle = new TH2F("MissMiss","Relavive Angles in Miss-Miss Scenario", 2000.0, 0.0, 0.2, 2000.0, 0.0, 0.2);
     
-    _AngleDelta = new TH1F("AngleDif", "Etheta - Ptheta", 2000.0, -0.5,1.0);
-    _AngleDeltaPT = new TH2F("AnglePT", "Etheta - Ptheta PT", 2000.0, 0.0,0.2,2000.0,0.0,0.2);
+    _AngleDifPT = new TH1F("AngleDifPT", "Etheta - Ptheta", 2000.0, 0.0, 3.2);
+    _AngleDelta = new TH1F("AngleDif", "Etheta - Ptheta", 2000.0, 0.0,3.2);
+    _AngleDeltaPT = new TH2F("AnglePT", "Angles of e- vs e+ relative to foward dir",  2000.0, 0.0,0.2,2000.0,0.0,0.2);
     _AnglevAngleBT = new TH2F("AngleBT", "Angles of e- vs e+ relative to forward dir", 2000.0, 0.0, 0.2, 2000.0, 0.0, 0.2);
 
 
@@ -147,11 +149,15 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
     int BhaBhaStatus;
 
     //Used for finding the difference in angles
+    double tmag_e, tmag_p;    
+
     double mag_e;
     double mag_p;
     double anglee;
     double anglep;
 
+    double angledif;
+	
     // this will only be entered if the collection is available
     if( col != NULL ){
       
@@ -247,16 +253,22 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
 	  Ppos[0] = mom_p[0]*Ppos[2]/mom_p[2];
 
 	  //Plotting Angle Difference
-	  mag_e = pow(mom_e[0],2.0) + pow(mom_e[1],2.0);
-	  mag_p = pow(mom_p[0],2.0) + pow(mom_e[1],2.0);
+	  tmag_e = pow(pow(mom_e[0],2.0) + pow(mom_e[1],2.0), 0.5);
+	  tmag_p = pow(pow(mom_p[0],2.0) + pow(mom_e[1],2.0), 0.5);
 
-	  anglee = atan(mag_e / abs(mom_e[2]));
-	  anglep = atan(mag_p / abs(mom_p[2]));
+	  anglee = atan(tmag_e / abs(mom_e[2]));
+	  anglep = atan(tmag_p / abs(mom_p[2]));
 
-	  
+	  mag_e = sqrt(pow(mom_e[0],2.0) + pow(mom_e[1],2.0) + pow(mom_e[2],2.0));
+	  mag_p = sqrt(pow(mom_p[0],2.0) + pow(mom_p[1],2.0) + pow(mom_p[2],2.0));
+		
+	  angledif = (mom_e[0]*mom_p[0] + mom_e[1]*mom_p[1] + mom_e[2]*mom_p[2])/(mag_e*mag_p);
+	  angledif = acos(angledif);  
+	
+
 	  //cout << angle << endl;
 
-	  _AngleDelta->Fill(anglee - anglep);
+	  _AngleDelta->Fill(angledif);
 	  _AnglevAngleBT->Fill(anglee,anglep); 
 	  
 	  
@@ -277,13 +289,20 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
 	  scipp_ilc::transform_to_lab(ein_x, ein_energy, eout_x, eout_energy);
 	  scipp_ilc::transform_to_lab(pin_x, pin_energy, pout_x, pout_energy);
 	  
+	  //cout << "OutX_E: " << eout_X << ", OutE: " << eout_energy << endl;
+	  //cout << "OutX:	  
+
+	  
+	
+
+
 	  //adjust the x position
 	  Epos[0] = eout_x*Epos[2]/mom_e[2];
 	  Ppos[0] = pout_x*Ppos[2]/mom_p[2];
 	  
 	  //shift origin to the center of the beamcal beampipe hole
-	  //scipp_ilc::z_to_beam_out(Epos[0], Epos[1], Epos[2]);
-	  //scipp_ilc::z_to_beam_out(Ppos[0], Ppos[1], Ppos[2]);
+	  scipp_ilc::z_to_beam_out(Epos[0], Epos[1], Epos[2]);
+	  scipp_ilc::z_to_beam_out(Ppos[0], Ppos[1], Ppos[2]);
 	  
 	  
 	  //adjust the energy to post transform
@@ -291,16 +310,22 @@ void BhaBhaDeflectionAnalysis::processEvent( LCEvent * evt ) {
 	  Penergy=pout_energy;
 
 	  //find the new angle. First we find the distance from the z axis
-	  double tmag_e = sqrt(pow(Epos[0], 2)+pow(Epos[1], 2)); //magnitude of the xy position vector
-	  double tmag_p = sqrt(pow(Ppos[0], 2)+pow(Ppos[1], 2));
+	  tmag_e = sqrt(pow(eout_x, 2)+pow(mom_e[1], 2)); //magnitude of the xy position vector
+	  tmag_p = sqrt(pow(pout_x, 2)+pow(mom_p[1], 2));
 	  
 	  
 	  //Calculating angle momentum makes from the Z-axis. Value in radians. Will be used later in plotting. 
-	  etheta = atan(tmag_e/abs(Epos[2]));
-	  ptheta = atan(tmag_p/abs(Ppos[2]));
+	  etheta = atan(tmag_e/abs(mom_e[2]));
+	  ptheta = atan(tmag_p/abs(mom_p[2]));
 	  
+	  mag_e = sqrt(pow(Epos[0],2.0) + pow(Epos[1],2.0) + pow(Epos[2],2.0));
+	  mag_p = sqrt(pow(Ppos[0],2.0) + pow(Ppos[1],2.0) + pow(Ppos[2],2.0)); 
+	  angledif = ((Epos[0]*Ppos[0]+ Epos[1]*Ppos[1] + Epos[2]*Ppos[2])/(mag_e*mag_p));
+	  angledif = acos(angledif);
+
 	  //Plot the post-transform angles
 	  _AngleDeltaPT->Fill(etheta, ptheta);
+	  _AngleDifPT->Fill(angledif);
 	  //_AnglevAngleBT->Fill(etheta, ptheta);  
 	
 	  //Checking if these particles land on the BeamCal. 

@@ -53,33 +53,31 @@ namespace scipp_ilc {
 
     void transform_to_cm(double pX, double E, double& pX_new, double& E_new){
 	    double theta = 0.007;
-	    double in_E = 250.0;
 	    double beta = sin(theta);
 	    double gamma = pow((1-pow(beta, 2)), -0.5);
 
 	    // *
-	    // *    |gamma         -gamma*beta| |p|                       |p'|
-	    // *    |-gamma*beta         gamma|*|E| = TRANSOFORMED4vector |E'|
+	    // *    |gamma         -gamma*beta| |E|                       |E'|
+	    // *    |-gamma*beta         gamma|*|p_x| = TRANSOFORMED4vector |p_x'|
 	    // *        
 	    // *                                     *                                     *      
 
-	    pX_new = pX*gamma - gamma*beta*E;
 	    E_new = E*gamma - gamma*beta*pX;
+	    pX_new = pX*gamma - gamma*beta*E;
     }    
     void transform_to_lab(double pX, double E, double& pX_new, double& E_new){
 	    double theta = 0.007;
-	    double in_E = 250.0;
 	    double beta = sin(theta);
 	    double gamma = pow((1-pow(beta, 2)), -0.5);
 
 	     //*
-	     //*    |gamma         gamma*beta| |p|                       |p'|
-	     //*    |gamma*beta         gamma|*|E| = TRANSOFORMED4vector |E'|
+	     //*    |gamma         gamma*beta| |E|                        |E'|
+	     //*    |gamma*beta         gamma|*|pX| = TRANSOFORMED4vector |pX'|
 	     //*        
 	     //*                                     *                                     *      
 
-	    pX_new = pX*gamma + gamma*beta*E;
 	    E_new = E*gamma + gamma*beta*pX;
+	    pX_new = pX*gamma + gamma*beta*E;
    }
 
    //to be used on cartesian position in Beamcal coordinate system
