@@ -1,4 +1,7 @@
-fndef UTIL_LCStdHepReader_H
+#undef _GLIBCXX_USE_CXX11_ABI
+#define _GLIBCXX_USE_CXX11_ABI 0
+
+#ifndef UTIL_LCStdHepReader_H
 #define UTIL_LCStdHepReader_H 1
 
 class MCParticleCollection ;
