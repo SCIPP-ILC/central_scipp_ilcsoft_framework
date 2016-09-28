@@ -29,7 +29,7 @@ using namespace plcio;
 namespace plcio{
 	LCStdHepReader::LCStdHepReader(const char* evfile){
     //   pulling from plcio namespace 
-    		_reader = new lStdHep(evfile,false);
+    		_reader = new StdHepJob(evfile,false);
     		if(_reader->getError()) {
 		      std::stringstream description ; 
 		      description << "LCStdHepReader: no stdhep file: " << evfile << std::ends ;

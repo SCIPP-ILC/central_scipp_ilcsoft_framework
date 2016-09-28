@@ -10,7 +10,7 @@ class MCParticleCollection ;
 
 namespace plcio{
 
-  class lStdHep ;
+  class StdHepJob ;
 
   
   /**Basic utility for reading a binary stdhep file and filling
@@ -60,7 +60,7 @@ namespace plcio{
 
   private:
     
-	lStdHep* _reader;
+	StdHepJob* _reader;
     
 
   }; // class
