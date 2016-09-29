@@ -85,7 +85,7 @@ ADD_DEFINITIONS( "-Wno-long-long" )
 
 # include directories
 INCLUDE_DIRECTORIES( ./src/core_processors/include ./src/processors/include
-./src/base/util .src/base/util/conversion_utilities ./src/base/beamcal_recon )
+./src/base/util ./src/base/beamcal_recon )
 #INSTALL_DIRECTORY( ./include DESTINATION . FILES_MATCHING PATTERN "*.h" )
 
 # source directories
@@ -93,7 +93,6 @@ AUX_SOURCE_DIRECTORY( ./src library_sources )
 AUX_SOURCE_DIRECTORY( ./src/core_processors library_sources ) 
 AUX_SOURCE_DIRECTORY( ./src/processors library_sources ) 
 AUX_SOURCE_DIRECTORY( ./src/base/util library_sources )
-AUX_SOURCE_DIRECTORY( ./src/base/util/conversion_utilities library_sources )
 AUX_SOURCE_DIRECTORY( ./src/base/beamcal_recon library_sources )
 
 # add library
