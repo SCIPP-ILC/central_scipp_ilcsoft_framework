@@ -100,9 +100,9 @@ void SusyCutflow::processEvent( LCEvent * evt ) {
            MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(particleIndex) );
             
            id = particle->getPDG(); 
-           stat = particle->getGeneratorStatus();
+           //stat = particle->getGeneratorStatus();
            // If Particle is FINAL-STATE 
-           if(stat==1){
+           //if(stat==1){
                 bool isDarkMatter = (id == 1000022);
                 if(isDarkMatter) continue ;
                 double E = particle->getEnergy();
@@ -138,7 +138,7 @@ void SusyCutflow::processEvent( LCEvent * evt ) {
                     }
                 }
                  
-           }//end final state
+          // }//end final state
         }//end for
 
         //all

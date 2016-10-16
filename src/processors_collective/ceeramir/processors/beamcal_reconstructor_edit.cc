@@ -107,16 +107,21 @@ namespace scipp_ilc {
             unsigned int layer_min = 5;
             unsigned int layer_max = 39;
 	    
-	    cout << "layer_min, layer_max " << endl;
-
 
             lcio::LCCollection* col = event->getCollection("BeamCalHits") ;
             if( col != NULL ){
                 lcio::CellIDDecoder<lcio::SimCalorimeterHit> decoder = lcio::CellIDDecoder<lcio::SimCalorimeterHit>(col);
 
+
+		char str1[] = "*";
+		char str2[] = "";
+
                 int nElements = col->getNumberOfElements()  ;
                 for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
                     lcio::SimCalorimeterHit* hit = dynamic_cast<lcio::SimCalorimeterHit*>( col->getElementAt(hitIndex) );
+
+		    str2 = str1 + str2;
+		    cout << str2 << endl;
 
                     const float* old_pos = hit->getPosition();
 
@@ -141,6 +146,8 @@ namespace scipp_ilc {
                                 int ID = getID(spread_x,spread_y);
                                 (*new_pixels)[ID] += spread_energy;
                             }
+
+			    cout << "*****************" << endl;
                         }
                     } else {
                         int ID = getID(old_x,old_y);

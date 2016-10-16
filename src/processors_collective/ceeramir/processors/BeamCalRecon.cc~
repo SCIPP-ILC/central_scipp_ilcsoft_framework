@@ -18,7 +18,9 @@
 #include "BeamCalRecon.h"
 #include "scipp_ilc_utilities.h"
 #include "polar_coords.h"
-#include "beamcal_reconstructor.h"
+//#include "beamcal_reconstructor.h"
+#include "beamcal_reconstructor_edit.h"
+
 #include "beamcal_scanner.h"
 #include <iostream>
 

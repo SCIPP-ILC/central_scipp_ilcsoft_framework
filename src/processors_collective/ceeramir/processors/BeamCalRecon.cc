@@ -21,7 +21,9 @@
 //#include "beamcal_reconstructor.h"
 #include "beamcal_reconstructor_edit.h"
 
-#include "beamcal_scanner.h"
+//#include "beamcal_scanner.h"
+#include "beamcal_scanner_edit.h"
+
 #include <iostream>
 
 #include <EVENT/LCCollection.h>
