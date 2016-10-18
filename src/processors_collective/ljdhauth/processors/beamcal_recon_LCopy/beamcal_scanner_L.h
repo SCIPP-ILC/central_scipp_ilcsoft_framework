@@ -5,7 +5,7 @@
 #include <vector>
 
 namespace scipp_ilc {
-    namespace beamcal_recon_C {
+    namespace beamcal_recon {
 
         struct beamcal_cluster {
             std::vector<int>* id_list;

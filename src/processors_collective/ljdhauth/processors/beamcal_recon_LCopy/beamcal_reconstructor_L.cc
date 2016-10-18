@@ -15,9 +15,9 @@
 #include "IMPL/LCRunHeaderImpl.h"
 
 
-#include "include/simple_list_geometry_edit.h"
-#include "include/beamcal_scanner_edit.h"
-#include "include/beamcal_reconstructor_edit.h"
+#include "simple_list_geometry.h"
+#include "beamcal_scanner.h"
+#include "beamcal_reconstructor.h"
 
 #include "scipp_ilc_globals.h"
 
@@ -25,7 +25,7 @@
 using namespace std;
 
 namespace scipp_ilc {
-    namespace beamcal_recon_C {
+    namespace beamcal_recon {
 
 
 /*
@@ -103,20 +103,16 @@ namespace scipp_ilc {
             double dim = _cellsize / ( _spreadfactor );
             double Ediv = (_spreadfactor * _spreadfactor);
 
-            unsigned int layer_min = 5;
+            unsigned int layer_min = 6;
             unsigned int layer_max = 39;
-	    
 
             lcio::LCCollection* col = event->getCollection("BeamCalHits") ;
             if( col != NULL ){
                 lcio::CellIDDecoder<lcio::SimCalorimeterHit> decoder = lcio::CellIDDecoder<lcio::SimCalorimeterHit>(col);
 
-
                 int nElements = col->getNumberOfElements()  ;
                 for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
                     lcio::SimCalorimeterHit* hit = dynamic_cast<lcio::SimCalorimeterHit*>( col->getElementAt(hitIndex) );
-
-
 
                     const float* old_pos = hit->getPosition();
 
@@ -141,7 +137,6 @@ namespace scipp_ilc {
                                 int ID = getID(spread_x,spread_y);
                                 (*new_pixels)[ID] += spread_energy;
                             }
-
                         }
                     } else {
                         int ID = getID(old_x,old_y);
@@ -317,11 +312,7 @@ namespace scipp_ilc {
             //function is used here, and also when processing signal events, and
             //when processing signal events you don't want to screw with the statistics.
             _adding_to_stats = true;
-
-	    cout << "******* have we found this *******" << endl;
             initialize_geometry(geom_file_name); //from simple_list_geometry.h
-
-	    cout << "******* We found this !!!!!!!!!! *******" << endl;
             generate_database(bgd_list_file_name);
             calibrate_scanner();
             _adding_to_stats = false;

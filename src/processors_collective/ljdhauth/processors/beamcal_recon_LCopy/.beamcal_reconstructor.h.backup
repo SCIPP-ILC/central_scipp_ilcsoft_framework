@@ -5,7 +5,7 @@
 #include "lcio.h"
 
 namespace scipp_ilc {
-    namespace beamcal_recon_C {
+    namespace beamcal_recon {
         typedef std::unordered_map<int,float> pixel_map;
 
         void initialize_beamcal_reconstructor(std::string geom_file_name, std::string bgd_list_file_name, int bgd_events_to_be_read);

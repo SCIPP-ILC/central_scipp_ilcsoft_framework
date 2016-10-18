@@ -1,0 +1,348 @@
+#undef _GLIBCXX_USE_CXX11_ABI
+#define _GLIBCXX_USE_CXX11_ABI 0
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
+#include <fstream>
+#include <cmath>
+#include <vector>
+#include <unordered_map>
+
+#include "polar_coords.h"
+#include "simple_list_geometry.h"
+
+using namespace std;
+
+namespace scipp_ilc {
+    namespace beamcal_recon {
+        //static int _LastRing;
+        //static float _sector_offset;
+        //static float sectorMultiplier;
+        //static float* _ring_to_radius_table;
+        //static short* SectorCountTable;
+
+        int _LastRing = 56;
+        static float _sector_offset = 0.05;
+        static float _ring_to_radius_table[] = {3.5, 7.0, 10.5, 14.0, 17.5, 
+                                        21.0, 24.5, 28.0, 31.5, 35.0,
+                                        38.5, 42.0, 45.5, 49.0, 52.5,
+                                        56.0, 59.5, 63.0, 66.5, 70.0,
+                                        73.5, 77.0, 80.5, 84.0, 87.5,
+                                        91.0, 94.5, 98.0, 101.5, 105.0,
+                                        108.5, 112.0, 115.5, 119.0, 122.5,
+                                        126.0, 129.5, 133.0, 136.5, 140.0,
+                                        143.5, 147.0, 150.5, 154.0, 157.5,
+                                        161.0, 164.5, 168.0, 171.5, 175.0,
+                                        178.5, 182.0, 185.5, 189.0, 192.5,
+                                        196.0, 199.5};
+
+        static short SectorCountTable[] = {6, 13, 19, 25, 31, 38, 44, 50, 57,
+                                            63, 69, 75, 82, 88, 94, 101, 107,
+                                            113, 119, 126, 132, 138, 145, 151,
+                                            157, 163, 170, 176, 182, 188, 195,
+                                            201, 207, 214, 220, 226, 232, 239,
+                                            245, 251, 258, 264, 270, 276, 283,
+                                            289, 295, 302, 308, 314, 320, 327,
+                                            333, 339, 346, 352, 358};
+
+        const int _IDlimit = 10000;
+
+        std::unordered_map<int,surrounding_ids*>* _pixel_graph;
+        
+        /*
+         * Use binary ( ln(n) time complexity ) search to find
+         * the ring that encapsulates the given radius,
+         * based on the _ring_to_radius_table.
+         */
+        static int getRing(double radius) {
+            if (radius <= _ring_to_radius_table[0]) return 0;
+
+            int start = 0;
+            int end = _LastRing;
+            while ( end-start > 1 ) {
+                int center = (int)(end-start)/2 + start;
+                if ( radius < _ring_to_radius_table[center] ) end = center;
+                else start = center;
+            }
+            return end;
+        }
+
+
+
+        /*
+         * Get the sector ID of that encapsulates the given
+         * phi, given the provided ring.
+         */
+        static int getSector(int ring, double phi) {
+            int sectorCount = SectorCountTable[ring];
+            double offset_phi = phi - _sector_offset*ring;
+            if (offset_phi < 0) offset_phi += 2.0*M_PI;
+            if ((2.0*M_PI) < offset_phi) offset_phi -= 2.0*M_PI;
+            int sector = (int) ((offset_phi/(2.0*M_PI)) * sectorCount);
+            return sector;
+        }
+
+
+
+        /*
+         * Get the anti-clockwise edge of the given
+         * sector within the given ring, accounting
+         * for the possibility that the sector may
+         * be beyond the range of the actual sector.
+         */
+        static double getPhi(int ring, int sector) {
+            int sectorCount = SectorCountTable[ring];
+            if( sector      < 0.0    ) sector += sectorCount;
+            if( sectorCount < sector ) sector -= sectorCount;
+
+            double offset_phi = ((double)sector / (double)sectorCount) * 2.0*M_PI;
+            double phi = offset_phi + _sector_offset*ring;
+            if (phi>2.0*M_PI) phi -= 2.0*M_PI;
+
+
+            return phi;
+        }
+
+
+
+        /*
+         * Obtain the pixel ID that corresponds to the
+         * given polar coordinates.
+         */
+        static int getIDpolar(double radius, double phi) {
+            int ring = getRing(radius);
+            int sector = getSector(ring,phi);
+            int ID = _IDlimit*ring + sector;
+            return ID;
+        }
+
+
+
+        /*
+         * Obtain the pixel ID that corresponds to the
+         * given cartesian coordinates.
+         */
+        int getID(double x, double y) {
+            double r,phi;
+            scipp_ilc::cartesian_to_polar(x,y,r,phi);
+            int ID = getIDpolar(r,phi);
+            return ID;
+        }
+
+
+
+        /*
+         * Obtain the x,y point corresponding to the center of
+         * the pixel given by ID
+         */
+        void get_pixel_center(int ID, double& x, double& y) {
+            int ringID = ID/_IDlimit;
+            int sectorID = ID%_IDlimit;
+
+
+            //get radial center
+            double outer_radius = _ring_to_radius_table[ringID];
+            double inner_radius = 0;
+            if ( ringID != 0 ) {
+                inner_radius = _ring_to_radius_table[ringID-1];
+            }
+
+            double radius = (outer_radius - inner_radius) / 2;
+
+
+            //get polar angular center
+            double ring_circumferance = 2*outer_radius*M_PI;
+            double sector_count = SectorCountTable[ringID];
+            double pixel_arc_length = ring_circumferance / sector_count;
+            double phi_offset = _sector_offset*ringID;
+
+            double phi = pixel_arc_length*sectorID + pixel_arc_length/2 + phi_offset;
+
+
+            //convert to cartesian coordinates
+            polar_to_cartesian(radius,phi,x,y);
+        }
+
+
+
+        /* 
+         * Identifying pixels that surround other pixels with a radial pixel scheme is hard.
+         * So, in order to avoid painfully repeating the process for every pixel that is
+         * looked at, I am creating a hashmap here which caches that information.
+         * The hashmap's keys correspond to the ID of the pixel you want to know the 
+         * sorrounding pixels of. The values are the IDs of the surrounding pixels...
+         * sort of. The values are actually two vectors, and consist of the IDs of the
+         * surrounding pixels. The reason the IDs are broken up into two seperate
+         * lists is that it allows you to rapidly identify pixels on a ring outside
+         * the current one, or inside it. 
+         *
+         * p.s. I'm calling this a graph because 'graph' is a computer science term.
+         *      look it up.
+         */
+        static void makeGraph() {
+           _pixel_graph = new unordered_map<int,surrounding_ids*>();
+
+            for( int ring = 0; ring <= _LastRing; ring++) {
+                for ( int sector = 0; sector < SectorCountTable[ring]; sector++ ) {
+                    int ID = ring*_IDlimit + sector;
+
+                    /*Identify phi boundries*/
+
+                    //create ring variables
+                    int outer_ring = ring + 1;
+                    int inner_ring = ring - 1;
+
+                    //create sector variables
+                    int clockwiseMost_sector = sector-1;
+                    if (clockwiseMost_sector < 0) {
+                        clockwiseMost_sector += SectorCountTable[ring];
+                    }
+
+                    int anticlockwiseMost_sector = sector+1;
+                    if (anticlockwiseMost_sector >= SectorCountTable[ring]) {
+                        anticlockwiseMost_sector -= SectorCountTable[ring];
+                    }
+
+                    //get phi boundries
+                    double clockwise_boundry = getPhi(ring, sector);
+                    double anticlockwise_boundry = getPhi(ring, anticlockwiseMost_sector);
+
+
+                    /*create ID lists*/
+
+                    //create inner ID list.
+                    //Note that the anticlockwise-most sector on the same ring is included
+                    /*
+                     * Additionally, note that these are added in reverse order.
+                     * That way, when iterating through the surrounding ID list,
+                     * the IDs are read in an order that performs a perfect anti-clockwise
+                     * rotation around the sector in question. I chose an anticlockwise
+                     * direction for this in order to match the direction of increasing phi
+                     * in polar coordinates.
+                     */
+                    vector<int>* pixel_list = new vector<int>();
+                    int anticlockwiseMost_ID = ring*_IDlimit + anticlockwiseMost_sector;
+                    pixel_list->push_back(anticlockwiseMost_ID);
+
+                    if (inner_ring >= 0) {
+                        //identify first and last inner sectors
+                        int inner_anticlockwiseMost_sector = getSector(inner_ring, anticlockwise_boundry);
+                        int inner_clockwiseMost_sector = getSector(inner_ring, clockwise_boundry);
+
+                        //add inner sectors to innerlist
+                        if(inner_clockwiseMost_sector <= inner_anticlockwiseMost_sector) {
+                            for (int inner_sector = inner_anticlockwiseMost_sector;
+                                    inner_sector >= inner_clockwiseMost_sector;
+                                    inner_sector--) {
+
+                                int inner_ID = (inner_ring)*_IDlimit + inner_sector;
+                                pixel_list->push_back(inner_ID);
+                            }
+                        } else {
+                            //in this case, we have to go around the corner;
+                            //i.e. from anticlockwise-most to zero,
+                            //and then from the max to clockwise-most
+                            for(int inner_sector = inner_anticlockwiseMost_sector;
+                                    inner_sector >= 0;
+                                    inner_sector--) {
+
+                                int inner_ID = (inner_ring)*_IDlimit + inner_sector;
+                                pixel_list->push_back(inner_ID);
+                            }
+                            for(int inner_sector = SectorCountTable[inner_ring]-1;
+                                    inner_sector >= inner_clockwiseMost_sector;
+                                    inner_sector--) {
+
+                                int inner_ID = (inner_ring)*_IDlimit + inner_sector;
+                                pixel_list->push_back(inner_ID);
+                            }
+                        }
+                    }
+                    int clockwiseMost_index = pixel_list->size();
+
+
+                    //create outer ID list.
+                    //Note that the clockwise-most sector on the same ring is included at index 0.
+                    int clockwiseMost_ID = ring*_IDlimit + clockwiseMost_sector;
+                    pixel_list->push_back(clockwiseMost_ID);
+
+                    if (outer_ring <= _LastRing) {
+                        //identify first and last outer sectors
+                        int outer_anticlockwiseMost_sector = getSector(outer_ring, anticlockwise_boundry);
+                        int outer_clockwiseMost_sector = getSector(outer_ring, clockwise_boundry);
+                        //add outer sectors to pixel_list
+                        if(outer_clockwiseMost_sector <= outer_anticlockwiseMost_sector) {
+                            for (int outer_sector = outer_clockwiseMost_sector;
+                                    outer_sector <= outer_anticlockwiseMost_sector;
+                                    outer_sector++) {
+
+                                int outer_ID = (outer_ring)*_IDlimit + outer_sector;
+                                pixel_list->push_back(outer_ID);
+                            }
+                        }
+                        else {
+                            //in this case, we have to go around the corner;
+                            //i.e. from the clockwise-most to the max,
+                            //and then from zero to the anticlockwise-most
+                            for(int	outer_sector = outer_clockwiseMost_sector;
+                                    outer_sector <= SectorCountTable[outer_ring]-1;
+                                    outer_sector++) {
+
+                                int outer_ID = (outer_ring)*_IDlimit + outer_sector;
+                                pixel_list->push_back(outer_ID);
+                            }
+                            for(int	outer_sector = 0;
+                                    outer_sector <= outer_anticlockwiseMost_sector;
+                                    outer_sector++){
+
+                                int outer_ID = (outer_ring)*_IDlimit + outer_sector;
+                                pixel_list->push_back(outer_ID);
+                            }
+                        }
+                    }
+
+
+                    //add surroundings to the hashmap
+                    surrounding_ids* surroundings;
+                    surroundings = (surrounding_ids*) malloc( sizeof(surrounding_ids) );
+                    surroundings->list = pixel_list;
+                    surroundings->half_turn_index = clockwiseMost_index;
+
+                    _pixel_graph->emplace(ID,surroundings);
+                }
+            }
+        }
+
+
+
+        /*
+         * Right, so... I never actually got around to writing
+         * this part. You really only need this if you intend
+         * to start testing a whole bunch of different geometry
+         * styles, and even then I wonder if writing this function
+         * would actually be faster than just altering the arrays
+         * up top and recompiling the code.
+         *
+         * However, if you do need an actual geometry file, I would
+         * suggest an xml-style file, and using Marlin's tinyxmlparser.h
+         * file in order to read it. Do NOT use XercesC to read xml files,
+         * unless you either already know how to use XercesC, or are insane.
+         */
+        static void readGeomFile(string geom_file_name) {    
+            cout << geom_file_name << endl;
+        }
+
+
+
+        /*
+         * Read in the geometry file and use that to establish
+         * the geometry parameters, then generate the pixel graph.
+         */
+        void initialize_geometry(string geom_file_name) {
+            cout << "Initializing geometry\n";
+            readGeomFile(geom_file_name);
+            makeGraph();
+            cout << "Geometry initialized\n";
+        }
+    }
+}

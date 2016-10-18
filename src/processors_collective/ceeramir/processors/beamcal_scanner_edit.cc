@@ -4,16 +4,16 @@
 #include <cmath>
 #include <algorithm>
 
-#include "beamcal_scanner_edit.h"
-#include "beamcal_reconstructor_edit.h"
-#include "simple_list_geometry.h"
+#include "include/beamcal_scanner_edit.h"
+#include "include/beamcal_reconstructor_edit.h"
+#include "include/simple_list_geometry_edit.h"
 
 
 using namespace std;
 
 
 namespace scipp_ilc {
-    namespace beamcal_recon {
+    namespace beamcal_recon_C {
 
 
 

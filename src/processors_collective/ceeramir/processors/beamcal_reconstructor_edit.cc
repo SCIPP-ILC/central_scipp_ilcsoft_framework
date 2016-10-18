@@ -15,10 +15,9 @@
 #include "IMPL/LCRunHeaderImpl.h"
 
 
-#include "simple_list_geometry.h"
-
-#include "beamcal_scanner_edit.h"
-#include "beamcal_reconstructor_edit.h"
+#include "include/simple_list_geometry_edit.h"
+#include "include/beamcal_scanner_edit.h"
+#include "include/beamcal_reconstructor_edit.h"
 
 #include "scipp_ilc_globals.h"
 
@@ -26,7 +25,7 @@
 using namespace std;
 
 namespace scipp_ilc {
-    namespace beamcal_recon {
+    namespace beamcal_recon_C {
 
 
 /*
@@ -113,15 +112,11 @@ namespace scipp_ilc {
                 lcio::CellIDDecoder<lcio::SimCalorimeterHit> decoder = lcio::CellIDDecoder<lcio::SimCalorimeterHit>(col);
 
 
-		char str1[] = "*";
-		char str2[] = "";
-
                 int nElements = col->getNumberOfElements()  ;
                 for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
                     lcio::SimCalorimeterHit* hit = dynamic_cast<lcio::SimCalorimeterHit*>( col->getElementAt(hitIndex) );
 
-		    str2 = str1 + str2;
-		    cout << str2 << endl;
+
 
                     const float* old_pos = hit->getPosition();
 
@@ -147,7 +142,6 @@ namespace scipp_ilc {
                                 (*new_pixels)[ID] += spread_energy;
                             }
 
-			    cout << "*****************" << endl;
                         }
                     } else {
                         int ID = getID(old_x,old_y);

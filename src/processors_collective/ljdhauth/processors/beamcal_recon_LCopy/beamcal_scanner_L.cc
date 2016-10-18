@@ -4,9 +4,9 @@
 #include <cmath>
 #include <algorithm>
 
-#include "include/beamcal_scanner_edit.h"
-#include "include/beamcal_reconstructor_edit.h"
-#include "include/simple_list_geometry_edit.h"
+#include "beamcal_scanner.h"
+#include "beamcal_reconstructor.h"
+#include "simple_list_geometry.h"
 
 
 using namespace std;
