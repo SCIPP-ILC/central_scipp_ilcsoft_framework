@@ -103,7 +103,7 @@ namespace scipp_ilc {
             double dim = _cellsize / ( _spreadfactor );
             double Ediv = (_spreadfactor * _spreadfactor);
 
-            unsigned int layer_min = 5;
+            unsigned int layer_min = 17;
             unsigned int layer_max = 39;
 	    
 
@@ -317,11 +317,7 @@ namespace scipp_ilc {
             //function is used here, and also when processing signal events, and
             //when processing signal events you don't want to screw with the statistics.
             _adding_to_stats = true;
-
-	    cout << "******* have we found this *******" << endl;
             initialize_geometry(geom_file_name); //from simple_list_geometry.h
-
-	    cout << "******* We found this !!!!!!!!!! *******" << endl;
             generate_database(bgd_list_file_name);
             calibrate_scanner();
             _adding_to_stats = false;

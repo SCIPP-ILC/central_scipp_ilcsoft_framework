@@ -104,7 +104,8 @@ void Basic::processEvent( LCEvent * evt ) {
     // this will only be entered if the collection is available
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
-    
+        cout << nElements << endl;
+         
         //first, find last electron and positron in the event
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );

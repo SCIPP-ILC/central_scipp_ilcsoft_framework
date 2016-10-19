@@ -80,6 +80,7 @@ void SusyCutflow::processEvent( LCEvent * evt ) {
     // usually the working horse ...
 
     LCCollection* col = evt->getCollection( _colName ) ;
+    cout << _colName << endl;
     cout << endl;
     cout << endl;
     cout << endl;
@@ -93,13 +94,17 @@ void SusyCutflow::processEvent( LCEvent * evt ) {
 
     // this will only be entered if the collection is available
     if( col != NULL ){
+        cout << "inside col" << endl;
         int nElements = col->getNumberOfElements()  ;
+        cout << col->getNumberOfElements() << endl;
         
         // For each particle in Event ...
         for(int particleIndex = 0; particleIndex < nElements ; particleIndex++){
            MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(particleIndex) );
-            
-           id = particle->getPDG(); 
+           cout << particle->getPDG() << endl;
+           
+           id = particle->getPDG();
+           //cout << id << endl; 
            //stat = particle->getGeneratorStatus();
            // If Particle is FINAL-STATE 
            //if(stat==1){

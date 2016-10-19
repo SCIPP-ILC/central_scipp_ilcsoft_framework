@@ -103,7 +103,7 @@ namespace scipp_ilc {
             double dim = _cellsize / ( _spreadfactor );
             double Ediv = (_spreadfactor * _spreadfactor);
 
-            unsigned int layer_min = 5;
+            unsigned int layer_min = 19;
             unsigned int layer_max = 39;
 	    
 
