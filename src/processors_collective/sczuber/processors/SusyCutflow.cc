@@ -92,7 +92,6 @@ void SusyCutflow::processEvent( LCEvent * evt ) {
     
     int id, stat; 
 
-    // this will only be entered if the collection is available
     if( col != NULL ){
         cout << "inside col" << endl;
         int nElements = col->getNumberOfElements()  ;
