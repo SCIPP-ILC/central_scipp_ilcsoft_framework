@@ -86,13 +86,14 @@ void SusyCutflow::processEvent( LCEvent * evt ) {
     cout << endl;
     cout << "event = " << _nEvt << endl;
     
-    double vec[4][3];
-    double scalars[4];
-    double energy[4];
-    
-    int id, stat; 
+
 
     if( col != NULL ){
+        double vec[4][3];
+        double scalars[4];
+        double energy[4];
+        
+        int id, stat; 
         cout << "inside col" << endl;
         int nElements = col->getNumberOfElements()  ;
         cout << col->getNumberOfElements() << endl;
@@ -100,11 +101,15 @@ void SusyCutflow::processEvent( LCEvent * evt ) {
         // For each particle in Event ...
         for(int particleIndex = 0; particleIndex < nElements ; particleIndex++){
            MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(particleIndex) );
-           cout << particle->getPDG() << endl;
-           
-           id = particle->getPDG();
-           //cout << id << endl; 
-           //stat = particle->getGeneratorStatus();
+          
+           try{ id = particle->getPDG(); 
+                cout << id << endl; 
+           }
+           catch(...){cout << "could not get particle id" << endl;}
+
+            stat = particle->getGeneratorStatus();
+            cout << "stat" << endl;
+            cout << stat << endl;
            // If Particle is FINAL-STATE 
            //if(stat==1){
                 bool isDarkMatter = (id == 1000022);
