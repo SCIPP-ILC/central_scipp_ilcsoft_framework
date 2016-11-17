@@ -296,6 +296,23 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
            }//end final state
         }//end for
 
+        double tot_vec[] = {0, 0};
+        tot_vec[0] = scatter_vec[0] + high_vec[0];
+        tot_vec[1] = scatter_vec[1] + high_vec[1];
+
+        double mass = sqrt(pow(energy, 2)-pow(scatter_vec[0], 2)-pow(scatter_vec[1], 2)-pow(scatter_vec[2], 2));
+        _mass->Fill(mass);
+        //cout << "Mass parameter: " << mass << endl;
+
+        //fill scalar 
+        _scalar->Fill(mag);
+        //cout << "Scalar Momentum: " << mag << endl;
+
+        //fill vector
+        double vector = sqrt(pow(tot_vec[0], 2) + pow(tot_vec[1], 2));
+        _vector->Fill(vector);
+        //cout << "Vector Momentum: " << vector << endl;
+        
         //create prediction vector
         scatter_vec[0] = -scatter_vec[0];
         scatter_vec[1] = -scatter_vec[1];
@@ -345,19 +362,6 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                 }
             }
 
-
-            double mass = sqrt(pow(energy, 2)-pow(scatter_vec[0], 2)-pow(scatter_vec[1], 2)-pow(scatter_vec[2], 2));
-            _mass->Fill(mass);
-            //cout << "Mass parameter: " << mass << endl;
-
-            //fill scalar 
-            _scalar->Fill(mag);
-            //cout << "Scalar Momentum: " << mag << endl;
-
-            //fill vector
-            double vector = sqrt(pow(scatter_vec[0], 2) + pow(scatter_vec[1], 2));
-            _vector->Fill(vector);
-            //cout << "Vector Momentum: " << vector << endl;
             cout << endl;
             cout << endl;
             cout << endl;
