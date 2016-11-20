@@ -40,7 +40,7 @@ Tester Tester;
 
 static TFile* _rootfile;
 static TH2F* _hitmap;
-
+static TH1F* _vector;
 
 Tester::Tester() : Processor("Tester") {
     // modify processor description
@@ -57,12 +57,10 @@ Tester::Tester() : Processor("Tester") {
 void Tester::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile(_root_file_name.c_str(),"RECREATE");
-
+    _rootfile = new TFile("eBpB_vector","RECREATE");
     // usually a good idea to
     //printParameters() ;
-
-    _nRun = 0 ;
+    _vector = new TH1F("vector", "Transverse Momentum Vector Magnitude", 2000.0, 0.0, 5.0);
     _nEvt = 0 ;
 
 }
@@ -81,15 +79,26 @@ void Tester::processEvent( LCEvent * evt ) {
 
     LCCollection* col = evt->getCollection( _colName ) ;
 
+    int stat=0;
+    double tot_mom[]={0, 0};
     // this will only be entered if the collection is available
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
 
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
-            
-           cout << "Generator Status of particle " << hitIndex << ": " <<  hit->getGeneratorStatus() << endl;
-        } 
+        
+            stat = hit->getGeneratorStatus();
+            if(stat==1){
+                const double* mom = hit->getMomentum();
+                tot_mom[0]+=mom[0];   
+                tot_mom[1]+=mom[1];   
+            }//end final state   
+        }//end for
+        
+        double vector = sqrt(pow(tot_mom[0], 2)+pow(tot_mom[1], 2));
+        _vector->Fill(vector);       
+         
     }
 
     _nEvt ++ ;
