@@ -103,7 +103,7 @@ namespace scipp_ilc {
             double dim = _cellsize / ( _spreadfactor );
             double Ediv = (_spreadfactor * _spreadfactor);
 
-            unsigned int layer_min = 17;
+            unsigned int layer_min = 19;
             unsigned int layer_max = 39;
 	    
 
@@ -113,6 +113,18 @@ namespace scipp_ilc {
 
 
                 int nElements = col->getNumberOfElements()  ;
+		float old_z;
+		float old_y;
+		float old_x;
+		float radius;
+		float old_energy;
+		unsigned int layer;
+		float spread_energy;
+		float spread_x;
+		float spread_y;
+		int ID;
+		float energy;
+
                 for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
                     lcio::SimCalorimeterHit* hit = dynamic_cast<lcio::SimCalorimeterHit*>( col->getElementAt(hitIndex) );
 
@@ -120,39 +132,39 @@ namespace scipp_ilc {
 
                     const float* old_pos = hit->getPosition();
 
-                    float old_z = old_pos[2];
-                    float old_y = old_pos[1];
-                    float old_x = old_pos[0] - abs(old_z)*_transform;
-                    float radius = hypot(old_x,old_y);
-                    float old_energy = hit->getEnergy();
-                    unsigned int layer = decoder(hit)["layer"];
+                    old_z = old_pos[2];
+                    old_y = old_pos[1];
+                    old_x = old_pos[0] - abs(old_z)*_transform;
+                    radius = hypot(old_x,old_y);
+                    old_energy = hit->getEnergy();
+                    layer = decoder(hit)["layer"];
 
                     if ( _remove_negative && (old_z<0) ) continue;
                     if ( radius > _radius_cut ) continue;
                     if ( layer < layer_min or layer_max < layer ) continue;
                     
                     if (_spreadfactor > 1) {
-                        float spread_energy = old_energy / Ediv;
+                        spread_energy = old_energy / Ediv;
                         for (int i = 0; i < _spreadfactor; i++) {
-                            float spread_x = (i*dim) + old_x + (dim/2.0) - (_cellsize/2.0);
+                            spread_x = (i*dim) + old_x + (dim/2.0) - (_cellsize/2.0);
                             for (int j = 0; j < _spreadfactor; j++) {
-                                float spread_y = (j*dim) + old_y + (dim/2.0) - (_cellsize/2.0);
+                                spread_y = (j*dim) + old_y + (dim/2.0) - (_cellsize/2.0);
 
-                                int ID = getID(spread_x,spread_y);
+                                ID = getID(spread_x,spread_y);
                                 (*new_pixels)[ID] += spread_energy;
                             }
 
                         }
                     } else {
-                        int ID = getID(old_x,old_y);
+                        ID = getID(old_x,old_y);
                         (*new_pixels)[ID] += old_energy;
                     }
                 }
 
                 if (_adding_to_stats) {
                     for( auto pixel : *new_pixels ) {
-                        int ID = pixel.first;
-                        float energy = pixel.second;
+                        ID = pixel.first;
+                        energy = pixel.second;
 
                         (*_energy_totals)[ID] += energy;
                         (*_square_energy_totals)[ID] += ( (double)energy ) * ( (double)energy );
@@ -229,19 +241,27 @@ namespace scipp_ilc {
             //one function will take longer than the entire rest
             //of the reconstruction.
             process_background_events(bgd_list_file_name);
+	    int ID;
+	    double energy_total;
+	    int hitcount;
+	    double squared_energy_total;
+	    double energy_average;
+	    double average_of_squares;
+	    double squares_of_averages;
+	    double energy_std_dev;
 
             for ( auto pixel : *_energy_totals ) {
-                int ID = pixel.first;
-                double energy_total = pixel.second;
+                ID = pixel.first;
+                energy_total = pixel.second;
 
-                int hitcount = (*_times_hit)[ID];
-                double squared_energy_total = (*_square_energy_totals)[ID];
+                hitcount = (*_times_hit)[ID];
+                squared_energy_total = (*_square_energy_totals)[ID];
 
-                double energy_average = energy_total / _num_bgd_events;
+                energy_average = energy_total / _num_bgd_events;
 
-                double average_of_squares = squared_energy_total / _num_bgd_events;
-                double square_of_averages = energy_average * energy_average;
-                double energy_std_dev = sqrt(average_of_squares - square_of_averages);
+                average_of_squares = squared_energy_total / _num_bgd_events;
+                square_of_averages = energy_average * energy_average;
+                energy_std_dev = sqrt(average_of_squares - square_of_averages);
 
                 if (hitcount == 1) {
                     energy_std_dev = -1.0;

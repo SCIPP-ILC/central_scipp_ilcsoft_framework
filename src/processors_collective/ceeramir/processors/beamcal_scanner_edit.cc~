@@ -13,7 +13,7 @@ using namespace std;
 
 
 namespace scipp_ilc {
-    namespace beamcal_recon {
+    namespace beamcal_recon_C {
 
 
 
@@ -41,10 +41,16 @@ namespace scipp_ilc {
             //energy, create an [ID,bgd-sub energy] pair, and load those
             //pairs into a vector.
             vector< pair<int, float> > sorted_pixels;
+
+	    int ID;
+	    float energy;
+	    float bgd_subtracted_energy;
+
+
             for (auto pixel : *pixels) { 
-                int ID = pixel.first;
-                float energy = pixel.second;
-                float bgd_subtracted_energy = energy - (*average_map)[ID];
+                ID = pixel.first;
+                energy = pixel.second;
+                bgd_subtracted_energy = energy - (*average_map)[ID];
                 pair<int,float> bgd_subtracted_pair( ID, bgd_subtracted_energy );
                 sorted_pixels.push_back(bgd_subtracted_pair);
             }
@@ -54,13 +60,15 @@ namespace scipp_ilc {
             //storing the pixels' significance as the hashmap's values.
             int count = 0;
             int maximum = 50;
+	    float std_dev;
+	    float signficance;
             for (auto bgd_subtracted_pixel : sorted_pixels) {
-                int ID = bgd_subtracted_pixel.first;
-                float bgd_subtracted_energy = bgd_subtracted_pixel.second;
-                float std_dev = (*std_dev_map)[ID];
+                ID = bgd_subtracted_pixel.first;
+                bgd_subtracted_energy = bgd_subtracted_pixel.second;
+                std_dev = (*std_dev_map)[ID];
                 if (std_dev == -1.0) { continue; }
 
-                float significance = 0.0;
+		//                significance = 0.0;
                 significance = bgd_subtracted_energy / std_dev;
                 (*seed_list)[ID] = significance;
 
@@ -181,11 +189,17 @@ namespace scipp_ilc {
             float chosen_energy = 0.0;
             double chosen_bgd = 0.0;
 
+	    int ID;
+	    float significance;
+	    float energy;
+	    double bgd;
+
+
             for( auto seed : *seed_list ) {
-                int ID = seed.first;
-                float significance = seed.second;
-                float energy = (*pixels)[ID];
-                double bgd = (*average_map)[ID];
+                ID = seed.first;
+                significance = seed.second;
+                energy = (*pixels)[ID];
+                bgd = (*average_map)[ID];
 
                 unordered_set<int>* searched_IDs = new unordered_set<int>();
                 searched_IDs->emplace(ID);

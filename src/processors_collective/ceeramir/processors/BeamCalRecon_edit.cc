@@ -15,6 +15,11 @@
  * April 5, 2016
  */
 
+//#include <ctime>    //************************************************************
+#include <iostream>
+#include <chrono>
+typedef std::chrono::high_resolution_clock Clock;
+
 #include "BeamCalRecon_edit.h"
 #include "scipp_ilc_utilities.h"
 #include "polar_coords.h"
@@ -50,6 +55,12 @@ static TFile* _rootfile;
 static TProfile* _radeff;
 static int _detected_num = 0;
 
+//clock_t _begin;
+//clock_t _end;
+auto _t1 = Clock::now();
+auto _t2 = Clock::now();
+
+
 BeamCalRecon_edit::BeamCalRecon_edit() : Processor("BeamCalRecon_edit") {
     // modify processor description
     _description = "Protype Processor" ;
@@ -70,6 +81,9 @@ void BeamCalRecon_edit::init() {
     _rootfile = new TFile(_root_file_name.c_str(),"RECREATE");
     _radeff = new TProfile("radeff","Radial Efficiency",14*2,0.0,140.0,0.0,1.0);
 
+    //    _begin = clock();
+    _t1 = Clock::now();
+
     //Load up all the bgd events, and initialize the reconstruction algorithm.
     scipp_ilc::beamcal_recon_C::initialize_beamcal_reconstructor(_beamcal_geometry_file_name, _background_event_list, _num_bgd_events_to_read);
 
@@ -86,7 +100,7 @@ void BeamCalRecon_edit::processRunHeader( LCRunHeader* run) {
 
 
 
-void BeamCalRecon_edit::processEvent( LCEvent* signal_event ) { 
+void BeamCalRecon_edit::processEvent( LCEvent* signal_event ) {
     //Make sure we are using an electron that actually hits the Positive BeamCal
     MCParticle* electron = NULL;
     bool detectable_electron = scipp_ilc::get_detectable_signal_event(signal_event,electron);
@@ -125,5 +139,10 @@ void BeamCalRecon_edit::check( LCEvent * evt ) {
 
 void BeamCalRecon_edit::end(){ 
     cout << "\ndetected: " << _detected_num << endl;
+    //    _end = clock();
+    _t2 = Clock::now();
+    cout << "*******************this is the end***********************" << endl;
+    //    cout << "******************* time elapsed: " << (_end - _begin) << " ***********************" << endl;
+    cout << "******************* time elapsed: " << std::chrono::duration_cast<std::chrono::nanoseconds>(_t2 - _t1).count() << " ***********************" << endl;
     _rootfile->Write();
 }

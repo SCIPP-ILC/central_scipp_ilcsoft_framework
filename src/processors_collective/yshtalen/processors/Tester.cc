@@ -57,7 +57,7 @@ Tester::Tester() : Processor("Tester") {
 void Tester::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("eBpB_vector","RECREATE");
+    _rootfile = new TFile("eBpB_vector.root","RECREATE");
     // usually a good idea to
     //printParameters() ;
     _vector = new TH1F("vector", "Transverse Momentum Vector Magnitude", 2000.0, 0.0, 5.0);
