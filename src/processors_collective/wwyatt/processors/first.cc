@@ -15,7 +15,7 @@
  * April 5, 2016
  */
 
-#include "Tester.h"
+#include "first.h"
 #include "scipp_ilc_utilities.h"
 #include <iostream>
 
@@ -36,13 +36,13 @@ using namespace marlin;
 using namespace std;
 
 
-Tester Tester;
+first first;
 
 static TFile* _rootfile;
 static TH2F* _hitmap;
 static TH1F* _vector;
 
-Tester::Tester() : Processor("Tester") {
+first::first() : Processor("first") {
     // modify processor description
     _description = "Protype Processor" ;
 
@@ -54,7 +54,7 @@ Tester::Tester() : Processor("Tester") {
 
 
 
-void Tester::init() { 
+void first::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
     _rootfile = new TFile("eBpB_vector.root","RECREATE");
@@ -66,17 +66,19 @@ void Tester::init() {
 
 
 
-void Tester::processRunHeader( LCRunHeader* run) { 
+void first::processRunHeader( LCRunHeader* run) { 
 //    _nRun++ ;
 } 
 
 
 
-void Tester::processEvent( LCEvent * evt ) { 
+void first::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
 
     LCCollection* col = evt->getCollection( _colName ) ;
+    
+    cout << "evet: " << _eEvt << endl;
 
     int stat, id =0;
     double tot_mom[]={0, 0};
@@ -101,12 +103,12 @@ void Tester::processEvent( LCEvent * evt ) {
 
 
 
-void Tester::check( LCEvent * evt ) { 
+void first::check( LCEvent * evt ) { 
     // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
 
 
 
-void Tester::end(){ 
+void first::end(){ 
     _rootfile->Write();
 }

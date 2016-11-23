@@ -63,12 +63,10 @@ MissingTransverseMomentum::MissingTransverseMomentum() : Processor("MissingTrans
 void MissingTransverseMomentum::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("predict_test.root","RECREATE");
+    _rootfile = new TFile("predict_eBpW.root","RECREATE");
   //  _hitmap_hi = new TH2F("high_hit","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
   //  _hitmap_had = new TH2F("hadronic_hit","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
-    _scalar = new TH1F("scalar", "Transverse Momentum Scalar Magnitude", 2000.0, 0.0, 20.0);
     _vector = new TH1F("vector", "Transverse Momentum Vector Magnitude", 2000.0, 0.0, 20.0);
-    _mass = new TH1F("mass", "Mass Parameter", 2000.0, 0.0, 20.0);
     _thetaDiff = new TH1F("theta", "Difference in Angle Between Predicting and Deflected Lepton Vectors", 2000.0, 0.0, 0.1);
     
     // usually a good idea to
@@ -115,7 +113,7 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
     double energy = 0;
 
     //Lorentz transform parameters
-    double theta, out_energy, out_x;
+    double out_energy, out_x;
 
     //MCParticle identifiers
     int id, stat;
@@ -137,7 +135,9 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
     MCParticle* high_p;
 
     const double* mom_e;
+    double energy_e;
     const double* mom_p;
+    double energy_p;
 
     int e_index;
     int p_index;
@@ -163,12 +163,10 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                 if(id==11){
                     high_e = hit;
                     e_index = hitIndex;
-                    cout << "PRIMARY ELECTRON INDEX: " << e_index << endl;
                 }
                 if(id==-11){
                     high_p = hit;
                     p_index = hitIndex;
-                    cout << "PRIMARY POSITRON INDEX: " << p_index << endl;
                 }
            }//end final state
         }//end for loop
@@ -177,8 +175,10 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
         
         //create high energy vector, track deflections
         mom_e = high_e->getMomentum();
+        energy_e = high_e->getEnergy();
         cout << "PRIMARY ELECTRON at index " << e_index << ": [" << mom_e[0] << ", " << mom_e[1] << ", " << mom_e[2] << "]" << endl;
         mom_p = high_p->getMomentum();
+        energy_p = high_p->getEnergy();
         cout << "PRIMARY POSITRON at index " << p_index << ": [" << mom_p[0] << ", " << mom_p[1] << ", " << mom_p[2] << "]" << endl;
 
         e_def=0;
@@ -243,15 +243,13 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
 
 
                 //determine stdhep position
-                const double* mom = hit->getMomentum();
+                const double* org_mom = hit->getMomentum();
+                double mom[] = {0, 0, 0};
+                mom[0]=org_mom[0];
+                mom[1]=org_mom[1];
+                mom[2]=org_mom[2];
                 
-                //create position vector by ratios from known z position and momentum
-                pos[2] = scipp_ilc::_BeamCal_zmin;
-                pos[0] = mom[0]*pos[2]/mom[2];
-                pos[1] = mom[1]*pos[2]/mom[2];
-               
-
-/******************  ***  LORENTZ TRANSFORM ***  ***********************************/
+/******************TRANSFORMS: 1- Lorentz, 2 - To BeamCal Frame**********************/
                 //collect parameters necessary for Lorentz transform
                 double in_x = mom[0];
                 double in_energy = hit->getEnergy();
@@ -260,15 +258,11 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                 //apply transform
                 scipp_ilc::transform_to_lab(in_x, in_energy, out_x, out_energy);
                 
-                //adjust x position
-                pos[0] = out_x*pos[2]/mom[2];
 /***********************************************************************************/
                 
                 //shift origin to center of beamcal beampipe hole
-                scipp_ilc::z_to_beam_out(pos[0], pos[1], pos[2]);
+                scipp_ilc::z_to_beam_out(mom[0], mom[1], mom[2]);
 
-                double rad = sqrt(pow(pos[0], 2)+ pow(pos[1], 2));
-                
                 //include hadronic only
                 if(hitIndex!=e_index && hitIndex!=p_index){
                         if(abs(out_x)>0.0){
@@ -286,8 +280,6 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                         double tmag = sqrt(pow(out_x, 2)+pow(mom[1], 2));
                         mag+=tmag;  
 
-                        theta = atan(tmag/abs(mom[2]));
-
                     //track neutrinos
                   //  if(id==12 || id==14 || id==16){
                   //      neutrino_counter++;
@@ -296,17 +288,10 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
            }//end final state
         }//end for
 
+
         double tot_vec[] = {0, 0};
         tot_vec[0] = scatter_vec[0] + high_vec[0];
         tot_vec[1] = scatter_vec[1] + high_vec[1];
-
-        double mass = sqrt(pow(energy, 2)-pow(scatter_vec[0], 2)-pow(scatter_vec[1], 2)-pow(scatter_vec[2], 2));
-        _mass->Fill(mass);
-        //cout << "Mass parameter: " << mass << endl;
-
-        //fill scalar 
-        _scalar->Fill(mag);
-        //cout << "Scalar Momentum: " << mag << endl;
 
         //fill vector
         double vector = sqrt(pow(tot_vec[0], 2) + pow(tot_vec[1], 2));
@@ -316,10 +301,10 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
         //create prediction vector
         scatter_vec[0] = -scatter_vec[0];
         scatter_vec[1] = -scatter_vec[1];
-        scatter_vec[2] = sqrt(pow(250.0-energy, 2) - pow(mag, 2));
+        scatter_vec[2] = -sqrt(pow(250.0-energy, 2) - pow(mag, 2));
 
         //--------------------------PLOTTING------------------------------------------------------------------
-        if(_nEvt<100000){
+        if(e_def!=0 || p_def!=0 || b_def!=0){
             //vector magnitudes and theta calculation
             double mag_scatter = sqrt(pow(scatter_vec[0], 2)+pow(scatter_vec[1], 2)+pow(scatter_vec[2], 2));
             double mag_high = sqrt(pow(high_vec[0], 2)+pow(high_vec[1], 2)+pow(high_vec[2], 2));
@@ -381,7 +366,13 @@ void MissingTransverseMomentum::check( LCEvent * evt ) {
 
 
 
-void MissingTransverseMomentum::end(){ 
+void MissingTransverseMomentum::end(){
+    cout << endl;
+    cout << endl;
+    cout << endl;
+    cout << "Electron deflection ratio: " << _e_def_count/100000 << endl;
+    cout << "Positron deflection ratio: " << _p_def_count/100000 << endl;
+     
     cout << "Events in Beamcal radius: " << _eventMax << endl;
     double correct = (double)_correct / (double)_eventMax;
     cout << "Ratio correctly identified: " << correct  << endl; 
