@@ -38,7 +38,6 @@
 
 using namespace lcio;
 using namespace marlin;
-using namespace std;
 
 MissingTransverseMomentum MissingTransverseMomentum;
 
@@ -63,7 +62,7 @@ MissingTransverseMomentum::MissingTransverseMomentum() : Processor("MissingTrans
 void MissingTransverseMomentum::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("predict_eBpW.root","RECREATE");
+    _rootfile = new TFile("predict_eWpB.root","RECREATE");
   //  _hitmap_hi = new TH2F("high_hit","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
   //  _hitmap_had = new TH2F("hadronic_hit","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
     _vector = new TH1F("vector", "Transverse Momentum Vector Magnitude", 2000.0, 0.0, 20.0);
@@ -84,6 +83,8 @@ void MissingTransverseMomentum::init() {
     _correct = 0;
     _false_pos = 0;
     _false_neg = 0;
+
+    _def_events = "";
 }
 
 
@@ -116,7 +117,7 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
     double out_energy, out_x;
 
     //MCParticle identifiers
-    int id, stat;
+    int id, stat, en;
 
     //hit status with respect to the Beamcal for high energy particle and prediction vectors
     // 1 - hit BeamCal
@@ -145,7 +146,7 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
     // this will only be entered if the collection is available
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
-        cout << "this collection has " << nElements << " elements" << endl;
+        //cout << "this collection has " << nElements << " elements" << endl;
         cout << endl; 
         cout << endl; 
         cout << endl; 
@@ -156,8 +157,10 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
     
+           const double* mom = hit->getMomentum();
            id = hit->getPDG(); 
            stat = hit->getGeneratorStatus();
+           cout << hitIndex << " PDGID: " << id << " Momentum: [" << mom[0] << ", " << mom[1] << ", " << mom[2] << "] Energy: " << hit->getEnergy() << endl;
            
            if(stat==1){
                 if(id==11){
@@ -172,14 +175,11 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
         }//end for loop
         
 
-        
         //create high energy vector, track deflections
         mom_e = high_e->getMomentum();
-        energy_e = high_e->getEnergy();
-        cout << "PRIMARY ELECTRON at index " << e_index << ": [" << mom_e[0] << ", " << mom_e[1] << ", " << mom_e[2] << "]" << endl;
+        //cout << "PRIMARY ELECTRON at index " << e_index << ": [" << mom_e[0] << ", " << mom_e[1] << ", " << mom_e[2] << "]" << endl;
         mom_p = high_p->getMomentum();
-        energy_p = high_p->getEnergy();
-        cout << "PRIMARY POSITRON at index " << p_index << ": [" << mom_p[0] << ", " << mom_p[1] << ", " << mom_p[2] << "]" << endl;
+        //cout << "PRIMARY POSITRON at index " << p_index << ": [" << mom_p[0] << ", " << mom_p[1] << ", " << mom_p[2] << "]" << endl;
 
         e_def=0;
         p_def=0;
@@ -199,8 +199,10 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
 
         //both particles deflected
         if(b_def==1){
-            cout << "Both particles deflected" << endl;
+            //cout << "Both particles deflected" << endl;
             _b_def_count++;
+            _def_events+=to_string(_nEvt);
+            _def_events+=" "; 
             high_vec[0]=mom_e[0]+mom_p[0];
             high_vec[1]=mom_e[1]+mom_p[1];
             high_vec[2]=mom_e[2]+mom_p[2];
@@ -209,7 +211,7 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
         else{
             //electron deflection
             if(e_def==1){
-                cout << "Electron deflected" << endl;
+                //cout << "Electron deflected" << endl;
                 _e_def_count++;
                 high_vec[0]=mom_e[0];
                 high_vec[1]=mom_e[1];
@@ -217,7 +219,7 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
             }
             //positron deflection
             else if(p_def==1){
-                cout << "Positron deflected" << endl;
+                //cout << "Positron deflected" << endl;
                 _p_def_count++;
                 high_vec[0]=mom_p[0];
                 high_vec[1]=mom_p[1];
@@ -225,7 +227,7 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
             }
             //no deflection
             else{
-                cout << "No deflection" << endl;
+                //cout << "No deflection" << endl;
                 _no_def_count++;
             } 
         }
@@ -249,6 +251,12 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                 mom[1]=org_mom[1];
                 mom[2]=org_mom[2];
                 
+                if( b_def!=0){
+
+                    cout << "PRIMARY ELECTRON at index " << e_index << ": [" << mom_e[0] << ", " << mom_e[1] << ", " << mom_e[2] << "]" << endl;
+                    cout << "PRIMARY POSITRON at index " << p_index << ": [" << mom_p[0] << ", " << mom_p[1] << ", " << mom_p[2] << "]" << endl;
+                }    
+
 /******************TRANSFORMS: 1- Lorentz, 2 - To BeamCal Frame**********************/
                 //collect parameters necessary for Lorentz transform
                 double in_x = mom[0];
@@ -285,6 +293,9 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
                   //      neutrino_counter++;
                   //  }    
                 }
+
+                
+
            }//end final state
         }//end for
 
@@ -301,10 +312,12 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
         //create prediction vector
         scatter_vec[0] = -scatter_vec[0];
         scatter_vec[1] = -scatter_vec[1];
-        scatter_vec[2] = -sqrt(pow(250.0-energy, 2) - pow(mag, 2));
+        scatter_vec[2] = sqrt(pow(250.0-energy, 2) - pow(mag, 2));
 
         //--------------------------PLOTTING------------------------------------------------------------------
         if(e_def!=0 || p_def!=0 || b_def!=0){
+
+
             //vector magnitudes and theta calculation
             double mag_scatter = sqrt(pow(scatter_vec[0], 2)+pow(scatter_vec[1], 2)+pow(scatter_vec[2], 2));
             double mag_high = sqrt(pow(high_vec[0], 2)+pow(high_vec[1], 2)+pow(high_vec[2], 2));
@@ -327,31 +340,29 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
 
             //determine vector hit status
             //exclude events outside the Beamcal
-            if(e_def==1 || b_def==1 || p_def==1){
-                if(hit_scatter!=2&&hit_high!=2){
-                    _eventMax++;
-                    if(hit_scatter==hit_high){
-                        _correct++;
-                        cout << "CORRECT" << endl;
-                    }
-                    else{
-                        if(hit_scatter==1&&hit_high!=1){
-                            _false_pos++;
-                            cout << "FALSE POSITIVE" << endl;
-                            }
-                        if(hit_scatter!=1&&hit_high==1){
-                            _false_neg++; 
-                            cout << "FALSE NEGATIVE" << endl;
-                            }
-                    }
+            if(hit_scatter!=2&&hit_high!=2){
+                _eventMax++;
+                if(hit_scatter==hit_high){
+                    _correct++;
+                    //cout << "CORRECT" << endl;
+                }
+                else{
+                    if(hit_scatter==1&&hit_high!=1){
+                        _false_pos++;
+                        //cout << "FALSE POSITIVE" << endl;
+                        }
+                    if(hit_scatter!=1&&hit_high==1){
+                        _false_neg++; 
+                        //cout << "FALSE NEGATIVE" << endl;
+                        }
                 }
             }
 
             cout << endl;
             cout << endl;
             cout << endl;
-            cout << "Prediction Vector: [" << scatter_vec[0] << ", " << scatter_vec[1] << ", " << scatter_vec[2] << "]"  << endl;
-            cout << "High Energy Vector: [" << high_vec[0] << ", " << high_vec[1] << ", " << high_vec[2] << "]"  << endl;
+            //cout << "Prediction Vector: [" << scatter_vec[0] << ", " << scatter_vec[1] << ", " << scatter_vec[2] << "]"  << endl;
+            //cout << "High Energy Vector: [" << high_vec[0] << ", " << high_vec[1] << ", " << high_vec[2] << "]"  << endl;
                 
         }
     }
@@ -370,16 +381,24 @@ void MissingTransverseMomentum::end(){
     cout << endl;
     cout << endl;
     cout << endl;
-    cout << "Electron deflection ratio: " << _e_def_count/100000 << endl;
-    cout << "Positron deflection ratio: " << _p_def_count/100000 << endl;
-     
-    cout << "Events in Beamcal radius: " << _eventMax << endl;
+    cout << "Electron deflections: " << _e_def_count << endl;
+    cout << "Positron deflections: " << _p_def_count << endl;
+    cout << "Double deflections: " << _b_def_count << endl;
+    double e_defs = (double)_e_def_count/100000.0;
+    double p_defs = (double)_p_def_count/100000.0;
+    double b_defs = (double)_b_def_count/100000.0;
+    cout << "Double deflection ratio: " << b_defs << endl;
+    cout << "Electron deflection ratio: " << e_defs << endl;
+    cout << "Positron deflection ratio: " << p_defs << endl;
+    
+    cout << _def_events << endl; 
+    /*cout << "Events in Beamcal radius: " << _eventMax << endl;
     double correct = (double)_correct / (double)_eventMax;
     cout << "Ratio correctly identified: " << correct  << endl; 
     double positive =  (double)_false_pos / (double)_eventMax;
     cout << "Ratio false positive: " << positive << endl; 
     double negative = (double)_false_neg / (double)_eventMax;
-    cout << "Ratio false negative: " << negative << endl; 
+    cout << "Ratio false negative: " << negative << endl;*/ 
     _rootfile->Write();
 }
 

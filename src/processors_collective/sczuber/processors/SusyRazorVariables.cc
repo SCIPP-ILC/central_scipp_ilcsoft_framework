@@ -1,0 +1,186 @@
+#undef _GLIBCXX_USE_CXX11_ABI
+#define _GLIBCXX_USE_CXX11_ABI 0
+/* 
+ * Ok, so I like C++11. Unfortunately,
+ * Marlin is built with ansi C, so the processor
+ * constructor freaks out about the string that is
+ * passed to it as an argument. The above two lines
+ * fix that issue, allowing our code to be compatible
+ * with ansi C class declarations.
+ * Big thanks to Daniel Bittman for helping me fix this.
+ */
+
+/*
+ * author Summer Zuber
+ * November 23, 2016
+ * This is an initial attempt to use calculate and use Razor Variables with our degenerate Susy Events 
+ */
+
+#include "SusyRazorVariables.h"
+#include "scipp_ilc_utilities.h"
+#include <iostream>
+#include <cmath>
+
+#include <EVENT/LCCollection.h>
+#include <EVENT/SimCalorimeterHit.h>
+#include <EVENT/MCParticle.h>
+
+#include <TFile.h>
+#include <TH2D.h>
+
+// ----- include for verbosity dependend logging ---------
+#include "marlin/VerbosityLevels.h"
+
+
+
+using namespace lcio;
+using namespace marlin;
+using namespace std;
+
+SusyRazorVariables SusyRazorVariables;
+
+static TFile* _rootfile;
+
+static TH1F* _FirstRazorPlot;
+
+SusyRazorVariables::SusyRazorVariables() : Processor("SusyRazorVariables") {
+    // modify processor description
+    _description = "Protype Processor" ;
+
+    // register steering parameters: name, description, class-variable, default value
+    registerInputCollection( LCIO::MCPARTICLE, "CollectionName" , "Name of the MCParticle collection"  , _colName , std::string("MCParticle") );
+}
+
+
+
+void SusyRazorVariables::init() { 
+    streamlog_out(DEBUG) << "   init called  " << std::endl ;
+
+    _rootfile = new TFile("SusyRazorVariables.root","RECREATE");
+    _FirstRazorPlot = new TH1F("FirstRazorPlot","My First Razor Plot", 40,0,20); 
+    // usually a good idea to
+    //printParameters() ;
+
+    _nRun = 0 ;
+    _nEvt = 0 ;
+}
+
+
+
+void SusyRazorVariables::processRunHeader( LCRunHeader* run) { 
+//    _nRun++ ;
+} 
+
+
+
+void SusyRazorVariables::processEvent( LCEvent * evt ) { 
+    // this gets called for every event 
+    // usually the working horse ...
+
+    LCCollection* col = evt->getCollection( _colName ) ;
+    cout << endl;
+    cout << endl;
+    cout << endl;
+    cout << "event = " << _nEvt << endl;
+    
+    double vec[4][3];
+    double scalars[4];
+    double energy[4];
+    
+    //particle identifiers
+    int id, stat; 
+
+    // this will only be entered if the collection is available
+    if( col != NULL ){
+        int nElements = col->getNumberOfElements()  ;
+        
+        // For each particle in Event ...
+        for(int particleIndex = 0; particleIndex < nElements ; particleIndex++){
+           MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(particleIndex) );
+            
+           try{ 
+            id = particle->getPDG(); 
+            stat = particle->getGeneratorStatus();
+           }
+           catch(const std::exception& e){
+               cout << "exception caught with message " << e.what() << "\n";
+           }
+           // If Particle is FINAL-STATE 
+           if(stat==1){
+
+                bool isDarkMatter = (id == 1000022);
+                if(isDarkMatter) continue ;
+                double E = particle->getEnergy();
+                const double* P = particle->getMomentum();
+                double Pmag = sqrt(P[0]*P[0]+P[1]*P[1]+P[2]*P[2]);
+                double cos = P[2]/Pmag;
+                double scalar = sqrt(P[0]*P[0]+P[1]*P[1]); 
+                bool isNeutrino = (
+                    id == 12 || id == -12 ||
+                    id == 14 || id == -14 ||
+                    id == 16 || id == -16 ||
+                    id == 18 || id == -18);
+                bool isForward = ( cos > 0.9 || cos < -0.9);               
+                scalars[0]+=scalar; //true
+                vec[0][0]+=P[0];
+                vec[0][1]+=P[1];
+                vec[0][2]+=P[2];
+                energy[0]+=E;                        
+                if(!isDarkMatter && !isNeutrino){ //detectable
+                    scalars[2]+=scalar;
+                    vec[2][0]+=P[0];
+                    vec[2][1]+=P[1];
+                    vec[2][2]+=P[2];
+                    energy[2]+=E;
+                    if(!isForward){
+                        scalars[1]+=scalar; //detected
+                        vec[1][0]+=P[0];
+                        vec[1][1]+=P[1];
+                        vec[1][2]+=P[2];
+                        energy[1]+=E;      
+                    }
+                }
+                 
+           }//end final state
+        }//end for
+        
+        cout << "event "<< _nEvt <<" finished " << endl;
+        //all
+        double total_true_scalar = scalars[0];
+        double total_detected_scalar = scalars[1];
+        double total_detectable_scalar = scalars[2];
+
+        double total_true_mass_squared = energy[0]+energy[0]-
+            (vec[0][0]*vec[0][0]+vec[0][1]*vec[0][1]+
+            vec[0][2]*vec[0][2]);
+        double total_true_mass = sqrt(total_true_mass_squared);
+        double total_detected_mass_squared = energy[1]*energy[1]-
+            (vec[1][0]*vec[1][0]+vec[1][1]*vec[1][1]+
+            vec[1][2]*vec[1][2]);
+        double total_detected_mass = sqrt(total_detected_mass_squared);
+        double total_detectable_mass_squared = energy[2]*energy[2]-
+            (vec[2][0]*vec[2][0]+vec[2][1]*vec[2][1]+
+            vec[2][2]*vec[2][2]);
+            
+        double total_true_vector = sqrt(vec[0][0]*vec[0][0]+vec[0][1]*vec[0][1]+vec[0][2]*vec[0][2]); 
+        double total_detected_vector = sqrt(vec[1][0]*vec[1][0]+vec[1][1]*vec[1][1]+vec[1][2]*vec[1][2]); 
+        double total_detectable_vector = sqrt(vec[2][0]*vec[2][0]+vec[2][1]*vec[2][1]+vec[2][2]*vec[2][2]); 
+        _V_n_C->Fill(total_detected_vector);
+        _V_n_A->Fill(total_detectable_vector);
+        _V_N_A->Fill(total_true_vector);
+    }
+    _nEvt ++ ;
+}
+
+
+
+void SusyRazorVariables::check( LCEvent * evt ) { 
+    // nothing to check here - could be used to fill checkplots in reconstruction processor
+}
+
+
+
+void SusyRazorVariables::end(){ 
+
+    _rootfile->Write();
+}

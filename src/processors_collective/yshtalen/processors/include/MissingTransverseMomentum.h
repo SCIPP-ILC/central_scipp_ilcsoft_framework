@@ -5,7 +5,7 @@
 #include "lcio.h"
 #include <string>
 
-
+using namespace std;
 using namespace lcio ;
 using namespace marlin ;
 
@@ -74,6 +74,7 @@ class MissingTransverseMomentum : public Processor {
   int _false_pos;
   int _false_neg;
   int _eventMax;
+  string _def_events;
 } ;
 
 #endif
