@@ -30,7 +30,7 @@
 
 // ----- include for verbosity dependend logging ---------
 #include "marlin/VerbosityLevels.h"
-
+#include <list>
 
 
 using namespace lcio;
@@ -68,7 +68,7 @@ void SusyRazorVariables::init() {
 
 
 void SusyRazorVariables::processRunHeader( LCRunHeader* run) { 
-//    _nRun++ ;
+    //    _nRun++ ;
 } 
 
 
@@ -82,98 +82,57 @@ void SusyRazorVariables::processEvent( LCEvent * evt ) {
     cout << endl;
     cout << endl;
     cout << "event = " << _nEvt << endl;
-    
-    double vec[4][3];
-    double scalars[4];
-    double energy[4];
-    
+
+    //creat tau list? 
+
+    // might not need these:
+    double vec[4][3];  // momentum 3 vectors of: tau 1, tau 2, lsp 1, lsp 2
+    double scalars[4]; // magnitude of 3 vectors of same categories 
+    double energy[4];  // energy of same categories 
+
     //particle identifiers
     int id, stat; 
 
     // this will only be entered if the collection is available
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
-        
+
         // For each particle in Event ...
         for(int particleIndex = 0; particleIndex < nElements ; particleIndex++){
-           MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(particleIndex) );
-            
-           try{ 
-            id = particle->getPDG(); 
-            stat = particle->getGeneratorStatus();
-           }
-           catch(const std::exception& e){
-               cout << "exception caught with message " << e.what() << "\n";
-           }
-           // If Particle is FINAL-STATE 
-           if(stat==1){
+            MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(particleIndex) ); 
+            try{ 
+                id = particle->getPDG(); 
+                stat = particle->getGeneratorStatus();
+            }
+            catch(const std::exception& e){
+                cout << "exception caught with message " << e.what() << "\n";
+            }
+           
 
-                bool isDarkMatter = (id == 1000022);
-                if(isDarkMatter) continue ;
-                double E = particle->getEnergy();
-                const double* P = particle->getMomentum();
-                double Pmag = sqrt(P[0]*P[0]+P[1]*P[1]+P[2]*P[2]);
-                double cos = P[2]/Pmag;
-                double scalar = sqrt(P[0]*P[0]+P[1]*P[1]); 
-                bool isNeutrino = (
-                    id == 12 || id == -12 ||
-                    id == 14 || id == -14 ||
-                    id == 16 || id == -16 ||
-                    id == 18 || id == -18);
-                bool isForward = ( cos > 0.9 || cos < -0.9);               
-                scalars[0]+=scalar; //true
-                vec[0][0]+=P[0];
-                vec[0][1]+=P[1];
-                vec[0][2]+=P[2];
-                energy[0]+=E;                        
-                if(!isDarkMatter && !isNeutrino){ //detectable
-                    scalars[2]+=scalar;
-                    vec[2][0]+=P[0];
-                    vec[2][1]+=P[1];
-                    vec[2][2]+=P[2];
-                    energy[2]+=E;
-                    if(!isForward){
-                        scalars[1]+=scalar; //detected
-                        vec[1][0]+=P[0];
-                        vec[1][1]+=P[1];
-                        vec[1][2]+=P[2];
-                        energy[1]+=E;      
+            if (id==15 || id == -15){
+                cout << particle << " " << particle->getPDG() << endl;
+                for(MCParticle* parent : particle->getParents()){
+                    cout << "parent: parent, id" << parent << " " << parent->getPDG() << endl;
+                    if(parent->getPDG() == 1000015 || parent->getPDG() == -1000015){
+                        //tauLIST.ADD(PARTICLE)
                     }
                 }
-                 
-           }//end final state
+
+            }
+
+            // transform momentum-energy four vector to R frame:
+            // beta = (E of tau 1 - E of tau 2)/(pz of tau 1 - pz of tau 2)
+            if(id == 1000022){
+                cout << particle <<"  "<< particle->getPDG() << endl; 
+            }
+            // _V_n_C->Fill(total_detected_vector);
+
+
         }//end for
-        
-        cout << "event "<< _nEvt <<" finished " << endl;
-        //all
-        double total_true_scalar = scalars[0];
-        double total_detected_scalar = scalars[1];
-        double total_detectable_scalar = scalars[2];
-
-        double total_true_mass_squared = energy[0]+energy[0]-
-            (vec[0][0]*vec[0][0]+vec[0][1]*vec[0][1]+
-            vec[0][2]*vec[0][2]);
-        double total_true_mass = sqrt(total_true_mass_squared);
-        double total_detected_mass_squared = energy[1]*energy[1]-
-            (vec[1][0]*vec[1][0]+vec[1][1]*vec[1][1]+
-            vec[1][2]*vec[1][2]);
-        double total_detected_mass = sqrt(total_detected_mass_squared);
-        double total_detectable_mass_squared = energy[2]*energy[2]-
-            (vec[2][0]*vec[2][0]+vec[2][1]*vec[2][1]+
-            vec[2][2]*vec[2][2]);
-            
-        double total_true_vector = sqrt(vec[0][0]*vec[0][0]+vec[0][1]*vec[0][1]+vec[0][2]*vec[0][2]); 
-        double total_detected_vector = sqrt(vec[1][0]*vec[1][0]+vec[1][1]*vec[1][1]+vec[1][2]*vec[1][2]); 
-        double total_detectable_vector = sqrt(vec[2][0]*vec[2][0]+vec[2][1]*vec[2][1]+vec[2][2]*vec[2][2]); 
-        _V_n_C->Fill(total_detected_vector);
-        _V_n_A->Fill(total_detectable_vector);
-        _V_N_A->Fill(total_true_vector);
-    }
-    _nEvt ++ ;
-}
-
-
-
+    }//ind if col
+    _nEvt ++;
+    cout << "event "<< _nEvt <<" finished " << endl;
+}//end process
 void SusyRazorVariables::check( LCEvent * evt ) { 
     // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
