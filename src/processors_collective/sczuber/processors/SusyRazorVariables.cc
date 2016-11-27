@@ -84,7 +84,10 @@ void SusyRazorVariables::processEvent( LCEvent * evt ) {
     cout << "event = " << _nEvt << endl;
 
     //creat tau list? 
-
+    std::list<MCParticle*> tauList;
+    //instead of list, these will be the two tau's for the event:
+    MCParticle* tau1;
+    MCParticle* tau2;
     // might not need these:
     double vec[4][3];  // momentum 3 vectors of: tau 1, tau 2, lsp 1, lsp 2
     double scalars[4]; // magnitude of 3 vectors of same categories 
@@ -97,6 +100,7 @@ void SusyRazorVariables::processEvent( LCEvent * evt ) {
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
 
+        int i = 0; // this is to count the 2 tau leptons 
         // For each particle in Event ...
         for(int particleIndex = 0; particleIndex < nElements ; particleIndex++){
             MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(particleIndex) ); 
@@ -106,33 +110,60 @@ void SusyRazorVariables::processEvent( LCEvent * evt ) {
             }
             catch(const std::exception& e){
                 cout << "exception caught with message " << e.what() << "\n";
-            }
-           
-
+            } 
             if (id==15 || id == -15){
                 cout << particle << " " << particle->getPDG() << endl;
                 for(MCParticle* parent : particle->getParents()){
                     cout << "parent: parent, id" << parent << " " << parent->getPDG() << endl;
+
                     if(parent->getPDG() == 1000015 || parent->getPDG() == -1000015){
-                        //tauLIST.ADD(PARTICLE)
+                        //tauList.Add(particle);
+                        if(i==0){tau1 = particle;}
+                        if(i==1){tau2 = particle;}
+                        i++;
                     }
                 }
 
-            }
-
-            // transform momentum-energy four vector to R frame:
-            // beta = (E of tau 1 - E of tau 2)/(pz of tau 1 - pz of tau 2)
+            } 
             if(id == 1000022){
-                cout << particle <<"  "<< particle->getPDG() << endl; 
+                cout << particle << "  " << particle->getPDG() << endl; 
             }
-            // _V_n_C->Fill(total_detected_vector);
-
 
         }//end for
+        cout << "tau 1 " << tau1 << " " << tau1->getPDG() << endl;
+        cout << "tau 2 " << tau2 << " " << tau2->getPDG() << endl;
+        for(int particleIndex = 0; particleIndex < nElements ; particleIndex++){
+            MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(particleIndex) );
+            try{
+                id = particle->getPDG();
+                stat = particle->getGeneratorStatus();
+            }
+            catch(const std::exception& e){
+                cout << "exception caught with message "<< e.what() << "\n";
+            }
+            double particle4Vector[4] = {particle->getEnergy(), particle->getMomentum()[0], 
+                                         particle->getMomentum()[1], particle->getMomentum()[2]};
+            //transform to R frame 
+            double beta = (tau1->getEnergy() - tau2->getEnergy())/(tau1->getMomentum()[2] - tau2->getMomentum()[2]);
+            cout << "BETA :"<< beta<<endl;
+            double R4Vector[4] = {Transform2RFrame( particle4Vector, beta )};
+            cout << "Four Vec    " << particle4Vector[0] <<" "<<particle4Vector[1]<<" "<<particle4Vector[2]<<" "<<particle4Vector[3]<< endl;
+            cout << "Transformed " << R4Vector[0]        <<" "<<R4Vector[1]       <<" "<<R4Vector[2]       <<" "<<R4Vector[3]<< endl; 
+        } 
     }//ind if col
+
     _nEvt ++;
+
     cout << "event "<< _nEvt <<" finished " << endl;
 }//end process
+
+// function to transform into R frame 
+double SusyRazorVariables::Transform2RFrame(double in[4], double beta){
+    double gamma = pow(1-pow(beta,2), -0.5);
+    double out[4] = {gamma*in[0]-gamma*beta*in[3], in[1], in[2], -gamma*beta*in[0]+gamma*in[3]}; 
+    return out[4];      
+}
+
 void SusyRazorVariables::check( LCEvent * evt ) { 
     // nothing to check here - could be used to fill checkplots in reconstruction processor
 }

@@ -90,6 +90,7 @@ void Tester::processEvent( LCEvent * evt ) {
             id = hit->getPDG();
             stat = hit->getGeneratorStatus();
             if(stat==1){
+                cout << "TEST: " << hit->getMomentum()[0] << endl;
                 cout << "Particle " << hitIndex << " with ID: " << id << endl;
             }//end final state   
         }//end for
