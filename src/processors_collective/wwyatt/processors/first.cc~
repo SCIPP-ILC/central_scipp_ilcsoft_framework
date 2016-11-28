@@ -56,7 +56,7 @@ first::first() : Processor("first") {
 
 void first::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
-
+    cout << "Initialized" << endl;
     _rootfile = new TFile("eBpB_vector.root","RECREATE");
     // usually a good idea to
     //printParameters() ;
@@ -75,8 +75,8 @@ void first::processRunHeader( LCRunHeader* run) {
 void first::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
-
-    LCCollection* col = evt->getCollection( _colName ) ;
+    cout << "Event started." << endl;
+    LCCollection* col = evt->getCollection( _colName );
 
     int stat, id =0;
     double tot_mom[]={0, 0};

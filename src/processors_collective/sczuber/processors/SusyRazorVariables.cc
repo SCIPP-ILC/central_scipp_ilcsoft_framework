@@ -134,6 +134,8 @@ void SusyRazorVariables::processEvent( LCEvent * evt ) {
         cout << "tau 2 " << tau2 << " " << tau2->getPDG() << endl;
         for(int particleIndex = 0; particleIndex < nElements ; particleIndex++){
             MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(particleIndex) );
+            cout << endl;
+            cout << endl;
             try{
                 id = particle->getPDG();
                 stat = particle->getGeneratorStatus();
@@ -146,9 +148,10 @@ void SusyRazorVariables::processEvent( LCEvent * evt ) {
             //transform to R frame 
             double beta = (tau1->getEnergy() - tau2->getEnergy())/(tau1->getMomentum()[2] - tau2->getMomentum()[2]);
             cout << "BETA :"<< beta<<endl;
-            double R4Vector[4] = {Transform2RFrame( particle4Vector, beta )};
-            cout << "Four Vec    " << particle4Vector[0] <<" "<<particle4Vector[1]<<" "<<particle4Vector[2]<<" "<<particle4Vector[3]<< endl;
-            cout << "Transformed " << R4Vector[0]        <<" "<<R4Vector[1]       <<" "<<R4Vector[2]       <<" "<<R4Vector[3]<< endl; 
+            double *R4Vector[4] = {Transform2RFrame( particle4Vector, beta )};
+            cout << "Four Vec    " << endl;
+            cout << particle4Vector[0] <<" "<<particle4Vector[1]<<" "<<particle4Vector[2]<<" "<<particle4Vector[3]<< endl;
+            cout << "Transformed " << R4Vector[0]        <<" "<<R4Vector[1]       <<" "<<R4Vector[2]       <<" "<<R4Vector[3]<<" "<<R4Vector[4]<< endl; 
         } 
     }//ind if col
 
@@ -158,10 +161,21 @@ void SusyRazorVariables::processEvent( LCEvent * evt ) {
 }//end process
 
 // function to transform into R frame 
-double SusyRazorVariables::Transform2RFrame(double in[4], double beta){
-    double gamma = pow(1-pow(beta,2), -0.5);
+double *SusyRazorVariables::Transform2RFrame(double in[4], double beta){
+    cout << "----------------------------"<<endl;
+    cout << "Running Transform Function!"<<endl;
+    double beta2 = pow(beta,2);
+    cout << "BETA SQUARED: "<<beta2<<endl; 
+    double gamma = 1/(sqrt(1-pow(beta,2)));
+    cout << "GAMMA: "<<gamma<<endl;
+    cout << "In 4 Vec: " <<endl;
+    cout << in[0] <<" "<<in[1]<<" "<<in[2]<<" "<<in[3]<<endl;
     double out[4] = {gamma*in[0]-gamma*beta*in[3], in[1], in[2], -gamma*beta*in[0]+gamma*in[3]}; 
-    return out[4];      
+    cout << "Out:"<<endl;
+    cout << out[0]<<" "<<out[1]<<" "<<out[2]<<" "<<out[3]<<endl;
+    cout << "----------------------------"<<endl; 
+    return out;     
+    
 }
 
 void SusyRazorVariables::check( LCEvent * evt ) { 

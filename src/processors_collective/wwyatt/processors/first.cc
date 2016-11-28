@@ -56,12 +56,14 @@ first::first() : Processor("first") {
 
 void first::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
-
+    cout << "Initialized" << endl;
     _rootfile = new TFile("eBpB_vector.root","RECREATE");
     // usually a good idea to
     //printParameters() ;
     _nEvt = 0 ;
 
+    //Setting up Plots\\
+    _vector = new TH1F("test_1", "This is a test.", 200.0, 0.0, 2000.0);
 }
 
 
@@ -75,10 +77,8 @@ void first::processRunHeader( LCRunHeader* run) {
 void first::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
-
-    LCCollection* col = evt->getCollection( _colName ) ;
-    
-    cout << "evet: " << _eEvt << endl;
+    cout << "Event started." << endl;
+    LCCollection* col = evt->getCollection( _colName );
 
     int stat, id =0;
     double tot_mom[]={0, 0};
@@ -93,6 +93,12 @@ void first::processEvent( LCEvent * evt ) {
             stat = hit->getGeneratorStatus();
             if(stat==1){
                 cout << "Particle " << hitIndex << " with ID: " << id << endl;
+		
+		//Setting up Test Plots\\
+		double thisEnergy = hit->getEnergy();
+		double thisMomentum = *hit->getMomentum();
+		_vector->Fill(id,hit->getEnergy());
+
             }//end final state   
         }//end for
          
