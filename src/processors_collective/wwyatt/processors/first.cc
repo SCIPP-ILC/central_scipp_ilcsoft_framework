@@ -57,13 +57,14 @@ first::first() : Processor("first") {
 void first::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
     cout << "Initialized" << endl;
-    _rootfile = new TFile("eBpB_vector.root","RECREATE");
+    _rootfile = new TFile("will_test.root","RECREATE");
     // usually a good idea to
     //printParameters() ;
     _nEvt = 0 ;
 
     //Setting up Plots\\
-    _vector = new TH1F("test_1", "This is a test.", 200.0, 0.0, 2000.0);
+    _vector = new TH1F("energy", "Energy", 13.0,  0.0, 260.0);
+    cout << "Vector allocated." << endl;
 }
 
 
@@ -79,7 +80,10 @@ void first::processEvent( LCEvent * evt ) {
     // usually the working horse ...
     cout << "Event started." << endl;
     LCCollection* col = evt->getCollection( _colName );
+    
 
+    double thisEnergy;
+    double thisMomentum;
     int stat, id =0;
     double tot_mom[]={0, 0};
     // this will only be entered if the collection is available
@@ -92,12 +96,12 @@ void first::processEvent( LCEvent * evt ) {
             id = hit->getPDG();
             stat = hit->getGeneratorStatus();
             if(stat==1){
-                cout << "Particle " << hitIndex << " with ID: " << id << endl;
+	      thisEnergy = hit->getEnergy();
+	      cout << "Particle " << hitIndex << " with ID: " << id << " energy " << thisEnergy << endl;
 		
-		//Setting up Test Plots\\
-		double thisEnergy = hit->getEnergy();
-		double thisMomentum = *hit->getMomentum();
-		_vector->Fill(id,hit->getEnergy());
+	      //Setting up Test Plots\\
+	      _vector->Fill(thisEnergy);
+	      //cout << "Bin Size: " << _veA
 
             }//end final state   
         }//end for

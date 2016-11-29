@@ -57,11 +57,14 @@ first::first() : Processor("first") {
 void first::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
     cout << "Initialized" << endl;
-    _rootfile = new TFile("eBpB_vector.root","RECREATE");
+    _rootfile = new TFile("will_test.root","RECREATE");
     // usually a good idea to
     //printParameters() ;
     _nEvt = 0 ;
 
+    //Setting up Plots\\
+    _vector = new TH1F("test", "This is a test.", 200.0, 0.0, 2000.0);
+    cout << "Vector allocated." << endl;
 }
 
 
@@ -91,6 +94,12 @@ void first::processEvent( LCEvent * evt ) {
             stat = hit->getGeneratorStatus();
             if(stat==1){
                 cout << "Particle " << hitIndex << " with ID: " << id << endl;
+		
+		//Setting up Test Plots\\
+		double thisEnergy = hit->getEnergy();
+		double thisMomentum = *hit->getMomentum();
+		_vector->Fill(id,hit->getEnergy());
+
             }//end final state   
         }//end for
          

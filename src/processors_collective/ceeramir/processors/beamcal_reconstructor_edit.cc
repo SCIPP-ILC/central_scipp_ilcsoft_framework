@@ -360,7 +360,7 @@ namespace scipp_ilc {
             std::mt19937 rng(rd()); // random-number engine used (Mersenne-Twister in this case)
             std::uniform_int_distribution<int> uni(0,_num_bgd_events-1); // guaranteed unbiased
             int bgd_index = uni(rng);
-            
+
             pixel_map bgd_populated_beamcal = *( (*_database)[bgd_index] );
             pixelate_beamcal( signal_event, &bgd_populated_beamcal );
             beamcal_cluster* signal_cluster = scan_beamcal(&bgd_populated_beamcal,_energy_averages,_energy_std_devs);
