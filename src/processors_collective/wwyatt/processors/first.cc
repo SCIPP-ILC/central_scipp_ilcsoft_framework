@@ -58,12 +58,12 @@ void first::init() {
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
     cout << "Initialized" << endl;
     _rootfile = new TFile("will_test.root","RECREATE");
+    _vector = new TH1F("energy", "Energy", 13.0,  0.0, 260.0);
     // usually a good idea to
     //printParameters() ;
     _nEvt = 0 ;
 
     //Setting up Plots\\
-    _vector = new TH1F("energy", "Energy", 13.0,  0.0, 260.0);
     cout << "Vector allocated." << endl;
 }
 
@@ -81,7 +81,6 @@ void first::processEvent( LCEvent * evt ) {
     cout << "Event started." << endl;
     LCCollection* col = evt->getCollection( _colName );
     
-
     double thisEnergy;
     double thisMomentum;
     int stat, id =0;
@@ -96,11 +95,11 @@ void first::processEvent( LCEvent * evt ) {
             id = hit->getPDG();
             stat = hit->getGeneratorStatus();
             if(stat==1){
-	      thisEnergy = hit->getEnergy();
+	      const double thisEnergy = hit->getEnergy();
 	      cout << "Particle " << hitIndex << " with ID: " << id << " energy " << thisEnergy << endl;
 		
 	      //Setting up Test Plots\\
-	      _vector->Fill(thisEnergy);
+	      _vector->Fill(hit->getEnergy());
 	      //cout << "Bin Size: " << _veA
 
             }//end final state   
