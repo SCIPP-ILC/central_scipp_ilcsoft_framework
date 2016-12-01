@@ -11,11 +11,11 @@
  */
 
 /*
- * author Christopher Milke
+ * author Jane Shtalenkova
  * April 5, 2016
  */
 
-#include "first.h"
+#include "Bhabha.h"
 #include "scipp_ilc_utilities.h"
 #include <iostream>
 
@@ -25,6 +25,7 @@
 
 #include <TFile.h>
 #include <TH2D.h>
+
 
 // ----- include for verbosity dependend logging ---------
 #include "marlin/VerbosityLevels.h"
@@ -36,76 +37,61 @@ using namespace marlin;
 using namespace std;
 
 
-first first;
+Bhabha Bhabha;
 
 static TFile* _rootfile;
-static TH2F* _hitmap;
-static TH1F* _energy;
+static TH2F*  _hitmap;  
 
-first::first() : Processor("first") {
+
+Bhabha::Bhabha() : Processor("Bhabha") {
     // modify processor description
     _description = "Protype Processor" ;
 
     // register steering parameters: name, description, class-variable, default value
     registerInputCollection( LCIO::MCPARTICLE, "CollectionName" , "Name of the MCParticle collection"  , _colName , std::string("MCParticle") );
-
-    registerProcessorParameter( "RootOutputName" , "output file"  , _root_file_name , std::string("output.root") );
 }
 
 
-void first::init() { 
+
+void Bhabha::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
-    cout << "Initialized" << endl;
-    _rootfile = new TFile("will_test.root","RECREATE");
-    _energy = new TH1F("energy", "Energy", 520.0,  0.0, 260.0);
-    _hitmap = new TH2F("pos", "Position Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
+
+    _rootfile = new TFile("hitmap.root","RECREATE");
+    _hitmap = new TH2F("hitmap","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
+
     // usually a good idea to
+
     //printParameters() ;
+
+    _nRun = 0 ;
     _nEvt = 0 ;
 
-    //Setting up Plots\\
-    cout << "Vector allocated." << endl;
 }
 
 
 
-void first::processRunHeader( LCRunHeader* run) { 
+void Bhabha::processRunHeader( LCRunHeader* run) { 
 //    _nRun++ ;
 } 
 
 
 
-void first::processEvent( LCEvent * evt ) { 
+void Bhabha::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
-    cout << "Event started." << endl;
-    LCCollection* col = evt->getCollection( _colName );
-    
-    double thisEnergy;
-    //double thisMomentum;
-    int stat, id =0;
-    double tot_mom[]={0, 0};
+
+    LCCollection* col = evt->getCollection( _colName ) ;
+
     // this will only be entered if the collection is available
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
 
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
-           MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
-        
-            id = hit->getPDG();
-            stat = hit->getGeneratorStatus();
-            if(stat==1){
-	      thisEnergy = hit->getEnergy();
-	      cout << "Particle " << hitIndex << " with ID: " << id << " energy " << thisEnergy << endl;
-	      //atan(
-	      //Setting up Test Plots\\
-      	      _energy->Fill(thisEnergy);
-	      _hitmap->Fill(id, thisEnergy);
+           SimCalorimeterHit* hit = dynamic_cast<SimCalorimeterHit*>( col->getElementAt(hitIndex) );
 
-            }//end final state   
-
-        }//end for
-         
+           const float* pos = hit->getPosition();
+           _hitmap->Fill(pos[0],pos[1]);
+        } 
     }
 
     _nEvt ++ ;
@@ -113,12 +99,12 @@ void first::processEvent( LCEvent * evt ) {
 
 
 
-void first::check( LCEvent * evt ) { 
+void Bhabha::check( LCEvent * evt ) { 
     // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
 
 
 
-void first::end(){ 
+void Bhabha::end(){ 
     _rootfile->Write();
 }

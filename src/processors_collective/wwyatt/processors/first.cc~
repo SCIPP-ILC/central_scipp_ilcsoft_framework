@@ -40,7 +40,7 @@ first first;
 
 static TFile* _rootfile;
 static TH2F* _hitmap;
-static TH1F* _vector;
+static TH1F* _energy;
 
 first::first() : Processor("first") {
     // modify processor description
@@ -53,12 +53,12 @@ first::first() : Processor("first") {
 }
 
 
-
 void first::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
     cout << "Initialized" << endl;
     _rootfile = new TFile("will_test.root","RECREATE");
-    _vector = new TH1F("energy", "Energy", 13.0,  0.0, 260.0);
+    _energy = new TH1F("energy", "Energy", 520.0,  0.0, 260.0);
+    _hitmap = new TH2F("pos", "Position Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     // usually a good idea to
     //printParameters() ;
     _nEvt = 0 ;
@@ -82,7 +82,7 @@ void first::processEvent( LCEvent * evt ) {
     LCCollection* col = evt->getCollection( _colName );
     
     double thisEnergy;
-    double thisMomentum;
+    //double thisMomentum;
     int stat, id =0;
     double tot_mom[]={0, 0};
     // this will only be entered if the collection is available
@@ -95,14 +95,15 @@ void first::processEvent( LCEvent * evt ) {
             id = hit->getPDG();
             stat = hit->getGeneratorStatus();
             if(stat==1){
-	      const double thisEnergy = hit->getEnergy();
+	      thisEnergy = hit->getEnergy();
 	      cout << "Particle " << hitIndex << " with ID: " << id << " energy " << thisEnergy << endl;
 		
 	      //Setting up Test Plots\\
-	      _vector->Fill(thisEnergy);
-	      //cout << "Bin Size: " << _veA
-
+	      
+	      _hitmap->Fill(id, thisEnergy);
+	      _energy->Fill(thisEnergy);
             }//end final state   
+
         }//end for
          
     }

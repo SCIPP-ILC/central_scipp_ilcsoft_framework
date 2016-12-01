@@ -15,7 +15,7 @@
  * April 5, 2016
  */
 
-#include "first.h"
+#include "Prediction.h"
 #include "scipp_ilc_utilities.h"
 #include <iostream>
 
@@ -36,13 +36,13 @@ using namespace marlin;
 using namespace std;
 
 
-first first;
+Prediction Prediction;
 
 static TFile* _rootfile;
 static TH2F* _hitmap;
-static TH1F* _energy;
+static TH1F* _vector;
 
-first::first() : Processor("first") {
+Prediction::Prediction() : Processor("Prediction") {
     // modify processor description
     _description = "Protype Processor" ;
 
@@ -53,36 +53,31 @@ first::first() : Processor("first") {
 }
 
 
-void first::init() { 
+
+void Prediction::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
-    cout << "Initialized" << endl;
-    _rootfile = new TFile("will_test.root","RECREATE");
-    _energy = new TH1F("energy", "Energy", 520.0,  0.0, 260.0);
-    _hitmap = new TH2F("pos", "Position Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
+
+    _rootfile = new TFile("eBpB_vector.root","RECREATE");
     // usually a good idea to
     //printParameters() ;
     _nEvt = 0 ;
 
-    //Setting up Plots\\
-    cout << "Vector allocated." << endl;
 }
 
 
 
-void first::processRunHeader( LCRunHeader* run) { 
+void Prediction::processRunHeader( LCRunHeader* run) { 
 //    _nRun++ ;
 } 
 
 
 
-void first::processEvent( LCEvent * evt ) { 
+void Prediction::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
-    cout << "Event started." << endl;
-    LCCollection* col = evt->getCollection( _colName );
-    
-    double thisEnergy;
-    //double thisMomentum;
+
+    LCCollection* col = evt->getCollection( _colName ) ;
+
     int stat, id =0;
     double tot_mom[]={0, 0};
     // this will only be entered if the collection is available
@@ -95,15 +90,9 @@ void first::processEvent( LCEvent * evt ) {
             id = hit->getPDG();
             stat = hit->getGeneratorStatus();
             if(stat==1){
-	      thisEnergy = hit->getEnergy();
-	      cout << "Particle " << hitIndex << " with ID: " << id << " energy " << thisEnergy << endl;
-	      //atan(
-	      //Setting up Test Plots\\
-      	      _energy->Fill(thisEnergy);
-	      _hitmap->Fill(id, thisEnergy);
-
+                cout << "TEST: " << hit->getMomentum()[0] << endl;
+                cout << "Particle " << hitIndex << " with ID: " << id << endl;
             }//end final state   
-
         }//end for
          
     }
@@ -113,12 +102,12 @@ void first::processEvent( LCEvent * evt ) {
 
 
 
-void first::check( LCEvent * evt ) { 
+void Prediction::check( LCEvent * evt ) { 
     // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
 
 
 
-void first::end(){ 
+void Prediction::end(){ 
     _rootfile->Write();
 }

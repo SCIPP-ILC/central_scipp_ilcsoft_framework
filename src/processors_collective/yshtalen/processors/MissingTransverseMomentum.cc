@@ -62,7 +62,7 @@ MissingTransverseMomentum::MissingTransverseMomentum() : Processor("MissingTrans
 void MissingTransverseMomentum::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("predict_eWpB.root","RECREATE");
+    _rootfile = new TFile("highFinder_eBpB.root","RECREATE");
   //  _hitmap_hi = new TH2F("high_hit","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
   //  _hitmap_had = new TH2F("hadronic_hit","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
     _vector = new TH1F("vector", "Transverse Momentum Vector Magnitude", 2000.0, 0.0, 20.0);
@@ -136,9 +136,9 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
     MCParticle* high_p;
 
     const double* mom_e;
-    double energy_e;
+    double energy_e=0;
     const double* mom_p;
-    double energy_p;
+    double energy_p=0;
 
     int e_index;
     int p_index;
@@ -160,16 +160,22 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
            const double* mom = hit->getMomentum();
            id = hit->getPDG(); 
            stat = hit->getGeneratorStatus();
-           cout << hitIndex << " PDGID: " << id << " Momentum: [" << mom[0] << ", " << mom[1] << ", " << mom[2] << "] Energy: " << hit->getEnergy() << endl;
+           //cout << hitIndex << " PDGID: " << id << " Momentum: [" << mom[0] << ", " << mom[1] << ", " << mom[2] << "] Energy: " << hit->getEnergy() << endl;
            
            if(stat==1){
                 if(id==11){
-                    high_e = hit;
-                    e_index = hitIndex;
+                    if(hit->getEnergy()>energy_e){
+                        high_e = hit;
+                        e_index = hitIndex;
+                        energy_e=hit->getEnergy();
+                    }
                 }
                 if(id==-11){
-                    high_p = hit;
-                    p_index = hitIndex;
+                    if(hit->getEnergy()>energy_p){
+                        high_p = hit;
+                        p_index = hitIndex;
+                        energy_p=hit->getEnergy();
+                    }
                 }
            }//end final state
         }//end for loop
@@ -361,8 +367,8 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
             cout << endl;
             cout << endl;
             cout << endl;
-            //cout << "Prediction Vector: [" << scatter_vec[0] << ", " << scatter_vec[1] << ", " << scatter_vec[2] << "]"  << endl;
-            //cout << "High Energy Vector: [" << high_vec[0] << ", " << high_vec[1] << ", " << high_vec[2] << "]"  << endl;
+            cout << "Prediction Vector: [" << scatter_vec[0] << ", " << scatter_vec[1] << ", " << scatter_vec[2] << "]"  << endl;
+            cout << "High Energy Vector: [" << high_vec[0] << ", " << high_vec[1] << ", " << high_vec[2] << "]"  << endl;
                 
         }
     }
