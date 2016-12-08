@@ -86,6 +86,13 @@ namespace BB{
   const static string ERROR_MAX_PHOTONS = "Max Photon User-Error: Trying to add photon but it is already full.";
   const static string ERROR_ALREADY_PARTICLE = "Particle Already There User-Error: Trying to add a paticle but the space is not NULL.";
 
+
+   struct Particle{
+     double mx = 0;
+     double my = 0;
+     double mz = 0;
+   }
+
   //Making a bundle to store and process my event because the data is being given to me nicly.
   class Bundle{
   public:
@@ -155,21 +162,36 @@ namespace BB{
     }
   private:
     int count = 0;
-    MCParticle* photonA = NULL;
-    MCParticle* photonB = NULL;
-    MCParticle* positron = NULL;
-    MCParticle* electron = NULL;
-    MCParticle* photons[2] = {NULL, NULL};
+    Particle photonA;
+    Particle photonB;
+    Particle positron;
+    Particle electron;
+    int photons = 0;
+
+      void setMomentum(MCParticle* _input, Particle _struct){
+	_struct.mx =  _input->getMomentum()[0];
+	_struct.my =  _input->getMomentum()[1];
+	_struct.mz =  _input->getMomentum()[2];
+    }
+    void setElectron(MCParticle* _input){
+      setMomentum(_input, electron);
+    }
+    void setPositron(MCParticle* _input){
+      setMomentum(_input, positron);
+    }
+
+    void setPhoton(MCParticle* _input, Particle _struct){
+      setMomentum(_input, _struct);
+    }
 
     //Preparing for updating class for n photons. Currently max is 2 photons.
     void addPhoton(MCParticle* _input){
-      if(photonA == NULL){
-	photonA = _input;
-	photons[0] = photonA;
-      }else if(photonB ==NULL){
-	photonB = _input;
-	photons[1] = photonB;
+      if(photons == 0){
+	setPhoton(_input, photonA);
+      }else if(photons == 1){
+	setPhoton(_input, photonB);
       }else err(ERROR_MAX_PHOTONS);
+      ++photons;
     }
 
     //Helper function, can be set to the namespace for general use. I could not find println(), so I made it.
