@@ -29,6 +29,8 @@
 // ----- include for verbosity dependend logging ---------
 #include "marlin/VerbosityLevels.h"
 
+//Header with Bhabah Processing Code
+#include "Bhabha_util.h"
 
 
 using namespace lcio;
@@ -74,106 +76,25 @@ void first::processRunHeader( LCRunHeader* run) {
 //    _nRun++ ;
 } 
 
-//Namespace for all my bahbah processing. NOTE: PUT INTO SEPERATE FILE.
-namespace BB{
-  //Setting PDG constants to particle names (DID NOT VERIFY)
-  const static int PHOTON = 22;
-  const static int POSITRON = 11;
-  const static int ELECTRON = -11;
+class BhabahBundle:BB::Bundle{
+public:
+  //Where I do my math to output to graph.
+  void initialize(){
+    double p_phi = getPhi(positron);
+    double e_phi = getPhi(electron);
+    double del_phi = p_phi-e_phi;
 
-  //Setting errors static so I can spell check them easily.
-  const static string ERROR_NOT_BAHBAH_PARTICLE = "Not a Bahbah particle User-Error: Trying to add a particle that is not accounted for.";
-  const static string ERROR_MAX_PHOTONS = "Max Photon User-Error: Trying to add photon but it is already full.";
-  const static string ERROR_ALREADY_PARTICLE = "Particle Already There User-Error: Trying to add a paticle but the space is not NULL.";
+    //Put in graph
+    _phi->Fill(del_phi);
+  }
 
-  //Making a bundle to store and process my event because the data is being given to me nicly.
-  class Bundle{
-  public:
-    Bundle(){}//No constructor
-
-    //Returns the total number of particles added. MAX is 4 right now.
-    int getCount(){
-      return count;
-    }
-
-    //Checks to see if particle is already there, then adds it for processing. Once full it runs initialize.
-    void addParticle(MCParticle* _input){
-      switch(_input->getPDG()){
-      case(PHOTON):
-	addPhoton(_input);
-	break;
-      case(POSITRON):
-	if(positron == NULL){
-	  positron = _input;
-	}else err(ERROR_ALREADY_PARTICLE);
-	break;
-      case(ELECTRON):
-	if(electron == NULL){
-	  electron = _input;
-	}else err(ERROR_ALREADY_PARTICLE);
-	break;
-      default:
-	err(ERROR_NOT_BAHBAH_PARTICLE);
-      } 
-      if(++count == 4){
-	initialize();
-      }
-    }
-    
-    //Where I do my math to output to graph.
-    void initialize(){
-      double p_phi = getPhi(positron);
-      double e_phi = getPhi(electron);
-      double del_phi = p_phi-e_phi;
-
-      //Put in graph
-      _phi->Fill(del_phi);
-    }
-    //returns the angle from the x-y axis
-    double getTheta(MCParticle* _input){
-      return atan(_input->getMomentum()[0]/_input->getMomentum()[1]);
-    }
-    //returns the angle from the z axis
-    double getPhi(MCParticle* _input){
-      //Get the norm in the x,y plane:
-      const double m_x = (_input->getMomentum())[0];
-      const double m_y = (_input->getMomentum())[1];
-      const double m_z = _input->getMomentum()[2];
-      double norm = sqrt(m_x*m_x + m_y*m_y);
-      double phi = atan(norm/m_z);
-
-      //The norm in the opposite side, and the z axis is the same side.
-      return phi;
-    }
-  private:
-    int count = 0;
-    MCParticle* photonA = NULL;
-    MCParticle* photonB = NULL;
-    MCParticle* positron = NULL;
-    MCParticle* electron = NULL;
-    MCParticle* photons[2] = {NULL, NULL};
-
-    //Preparing for updating class for n photons. Currently max is 2 photons.
-    void addPhoton(MCParticle* _input){
-      if(photonA == NULL){
-	photonA = _input;
-	photons[0] = photonA;
-      }else if(photonB ==NULL){
-	photonB = _input;
-	photons[1] = photonB;
-      }else err(ERROR_MAX_PHOTONS);
-    }
-
-    //Helper function, can be set to the namespace for general use. I could not find println(), so I made it.
-    void err(string _input){
-      cout << _input << endl;
-    }
-  };
+private:
 }
+
 void first::processEvent( LCEvent * evt ) { 
     LCCollection* col = evt->getCollection( _colName );
     
-    BB::Bundle* bundle = new BB::Bundle; //Created a bundle to process the data for the bahbah event.
+    BhabahBundle* bundle = new BhabahBundle; //Created a bundle to process the data for the bahbah event.
 
     int stat, id =0;
     if( col != NULL ){

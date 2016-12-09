@@ -59,7 +59,7 @@ void first::init() {
     _rootfile = new TFile("will_test.root","RECREATE");
     _energy = new TH1F("energy", "Energy", 520.0,  0.0, 260.0);
     _hitmap = new TH2F("pos", "Position Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
-    _phi = new TH1F("phi", "Angle Difference", 300,-5, 5);
+    _phi = new TH1F("phi", "Angle Difference", 300, .1, 1);
 
     //printParameters() ;
     _nEvt = 0 ;
@@ -109,7 +109,7 @@ namespace BB{
 	break;
       case(ELECTRON):
 	if(electron == NULL){
-	  electron == _input;
+	  electron = _input;
 	}else err(ERROR_ALREADY_PARTICLE);
 	break;
       default:
@@ -123,16 +123,8 @@ namespace BB{
     //Where I do my math to output to graph.
     void initialize(){
       double p_phi = getPhi(positron);
-      cout << "Positron Phi: " << p_phi << endl;
-      if(electron != NULL)cout << "electron not null " << endl;
-      cout << "momentum " << electron->getMomentum()[0] << endl;
-      double e_phi = getPhi(electron);//It is breaking here, when it is the electrons turn.
-      //probably because the electron is being destroyed at the end of each event.
-      cout << "Test again for phi " << e_phi << endl;
+      double e_phi = getPhi(electron);
       double del_phi = p_phi-e_phi;
-
-      cout << "(Electron,Positron) phi: " << e_phi << ", " << p_phi << endl;
-      cout << "Difference in phi: " << del_phi << endl;
 
       //Put in graph
       _phi->Fill(del_phi);
@@ -179,37 +171,23 @@ namespace BB{
   };
 }
 void first::processEvent( LCEvent * evt ) { 
-    // this gets called for every event 
-    // usually the working horse ...
-    cout << "Event started." << endl;
     LCCollection* col = evt->getCollection( _colName );
     
-    BB::Bundle* bundle = new BB::Bundle;
-    double thisEnergy;
-    //double thisMomentum;
+    BB::Bundle* bundle = new BB::Bundle; //Created a bundle to process the data for the bahbah event.
+
     int stat, id =0;
-    double tot_mom[]={0, 0};
-    // this will only be entered if the collection is available
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
-
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
-           MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
-        
+           MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );        
             id = hit->getPDG();
             stat = hit->getGeneratorStatus();
             if(stat==1){
-	      thisEnergy = hit->getEnergy();
-	      cout << "Particle " << hitIndex << " with ID: " << id << " energy " << thisEnergy << endl;
-	      bundle->addParticle(hit);
-	      //Setting up Test Plots\\
-      	      _energy->Fill(thisEnergy);
-	      _hitmap->Fill(id, thisEnergy);
+	      //hit is an end particle:
+	      bundle->addParticle(hit); //I add it to a Bahbah class to do the rest of the work.
 
             }//end final state   
-
         }//end for
-         
     }
     delete[] bundle;
     _nEvt ++ ;
