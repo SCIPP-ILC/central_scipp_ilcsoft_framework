@@ -148,7 +148,11 @@ void SusyRazorVariables::processEvent( LCEvent * evt ) {
             //transform to R frame 
             double beta = (tau1->getEnergy() - tau2->getEnergy())/(tau1->getMomentum()[2] - tau2->getMomentum()[2]);
             cout << "BETA :"<< beta<<endl;
-            double *R4Vector[4] = {Transform2RFrame( particle4Vector, beta )};
+            double beta2 = pow(beta,2);
+            double gamma = 1/(sqrt(1-beta2));
+            double R4Vector[4] = {gamma*particle4Vector[0]-gamma*beta*particle4Vector[3],particle4Vector[1], particle4Vector[2], 
+            -gamma*beta*particle4Vector[0]+gamma*particle4Vector[3]};
+            //double *R4Vector[4] = {Transform2RFrame( particle4Vector, beta )};
             cout << "Four Vec    " << endl;
             cout << particle4Vector[0] <<" "<<particle4Vector[1]<<" "<<particle4Vector[2]<<" "<<particle4Vector[3]<< endl;
             cout << "Transformed " << R4Vector[0]        <<" "<<R4Vector[1]       <<" "<<R4Vector[2]       <<" "<<R4Vector[3]<<" "<<R4Vector[4]<< endl; 
@@ -160,7 +164,9 @@ void SusyRazorVariables::processEvent( LCEvent * evt ) {
     cout << "event "<< _nEvt <<" finished " << endl;
 }//end process
 
-// function to transform into R frame 
+
+// function to transform into R frame (unnecessary) 
+/* 
 double *SusyRazorVariables::Transform2RFrame(double in[4], double beta){
     cout << "----------------------------"<<endl;
     cout << "Running Transform Function!"<<endl;
@@ -177,6 +183,7 @@ double *SusyRazorVariables::Transform2RFrame(double in[4], double beta){
     return out;     
     
 }
+*/
 
 void SusyRazorVariables::check( LCEvent * evt ) { 
     // nothing to check here - could be used to fill checkplots in reconstruction processor

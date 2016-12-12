@@ -50,7 +50,7 @@ class SusyRazorVariables : public Processor {
   virtual void processEvent( LCEvent * evt ) ; 
   
   // need to add transform function in here?
-  virtual double* Transform2RFrame(double in[4], double beta); 
+  //virtual double* Transform2RFrame(double in[4], double beta); 
   
   virtual void check( LCEvent * evt ) ; 
   

@@ -30,7 +30,7 @@
 #include "marlin/VerbosityLevels.h"
 
 //Header with Bhabah Processing Code
-#include "Bhabha_util.h"
+//#include "Bhabha_util.h"
 
 
 using namespace lcio;
@@ -76,7 +76,7 @@ void first::processRunHeader( LCRunHeader* run) {
 //    _nRun++ ;
 } 
 
-class BhabahBundle:BB::Bundle{
+class BhabahBundle:public Bundle{
 public:
   //Where I do my math to output to graph.
   void initialize(){
@@ -89,7 +89,7 @@ public:
   }
 
 private:
-}
+};
 
 void first::processEvent( LCEvent * evt ) { 
     LCCollection* col = evt->getCollection( _colName );
@@ -105,12 +105,12 @@ void first::processEvent( LCEvent * evt ) {
             stat = hit->getGeneratorStatus();
             if(stat==1){
 	      //hit is an end particle:
-	      bundle->addParticle(hit); //I add it to a Bahbah class to do the rest of the work.
+	      //	      bundle->addParticle(hit); //I add it to a Bahbah class to do the rest of the work.
 
             }//end final state   
         }//end for
     }
-    delete[] bundle;
+    //    delete[] bundle;
     _nEvt ++ ;
 }
 

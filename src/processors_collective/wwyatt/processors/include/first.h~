@@ -5,13 +5,12 @@
 #include "lcio.h"
 #include <string>
 #include <cmath>
-#include <EVENT/MCParticle.h>
 
 #include <iostream>//May not need. Can I use std namespace without this?
 using namespace lcio ;
 using namespace marlin ;
 
-//Extra Bahbah Stuff
+//Extra Bahbah Header
 using namespace std;
 //Making a bundle to store and process my event because the data is being given to me nicly.
 class Bundle{
