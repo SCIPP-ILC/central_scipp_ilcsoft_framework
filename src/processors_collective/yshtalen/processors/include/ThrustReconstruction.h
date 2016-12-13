@@ -81,9 +81,6 @@ protected:
   std::vector<Hep3Vector> _partMom;
   std::string filename;
   RanluxEngine myrnd;
-
-  int _nEvt;
-  int _nRun;
 } ;
 
 #endif

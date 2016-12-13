@@ -67,7 +67,7 @@ void ThrustReconstruction::init() {
 }
 
 void ThrustReconstruction::processRunHeader( LCRunHeader* run) { 
-  // run->parameters().setValue("thrust",12300321);
+    run->parameters().setValue("thrust",12300321);
 } 
 
 void ThrustReconstruction::processEvent( LCEvent * evt ) { 

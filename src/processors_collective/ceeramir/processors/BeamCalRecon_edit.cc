@@ -41,7 +41,7 @@ typedef std::chrono::high_resolution_clock Clock;
 
 #include <TFile.h>
 #include <TProfile.h>
-
+#include <TH2D.h>
 
 
 using namespace lcio;
@@ -54,11 +54,11 @@ BeamCalRecon_edit BeamCalRecon_edit;
 static TFile* _rootfile;
 static TProfile* _radeff;
 static int _detected_num = 0;
+static TH2F* _hitmap_bgd;
 
-//clock_t _begin;
-//clock_t _end;
-auto _t1 = Clock::now();
-auto _t2 = Clock::now();
+
+//auto _t1 = Clock::now();
+//auto _t2 = Clock::now();
 
 
 BeamCalRecon_edit::BeamCalRecon_edit() : Processor("BeamCalRecon_edit") {
@@ -80,9 +80,9 @@ void BeamCalRecon_edit::init() {
 
     _rootfile = new TFile(_root_file_name.c_str(),"RECREATE");
     _radeff = new TProfile("radeff","Radial Efficiency",14*2,0.0,140.0,0.0,1.0);
+    _hitmap_bgd = new TH2F("hitmap_bgd","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
 
-    //    _begin = clock();
-    _t1 = Clock::now();
+    //    _t1 = Clock::now();
 
     //Load up all the bgd events, and initialize the reconstruction algorithm.
     scipp_ilc::beamcal_recon_C::initialize_beamcal_reconstructor(_beamcal_geometry_file_name, _background_event_list, _num_bgd_events_to_read);
@@ -102,6 +102,9 @@ void BeamCalRecon_edit::processRunHeader( LCRunHeader* run) {
 
 void BeamCalRecon_edit::processEvent( LCEvent* signal_event ) {
     //Make sure we are using an electron that actually hits the Positive BeamCal
+
+  //  _hitmap_bgd->Fill
+
     MCParticle* electron = NULL;
     bool detectable_electron = scipp_ilc::get_detectable_signal_event(signal_event,electron);
     if ( not detectable_electron ) return;
@@ -110,6 +113,9 @@ void BeamCalRecon_edit::processEvent( LCEvent* signal_event ) {
     const double* endpoint = electron->getEndpoint();
     double end_x = (endpoint[0] - 0.007*endpoint[2]);
     double end_y = endpoint[1];
+    double endx = end_x;
+    double endy = end_y;
+
     double radius,phi;
     scipp_ilc::cartesian_to_polar(end_x,end_y,radius,phi);
 
@@ -124,7 +130,7 @@ void BeamCalRecon_edit::processEvent( LCEvent* signal_event ) {
     //Plot our results with respect to the radius of the signal electron.
     _radeff->Fill(radius,detected); //bools and ints are basically interchangeable...
     _detected_num += detected;
-    
+    _hitmap_bgd->Fill(endx,endy);
 
     cout << _nEvt++ << endl;;
 }
@@ -139,10 +145,10 @@ void BeamCalRecon_edit::check( LCEvent * evt ) {
 
 void BeamCalRecon_edit::end(){ 
     cout << "\ndetected: " << _detected_num << endl;
-    //    _end = clock();
-    _t2 = Clock::now();
-    cout << "*******************this is the end***********************" << endl;
+
+    //    _t2 = Clock::now();
+    //    cout << "*******************this is the end***********************" << endl;
     //    cout << "******************* time elapsed: " << (_end - _begin) << " ***********************" << endl;
-    cout << "******************* time elapsed: " << std::chrono::duration_cast<std::chrono::nanoseconds>(_t2 - _t1).count() << " ***********************" << endl;
+    //    cout << "******************* time elapsed: " << std::chrono::duration_cast<std::chrono::nanoseconds>(_t2 - _t1).count() << " ***********************" << endl;
     _rootfile->Write();
 }
