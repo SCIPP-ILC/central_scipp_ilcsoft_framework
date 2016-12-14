@@ -58,12 +58,12 @@ first::first() : Processor("first") {
 void first::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
     cout << "Initialized" << endl;
-    _rootfile = new TFile("will_test.root","RECREATE");
+    _rootfile = new TFile("Phi_Bhabha.root","RECREATE");
     _energy = new TH1F("energy", "Energy", 520.0,  0.0, 260.0);
     _hitmap = new TH2F("pos", "Position Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
-    _phi1 = new TH1F("phi_s", "Angle Difference", 500, 0, 6.28);
-    _phi2 = new TH1F("phi_m", "Angle Difference", 500, 1, 3.14);
-    _phi3 = new TH1F("phi_l", "Angle Difference", 500, 0, 1);
+    _phi1 = new TH1F("phi_s", "Angle Difference (Electron - Positron) From 0-2π", 500, 0, 6.28);
+    _phi2 = new TH1F("phi_m", "Angle Difference (Electron - Positron) From 1-π", 500, 1, 3.14);
+    _phi3 = new TH1F("phi_l", "Angle Difference (Electron - Positron) From 0-1rad", 500, 0, 1);
 
     //printParameters() ;
     _nEvt = 0 ;
