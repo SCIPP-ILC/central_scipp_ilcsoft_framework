@@ -18,6 +18,7 @@
 #include "include/simple_list_geometry_edit.h"
 #include "include/beamcal_scanner_edit.h"
 #include "include/beamcal_reconstructor_edit.h"
+#include "include/BeamCalRecon_edit.h"
 
 #include "scipp_ilc_globals.h"
 
@@ -158,6 +159,14 @@ namespace scipp_ilc {
                     } else {
                         ID = getID(old_x,old_y);
                         (*new_pixels)[ID] += old_energy;
+			//			cout << " old x:"<< old_x << ", old y:"<< old_y << endl;
+			if(_adding_to_stats==true){
+			  //			  _hitmap_bgd->Fill(old_x,old_y);
+
+
+			}
+			else{
+			}
                     }
                 }
 
