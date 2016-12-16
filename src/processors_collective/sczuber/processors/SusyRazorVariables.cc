@@ -57,7 +57,7 @@ void SusyRazorVariables::init() {
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
     _rootfile = new TFile("SusyRazorVariables.root","RECREATE");
-    _FirstRazorPlot = new TH1F("FirstRazorPlot","My First Razor Plot", 40,0,20); 
+    _FirstRazorPlot = new TH1F("FirstRazorPlot","My First Razor Plot", 100,0,20); 
     // usually a good idea to
     //printParameters() ;
 
@@ -83,15 +83,15 @@ void SusyRazorVariables::processEvent( LCEvent * evt ) {
     cout << endl;
     cout << "event = " << _nEvt << endl;
 
-    //creat tau list? 
-    std::list<MCParticle*> tauList;
-    //instead of list, these will be the two tau's for the event:
+    //these will be the two tau's for the event:
     MCParticle* tau1;
     MCParticle* tau2;
-    // might not need these:
+    
+    // these will be my momentum and energy sums for the event: 
     double vec[4][3];  // momentum 3 vectors of: tau 1, tau 2, lsp 1, lsp 2
-    double scalars[4]; // magnitude of 3 vectors of same categories 
+    double scalarPT[4]; // magnitude of the PT of the same categories 
     double energy[4];  // energy of same categories 
+    double vecFinals[1][3]; // the momentum 3 vectors of final state particles: for not just all final state particles
 
     //particle identifiers
     int id, stat; 
@@ -112,12 +112,12 @@ void SusyRazorVariables::processEvent( LCEvent * evt ) {
                 cout << "exception caught with message " << e.what() << "\n";
             } 
             if (id==15 || id == -15){
-                cout << particle << " " << particle->getPDG() << endl;
+                //cout << particle << " " << particle->getPDG() << endl;
                 for(MCParticle* parent : particle->getParents()){
-                    cout << "parent: parent, id" << parent << " " << parent->getPDG() << endl;
+                    //cout << "parent: parent, id" << parent << " " << parent->getPDG() << endl;
 
                     if(parent->getPDG() == 1000015 || parent->getPDG() == -1000015){
-                        //tauList.Add(particle);
+                        
                         if(i==0){tau1 = particle;}
                         if(i==1){tau2 = particle;}
                         i++;
@@ -125,17 +125,32 @@ void SusyRazorVariables::processEvent( LCEvent * evt ) {
                 }
 
             } 
-            if(id == 1000022){
-                cout << particle << "  " << particle->getPDG() << endl; 
-            }
-
         }//end for
         cout << "tau 1 " << tau1 << " " << tau1->getPDG() << endl;
         cout << "tau 2 " << tau2 << " " << tau2->getPDG() << endl;
+        
+        vec[0][0]+=tau1->getMomentum()[0];
+        vec[0][1]+=tau1->getMomentum()[1];
+        vec[0][2]+=tau1->getMomentum()[2];
+        vec[1][0]+=tau2->getMomentum()[0];
+        vec[1][1]+=tau2->getMomentum()[1];
+        vec[1][2]+=tau2->getMomentum()[2];
+
+        scalarPT[0]+=sqrt(vec[0][0]*vec[0][0]+vec[0][1]*vec[0][1]); //tau 1
+        scalarPT[1]+=sqrt(vec[1][0]+vec[1][0]+vec[1][1]*vec[1][1]); //tau 2
+
+        //transform to R frame 
+        double beta = (tau1->getEnergy() - tau2->getEnergy())/(tau1->getMomentum()[2] - tau2->getMomentum()[2]);
+        cout << "BETA :"<< beta<<endl;
+        
+        double beta2 = pow(beta,2);
+        double gamma = 1/(sqrt(1-beta2));
         for(int particleIndex = 0; particleIndex < nElements ; particleIndex++){
             MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(particleIndex) );
+            
             cout << endl;
             cout << endl;
+            
             try{
                 id = particle->getPDG();
                 stat = particle->getGeneratorStatus();
@@ -143,20 +158,36 @@ void SusyRazorVariables::processEvent( LCEvent * evt ) {
             catch(const std::exception& e){
                 cout << "exception caught with message "<< e.what() << "\n";
             }
-            double particle4Vector[4] = {particle->getEnergy(), particle->getMomentum()[0], 
+            
+            double part4Vector[4] = {particle->getEnergy(), particle->getMomentum()[0], 
                                          particle->getMomentum()[1], particle->getMomentum()[2]};
-            //transform to R frame 
-            double beta = (tau1->getEnergy() - tau2->getEnergy())/(tau1->getMomentum()[2] - tau2->getMomentum()[2]);
-            cout << "BETA :"<< beta<<endl;
-            double beta2 = pow(beta,2);
-            double gamma = 1/(sqrt(1-beta2));
-            double R4Vector[4] = {gamma*particle4Vector[0]-gamma*beta*particle4Vector[3],particle4Vector[1], particle4Vector[2], 
-            -gamma*beta*particle4Vector[0]+gamma*particle4Vector[3]};
+            double R4Vector[4] = {gamma*part4Vector[0]-gamma*beta*part4Vector[3],part4Vector[1], part4Vector[2], 
+                                    -gamma*beta*part4Vector[0]+gamma*part4Vector[3]};
             //double *R4Vector[4] = {Transform2RFrame( particle4Vector, beta )};
-            cout << "Four Vec    " << endl;
-            cout << particle4Vector[0] <<" "<<particle4Vector[1]<<" "<<particle4Vector[2]<<" "<<particle4Vector[3]<< endl;
-            cout << "Transformed " << R4Vector[0]        <<" "<<R4Vector[1]       <<" "<<R4Vector[2]       <<" "<<R4Vector[3]<<" "<<R4Vector[4]<< endl; 
-        } 
+            //cout << "Four Vec    " << endl;
+            //cout << particle4Vector[0] <<" "<<particle4Vector[1]<<" "<<particle4Vector[2]<<" "<<particle4Vector[3]<< endl;
+            //cout << "Transformed " << R4Vector[0]        <<" "<<R4Vector[1]       <<" "<<R4Vector[2]       <<" "<<R4Vector[3]<<" "<<R4Vector[4]<< endl;
+            if(stat==1){
+                vecFinals[0][0]+=R4Vector[1];
+                vecFinals[0][1]+=R4Vector[2];
+                vecFinals[0][2]+=R4Vector[3];
+            }
+        } //end for
+
+        // create MTR variable:
+        // missing transverse energy (i.e. missing transverse momentum)
+        double ETM[2] = { -vecFinals[0][0], -vecFinals[0][1]}; 
+        double ETMmag = sqrt(ETM[0]*ETM[0]+ETM[1]*ETM[1]);
+        
+        // pt j1 + pt j2 vector :
+        double pt_taus[2] = {vec[0][0]+vec[1][0], vec[0][1]+vec[1][1]};
+        // dot product of ETM and pt_taus:
+        double dotProd = ETM[0]*pt_taus[0]+ETM[1]*pt_taus[1]; 
+        double MTR = sqrt((ETMmag*(scalarPT[0]+scalarPT[1])-dotProd)/2);
+        if(beta2<=1){
+            cout << "filling  " << MTR << endl;
+            _FirstRazorPlot->Fill(MTR);
+        }
     }//ind if col
 
     _nEvt ++;

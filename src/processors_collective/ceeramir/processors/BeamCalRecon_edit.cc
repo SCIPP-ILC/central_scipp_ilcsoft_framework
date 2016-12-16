@@ -56,6 +56,8 @@ static TProfile* _radeff;
 static int _detected_num = 0;
 static TH2F* _hitmap_bgd;
 
+vector<pair<float,float>> bgd_plot;
+
 
 //auto _t1 = Clock::now();
 //auto _t2 = Clock::now();

@@ -130,7 +130,7 @@ void BeamCalRecon_edit::processEvent( LCEvent* signal_event ) {
     //Plot our results with respect to the radius of the signal electron.
     _radeff->Fill(radius,detected); //bools and ints are basically interchangeable...
     _detected_num += detected;
-    _hitmap_bgd->Fill(endx,endy,detected);
+    //    _hitmap_bgd->Fill(endx,endy,detected);
 
     cout << _nEvt++ << endl;;
 }

@@ -58,7 +58,7 @@ first::first() : Processor("first") {
 void first::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
     cout << "Initialized" << endl;
-    _rootfile = new TFile("Bhabha_x_100k.root","RECREATE");
+    _rootfile = new TFile("Phi_Bhabha.root","RECREATE");
     _energy = new TH1F("energy", "Energy", 520.0,  0.0, 260.0);
     _hitmap = new TH2F("pos", "Position Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     _phi1 = new TH1F("phi_s", "Angle Difference (Electron - Positron) From 0-2π", 500, 0, 6.28);
