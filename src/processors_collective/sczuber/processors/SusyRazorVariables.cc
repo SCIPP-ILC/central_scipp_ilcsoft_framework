@@ -42,6 +42,7 @@ SusyRazorVariables SusyRazorVariables;
 static TFile* _rootfile;
 
 static TH1F* _FirstRazorPlot;
+static TH1F* _RPlot;
 
 SusyRazorVariables::SusyRazorVariables() : Processor("SusyRazorVariables") {
     // modify processor description
@@ -58,6 +59,7 @@ void SusyRazorVariables::init() {
 
     _rootfile = new TFile("SusyRazorVariables.root","RECREATE");
     _FirstRazorPlot = new TH1F("FirstRazorPlot","My First Razor Plot", 100,0,20); 
+    _RPlot = new TH1F("RPlot", " R = MTR/MR",100,0,10);
     // usually a good idea to
     //printParameters() ;
 
@@ -136,21 +138,30 @@ void SusyRazorVariables::processEvent( LCEvent * evt ) {
         vec[1][1]+=tau2->getMomentum()[1];
         vec[1][2]+=tau2->getMomentum()[2];
 
+        energy[0]+= tau1->getEnergy(); 
+        energy[1]+= tau2->getEnergy();
+
         scalarPT[0]+=sqrt(vec[0][0]*vec[0][0]+vec[0][1]*vec[0][1]); //tau 1
         scalarPT[1]+=sqrt(vec[1][0]+vec[1][0]+vec[1][1]*vec[1][1]); //tau 2
 
         //transform to R frame 
-        double beta = (tau1->getEnergy() - tau2->getEnergy())/(tau1->getMomentum()[2] - tau2->getMomentum()[2]);
+        double beta = (tau1->getEnergy() - tau2->getEnergy())/(vec[0][2] - vec[1][2]);
         cout << "BETA :"<< beta<<endl;
         
         double beta2 = pow(beta,2);
         double gamma = 1/(sqrt(1-beta2));
+        // want to check whether this transformation equilizes 3-momentum of tau 1 and tau 2 
+        // I don't need the energy, here are transformed three vectors
+        double vecT1[3] = {vec[0][0], vec[0][1], - gamma*beta*energy[0]+gamma*vec[0][2]}; 
+        double vecT2[3] = {vec[1][0], vec[1][1], - gamma*beta*energy[1]+gamma*vec[1][2]};
+        double magT1 = sqrt(vecT1[0]*vecT1[0]+vecT1[1]*vecT1[1]+vecT1[2]*vecT1[2]);
+        double magT2 = sqrt(vecT2[0]*vecT2[0]+vecT2[1]*vecT2[1]+vecT2[2]*vecT2[2]);
+        double dif3mag = magT1 - magT2;
+        cout << dif3mag << endl;
+        
         for(int particleIndex = 0; particleIndex < nElements ; particleIndex++){
             MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(particleIndex) );
-            
-            cout << endl;
-            cout << endl;
-            
+                                
             try{
                 id = particle->getPDG();
                 stat = particle->getGeneratorStatus();
@@ -184,9 +195,11 @@ void SusyRazorVariables::processEvent( LCEvent * evt ) {
         // dot product of ETM and pt_taus:
         double dotProd = ETM[0]*pt_taus[0]+ETM[1]*pt_taus[1]; 
         double MTR = sqrt((ETMmag*(scalarPT[0]+scalarPT[1])-dotProd)/2);
+        double R = MTR/(2*magT1);
         if(beta2<=1){
             cout << "filling  " << MTR << endl;
             _FirstRazorPlot->Fill(MTR);
+            _RPlot->Fill(R);
         }
     }//ind if col
 
