@@ -145,6 +145,9 @@ namespace scipp_ilc {
                     if ( layer < layer_min or layer_max < layer ) continue;
                     
                     if (_spreadfactor > 1) {
+		      //*******************
+		      cout << " old x:"<< old_x << ", old y:"<< old_y << endl;
+		      //*******************
                         spread_energy = old_energy / Ediv;
                         for (int i = 0; i < _spreadfactor; i++) {
                             spread_x = (i*dim) + old_x + (dim/2.0) - (_cellsize/2.0);
@@ -160,8 +163,12 @@ namespace scipp_ilc {
                         ID = getID(old_x,old_y);
                         (*new_pixels)[ID] += old_energy;
 			//			cout << " old x:"<< old_x << ", old y:"<< old_y << endl;
-			if(_adding_to_stats){
-			  _hitmap_bgd->Fill(old_x,old_y);
+			if(_adding_to_stats==true){
+			  //			  _hitmap_bgd->Fill(old_x,old_y);
+
+
+			}
+			else{
 			}
                     }
                 }

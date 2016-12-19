@@ -144,17 +144,15 @@ namespace scipp_ilc {
                     if ( radius > _radius_cut ) continue;
                     if ( layer < layer_min or layer_max < layer ) continue;
                     
-                    if (_spreadfactor > 1) {
+                    if (_spreadfactor > 1) { // _spreadfactor == 1 , therefore fails condition
                         spread_energy = old_energy / Ediv;
                         for (int i = 0; i < _spreadfactor; i++) {
                             spread_x = (i*dim) + old_x + (dim/2.0) - (_cellsize/2.0);
                             for (int j = 0; j < _spreadfactor; j++) {
                                 spread_y = (j*dim) + old_y + (dim/2.0) - (_cellsize/2.0);
-
                                 ID = getID(spread_x,spread_y);
                                 (*new_pixels)[ID] += spread_energy;
                             }
-
                         }
                     } else {
                         ID = getID(old_x,old_y);
