@@ -95,7 +95,7 @@ void Thrust::init() {
 
 
 void Thrust::processRunHeader( LCRunHeader* run) { 
-    run->parameters().setValue("thrust",12300321);
+    //run->parameters().setValue("thrust",12300321);
     //    _nRun++ ;
 
 } 
