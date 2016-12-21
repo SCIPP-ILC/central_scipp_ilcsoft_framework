@@ -12,11 +12,6 @@
 
 namespace CLHEP{}    // declare namespace CLHEP for backward compatibility
 using namespace CLHEP ;
-#include "marlin/Processor.h"
-#include "lcio.h"
-#include <string>
-
-
 using namespace lcio ;
 using namespace marlin ;
 
