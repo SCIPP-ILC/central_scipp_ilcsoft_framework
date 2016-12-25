@@ -67,7 +67,7 @@ Thrust::Thrust() : Processor("Thrust") {
 
 
 void Thrust::init() { 
-    streamlog_out(DEBUG) << "   init called  " << std::endl ;
+    streamlog_out(DEBUG)  << "   init called  " << std::endl ;
 
     _rootfile = new TFile("thrust_test.root","RECREATE");
     // irameters() ;
@@ -75,6 +75,7 @@ void Thrust::init() {
   // config ranlux 
   filename = "Ranlux.coonf";
   ifstream rndcfgfile( filename.c_str() );
+  cout << "PRINITNG THE THIG NOW: " << rndcfgfile << endl;
   if (!rndcfgfile)
     {
       long int ss=1234;
@@ -107,13 +108,13 @@ void Thrust::processEvent( LCEvent * evt ) {
     // usually the working horse ...
 
     _inParVec = evt->getCollection( _colName) ;
-
+    cout << _inParVec->getNumberOfElements() << endl;
     if (!_partMom.empty()) _partMom.clear();
 
     for (int n=0;n<_inParVec->getNumberOfElements() ;n++)
     {
       MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
-
+        //MCParticle* aPart = _inParVec->getElementAt(n);
       const double* partMom = aPart->getMomentum();
       _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
 
