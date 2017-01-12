@@ -63,7 +63,7 @@ void first::init() {
     _hitmap = new TH2F("pos", "Position Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     _phi1 = new TH1F("phi_s", "Angle Difference (Electron - Positron) From 0-2π", 500, 0, 6.28);
     _phi2 = new TH1F("phi_m", "Angle Difference (Electron - Positron) From 1-π", 500, 1, 3.14);
-    _phi3 = new TH1F("phi_l", "Angle Difference (Electron - Positron) From 0-1rad", 500, 0, 1);
+    _phi3 = new TH1F("phi_t", "Angle Difference (Electron - Positron) From 0-1rad", 500, 0, .1);
 
     //printParameters() ;
     _nEvt = 0 ;

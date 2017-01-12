@@ -107,6 +107,8 @@ class Bundle{
   void err(string);
   void addParticle(MCParticle*);
   void addPhoton(MCParticle*);
+  double getMagnitude(MCParticle*);
+  double getDotProduct(MCParticle*, MCParticle*);
 private:
 };
 
@@ -147,9 +149,17 @@ void first::end(){
 
 //Implementation of the Bundle Class
 void Bundle::initialize(){
-  double p_phi = getPhi(positron);
-  double e_phi = getPhi(electron);
-  double del_phi = p_phi-e_phi;
+  /*  Trial 1: Getting angle between electron and positron.
+      double p_phi = getPhi(positron);
+      double e_phi = getPhi(electron);
+      double del_phi = p_phi-e_phi; */
+  //Trial 2: Getting angle between elctron and positron using covariant angles.
+  double dot = getDotProduct(positron, electron);
+  double mag_A = getMagnitude(positron);
+  double mag_B = getMagnitude(electron);
+  double val = mag_A*mag_B/dot;
+  cout << "Angle " << val << endl;
+  double del_phi = acos(val);
 
   //Put in graph
   _phi1->Fill(del_phi);
@@ -186,6 +196,8 @@ void Bundle::err(string _input){
   cout << _input << endl;
 }
 
+
+
 //Checks to see if particle is already there, then adds it for processing. Once full it runs initialize.
 void Bundle::addParticle(MCParticle* _input){
   switch(_input->getPDG()){
@@ -219,4 +231,21 @@ void Bundle::addPhoton(MCParticle* _input){
     photonB = _input;
     photons[1] = photonB;
   }else if(VERBOSE)err(ERROR_MAX_PHOTONS);
+}
+
+//Gets the norm of the vector and finds it's manitude.
+double Bundle::getMagnitude(MCParticle* _input){
+  const double m_x = (_input->getMomentum())[0];
+  const double m_y = (_input->getMomentum())[1];
+  const double m_z = _input->getMomentum()[2];
+  return sqrt(m_x*m_x + m_y*m_y + m_z*m_z);
+}
+double Bundle::getDotProduct(MCParticle* A, MCParticle* B){
+  const double a_x = (A->getMomentum())[0];
+  const double a_y = (A->getMomentum())[1];
+  const double a_z = A->getMomentum()[2];
+  const double b_x = (B->getMomentum())[0];
+  const double b_y = (B->getMomentum())[1];
+  const double b_z = B->getMomentum()[2];
+  return (a_x*b_x + a_y*b_y + a_z*b_z);
 }
