@@ -197,20 +197,31 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
     
       MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
       const double* partMom = aPart->getMomentum();
-      //_partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
-      double thrustAxisMag = sqrt(_principleThrustRazorAxis.x()*_principleThrustRazorAxis.x()+_principleThrustRazorAxis.y()*
-                           _principleThrustRazorAxis.y()+_principleThrustRazorAxis.z()*_principleThrustRazorAxis.z());
+      
       double ptaX = _principleThrustRazorAxis.x();
       double ptaY = _principleThrustRazorAxis.y();
       double ptaZ = _principleThrustRazorAxis.z();
-      cout << "MAGNITUDE:  " << thrustAxisMag<< endl;
+      
+      //_partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) );  
+      
       double perpI[3] = {-ptaZ, 0, ptaX};
-      double dotI = -ptaX*ptaZ +ptaZ*ptaX; // dot product of pta and perpI 
+      // dot product of pta and perpI obviously zero 
+      // vector orthog to these two:
+      
       //need cross product of these two 
-      double perpII[3] = {ptaY*ptaX-0, -ptaX*ptaX+-ptaZ*ptaZ, 0+ptaZ*ptaY}; 
-      double dotII = ptaX*perpII[0]+ptaY*perpII[1]+ptaZ*perpII[2]; // dot product of pta and perpII
-      cout <<"dot II:  " << dotII<< endl; 
+      double perpII[3] = {ptaY*ptaX, -ptaX*ptaX-ptaZ*ptaZ, ptaZ*ptaY}; 
+      
+      //cout << "perpIMAG :" f<< perpImag;
+      //cout << " "<< perpIImag;
 
+      double unitVecI[3] = {perpI[0]/perpImag, perpI[1]/perpImag, perpI[2]/perpImag};
+      double unitVecII[3] = {perpII[0]/perpIImag, perpII[1]/perpIImag, perpII[2]/perpIImag};
+      double unitVecImag = unitVecI[0]*unitVecI[0]+unitVecI[1]*unitVecI[1]+unitVecI[2]*unitVecI[2];
+      double unitVecIImag = unitVecII[0]*unitVecII[0]+unitVecII[1]*unitVecII[1]+unitVecII[2]*unitVecII[2]; 
+      cout << "unit mags" << endl;
+      cout << unitVecImag << " " <<unitVecIImag<<endl;
+
+      
     }
 
   if (_principleThrustRazorValue >= _max) _max = _principleThrustRazorValue;
