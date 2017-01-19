@@ -13,6 +13,11 @@
 /*
  * author Christopher Milke
  * April 5, 2016
+ *
+ * author Summer Zuber 
+ * January 18, 2017 
+ *
+ * Using thrust reconstruction code by: _____
  */
 
 #include "ThrustRazor.h"
@@ -60,8 +65,8 @@ ThrustRazor::ThrustRazor() : Processor("ThrustRazor") {
 
     registerProcessorParameter( "RootOutputName" , "output file"  , _root_file_name , std::string("output.root") );
     registerProcessorParameter( "typeOfThrustRazorFinder" ,
-     "Type of thrust reconstruction algorithm to be used:\n#\t1 : Tasso algorithm\n#\t2 : JetSet algorithm"  ,
-      _typeOfThrustRazorFinder , 2 ) ;
+            "Type of thrust reconstruction algorithm to be used:\n#\t1 : Tasso algorithm\n#\t2 : JetSet algorithm"  ,
+            _typeOfThrustRazorFinder , 2 ) ;
 }
 
 
@@ -72,21 +77,21 @@ void ThrustRazor::init() {
     _rootfile = new TFile("thrust_test.root","RECREATE");
     // irameters() ;
 
-  // config ranlux 
-  filename = "Ranlux.coonf";
-  ifstream rndcfgfile( filename.c_str() );
-  
-  if (!rndcfgfile)
+    // config ranlux 
+    filename = "Ranlux.coonf";
+    ifstream rndcfgfile( filename.c_str() );
+
+    if (!rndcfgfile)
     {
-      long int ss=1234;
-      myrnd.setSeeds(&ss,4);
-      myrnd.showStatus();
+        long int ss=1234;
+        myrnd.setSeeds(&ss,4);
+        myrnd.showStatus();
     }
-  else
+    else
     {
-      rndcfgfile.close();
-      myrnd.restoreStatus(filename.c_str());
-      myrnd.showStatus();
+        rndcfgfile.close();
+        myrnd.restoreStatus(filename.c_str());
+        myrnd.showStatus();
     } // if file not existusually a good idea to
     //printParameters() ;
     _nEvt = 0 ;
@@ -114,73 +119,73 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
 
     for (int n=0;n<_inParVec->getNumberOfElements() ;n++)
     {
-      MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
+        MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
         //MCParticle* aPart = _inParVec->getElementAt(n);
-      const double* partMom = aPart->getMomentum();
-      _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
+        const double* partMom = aPart->getMomentum();
+        _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
 
-   
+
     }
 
     _nEvt ++ ; // different from original-moved out of for loop - summer 
-  //reset variables for output   
-  _principleThrustRazorValue = -1;
-  _majorThrustRazorValue     = -1;
-  _minorThrustRazorValue     = -1;
-  _principleThrustRazorAxis.set(0,0,0);
-  _majorThrustRazorAxis.set(0,0,0);
-  _minorThrustRazorAxis.set(0,0,0);
+    //reset variables for output   
+    _principleThrustRazorValue = -1;
+    _majorThrustRazorValue     = -1;
+    _minorThrustRazorValue     = -1;
+    _principleThrustRazorAxis.set(0,0,0);
+    _majorThrustRazorAxis.set(0,0,0);
+    _minorThrustRazorAxis.set(0,0,0);
 
-  // Switch to the desired type of thrust finder
-  if (_typeOfThrustRazorFinder == 1)
+    // Switch to the desired type of thrust finder
+    if (_typeOfThrustRazorFinder == 1)
     { 
-      TassoThrustRazor();
+        TassoThrustRazor();
     }
-  else if (_partMom.size()<=1)
+    else if (_partMom.size()<=1)
     { 
-      TassoThrustRazor();
+        TassoThrustRazor();
     }
-  else if (_typeOfThrustRazorFinder == 2)
+    else if (_typeOfThrustRazorFinder == 2)
     {
-      JetsetThrustRazor();
+        JetsetThrustRazor();
     }
-  // ###write
-  //    evt->parameters().setValue("thrust",_principleThrustRazorValue);
+    // ###write
+    //    evt->parameters().setValue("thrust",_principleThrustRazorValue);
 
-  FloatVec thrax;
-  thrax.clear();
-  thrax.push_back(_principleThrustRazorAxis.x());
-  thrax.push_back(_principleThrustRazorAxis.y());
-  thrax.push_back(_principleThrustRazorAxis.z());
+    FloatVec thrax;
+    thrax.clear();
+    thrax.push_back(_principleThrustRazorAxis.x());
+    thrax.push_back(_principleThrustRazorAxis.y());
+    thrax.push_back(_principleThrustRazorAxis.z());
 
-  _inParVec->parameters().setValue("principleThrustRazorValue",_principleThrustRazorValue);
-  _inParVec->parameters().setValues("principleThrustRazorAxis",thrax);
+    _inParVec->parameters().setValue("principleThrustRazorValue",_principleThrustRazorValue);
+    _inParVec->parameters().setValues("principleThrustRazorAxis",thrax);
 
-  if (_typeOfThrustRazorFinder == 2)
+    if (_typeOfThrustRazorFinder == 2)
     {
-      thrax.clear();
-      thrax.push_back(_majorThrustRazorAxis.x());
-      thrax.push_back(_majorThrustRazorAxis.y());
-      thrax.push_back(_majorThrustRazorAxis.z());
+        thrax.clear();
+        thrax.push_back(_majorThrustRazorAxis.x());
+        thrax.push_back(_majorThrustRazorAxis.y());
+        thrax.push_back(_majorThrustRazorAxis.z());
 
-      _inParVec->parameters().setValue("majorThrustRazorValue",_majorThrustRazorValue);
-      _inParVec->parameters().setValues("majorThrustRazorAxis",thrax);
+        _inParVec->parameters().setValue("majorThrustRazorValue",_majorThrustRazorValue);
+        _inParVec->parameters().setValues("majorThrustRazorAxis",thrax);
 
-      thrax.clear();
-      thrax.push_back(_minorThrustRazorAxis.x());
-      thrax.push_back(_minorThrustRazorAxis.y());
-      thrax.push_back(_minorThrustRazorAxis.z());
+        thrax.clear();
+        thrax.push_back(_minorThrustRazorAxis.x());
+        thrax.push_back(_minorThrustRazorAxis.y());
+        thrax.push_back(_minorThrustRazorAxis.z());
 
-      _inParVec->parameters().setValue("minorThrustRazorValue",_minorThrustRazorValue);
-      _inParVec->parameters().setValues("minorThrustRazorAxis",thrax);
+        _inParVec->parameters().setValue("minorThrustRazorValue",_minorThrustRazorValue);
+        _inParVec->parameters().setValues("minorThrustRazorAxis",thrax);
 
-      float Oblateness;
-      Oblateness = _majorThrustRazorValue - _minorThrustRazorValue;
-      _inParVec->parameters().setValue("Oblateness",Oblateness);
-      if ( (_majorThrustRazorValue < 0) || (_minorThrustRazorValue < 0) )
-    {
-      _inParVec->parameters().setValue("Oblateness",-1);
-    }
+        float Oblateness;
+        Oblateness = _majorThrustRazorValue - _minorThrustRazorValue;
+        _inParVec->parameters().setValue("Oblateness",Oblateness);
+        if ( (_majorThrustRazorValue < 0) || (_minorThrustRazorValue < 0) )
+        {
+            _inParVec->parameters().setValue("Oblateness",-1);
+        }
     }
 
     streamlog_out( DEBUG4 ) << " thrust: " << _principleThrustRazorValue << " TV: " << _principleThrustRazorAxis << endl;
@@ -192,40 +197,95 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
     cout << "  major: " << _majorThrustRazorValue << " TV: " << _majorThrustRazorAxis << endl;
     cout << "  minor: " << _minorThrustRazorValue << " TV: " << _minorThrustRazorAxis << endl;
 
-
+    double vec[2][3][4]; // jet 1, jet 2 : true detectable, detected : energy, momx, momy, momz 
+    int id, stat; 
     for (int n=0;n<_inParVec->getNumberOfElements() ;n++){
-    
-      MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
-      const double* partMom = aPart->getMomentum();
-      
-      double ptaX = _principleThrustRazorAxis.x();
-      double ptaY = _principleThrustRazorAxis.y();
-      double ptaZ = _principleThrustRazorAxis.z();
-      
-      //_partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) );  
-      
-      double perpI[3] = {-ptaZ, 0, ptaX};
-      // dot product of pta and perpI obviously zero 
-      // vector orthog to these two:
-      
-      //need cross product of these two 
-      double perpII[3] = {ptaY*ptaX, -ptaX*ptaX-ptaZ*ptaZ, ptaZ*ptaY}; 
-      
-      //cout << "perpIMAG :" f<< perpImag;
-      //cout << " "<< perpIImag;
 
-      double unitVecI[3] = {perpI[0]/perpImag, perpI[1]/perpImag, perpI[2]/perpImag};
-      double unitVecII[3] = {perpII[0]/perpIImag, perpII[1]/perpIImag, perpII[2]/perpIImag};
-      double unitVecImag = unitVecI[0]*unitVecI[0]+unitVecI[1]*unitVecI[1]+unitVecI[2]*unitVecI[2];
-      double unitVecIImag = unitVecII[0]*unitVecII[0]+unitVecII[1]*unitVecII[1]+unitVecII[2]*unitVecII[2]; 
-      cout << "unit mags" << endl;
-      cout << unitVecImag << " " <<unitVecIImag<<endl;
+        MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
 
-      
+        try{
+            id = aPart->getPDG();
+            stat = aPart->getGeneratorStatus();
+        }
+        catch(const std::exception& e){
+            cout << "exception caught with message " << e.what() << "\n";
+        }
+
+        if(stat==1){
+            const double* partMom = aPart->getMomentum();
+            double part4mom[4] = {aPart->getEnergy(), partMom[0], partMom[1], partMom[2]};
+
+            double ptaX = _principleThrustRazorAxis.x();
+            double ptaY = _principleThrustRazorAxis.y();
+            double ptaZ = _principleThrustRazorAxis.z();
+
+            double pta[3] = {ptaX, ptaY, ptaZ};
+
+            cout << "Momentum: " << partMom[0] << partMom[1] << partMom[2]<< endl;
+            double dot = ptaX*partMom[0]+ptaY*partMom[1]+ptaZ*partMom[2];
+            cout << "dot " << dot << endl;
+
+            // need momentum and energy of entire jet 
+
+            bool isDarkMatter = (id == 1000022);
+            bool isNeutrino = (
+                    id == 12 || id == -12 ||
+                    id == 14 || id == -14 ||
+                    id == 16 || id == -16 ||
+                    id == 18 || id == -18);
+            double cos = partMom[2]/(sqrt(partMom[0]*partMom[0]+partMom[1]*partMom[1]+partMom[2]*partMom[2]));
+            bool isForward = ( cos > 0.9 || cos < - 0.9);
+            if(dot>0){
+                vec[0][0][0]+= part4mom[0]; 
+                vec[0][0][1]+= part4mom[1];
+                vec[0][0][2]+=part4mom[2];
+                vec[0][0][3]+=part4mom[3];
+                if (!isDarkMatter && !isNeutrino){
+                    vec[0][1][0]+=part4mom[0];
+                    vec[0][1][1]+=part4mom[1];
+                    vec[0][1][2]+=part4mom[2];
+                    vec[0][1][3]+=part4mom[3];
+                    if(!isForward){
+                        vec[0][2][0]+=part4mom[0];
+                        vec[0][2][1]+=part4mom[1];
+                        vec[0][2][2]+=part4mom[2];
+                        vec[0][2][3]+=part4mom[3];
+                    }
+                }
+            }
+            if(dot<0){ 
+                vec[1][0][0]+= part4mom[0]; 
+                vec[1][0][1]+= part4mom[1];
+                vec[1][0][2]+=part4mom[2];
+                vec[1][0][3]+=part4mom[3];
+                if (!isDarkMatter && !isNeutrino){
+                    vec[1][1][0]+=part4mom[0];
+                    vec[1][1][1]+=part4mom[1];
+                    vec[1][1][2]+=part4mom[2];
+                    vec[1][1][3]+=part4mom[3];
+                    if(!isForward){
+                        vec[1][2][0]+=part4mom[0];
+                        vec[1][2][1]+=part4mom[1];
+                        vec[1][2][2]+=part4mom[2];
+                        vec[1][2][3]+=part4mom[3];
+                    }
+                }
+            }
+            if(dot==0){
+                int jet = rand() % 2;
+                cout << " RANDOM " << jet << endl; 
+            }
+        }
     }
+    for (int n=0;n<_inParVec->getNumberOfElements() ;n++){
 
-  if (_principleThrustRazorValue >= _max) _max = _principleThrustRazorValue;
-  if (_principleThrustRazorValue <= _min) _min = _principleThrustRazorValue;
+        MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
+        const double* partMom = aPart->getMomentum();
+        
+
+    }
+    if (_principleThrustRazorValue >= _max) _max = _principleThrustRazorValue;
+    if (_principleThrustRazorValue <= _min) _min = _principleThrustRazorValue;
 }
 
 
@@ -242,170 +302,170 @@ void ThrustRazor::end(){
 }
 
 int ThrustRazor::JetsetThrustRazor(){
-  const int nwork=11,iFastMax = 4,iGood=2;
-  const float dConv=0.0001; // 0.0001
-  int sgn;
-  double theta=0,phi=0;
-  double thp,thps,tds,tmax,dOblateness;
-  vector<Hep3Vector> TAxes(3),Fast(iFastMax+1),Workv(nwork);
-  vector<double> Workf(nwork),dThrustRazor(3);
-  Hep3Vector tdi,tpr,mytest;
+    const int nwork=11,iFastMax = 4,iGood=2;
+    const float dConv=0.0001; // 0.0001
+    int sgn;
+    double theta=0,phi=0;
+    double thp,thps,tds,tmax,dOblateness;
+    vector<Hep3Vector> TAxes(3),Fast(iFastMax+1),Workv(nwork);
+    vector<double> Workf(nwork),dThrustRazor(3);
+    Hep3Vector tdi,tpr,mytest;
 
-  tmax = 0;
-  for ( unsigned int i=0; i < _partMom.size(); i++)
-    tmax += _partMom[i].mag();
+    tmax = 0;
+    for ( unsigned int i=0; i < _partMom.size(); i++)
+        tmax += _partMom[i].mag();
 
-  // pass = 0: find thrust axis
-  // pass = 1: find major axis
-  for ( int pass=0; pass <= 1; pass++ )
+    // pass = 0: find thrust axis
+    // pass = 1: find major axis
+    for ( int pass=0; pass <= 1; pass++ )
     {
-      if ( pass == 1 )
-    {
-      phi   = TAxes[0].phi();
-      theta = TAxes[0].theta();
-      for ( unsigned  int i = 0;i < _partMom.size(); i++)
+        if ( pass == 1 )
         {
-          _partMom[i].rotateZ(-phi);
-          _partMom[i].rotateY(-theta);
-        }
-      TAxes[0].set(0,0,1);
-    } // if pass == 1
+            phi   = TAxes[0].phi();
+            theta = TAxes[0].theta();
+            for ( unsigned  int i = 0;i < _partMom.size(); i++)
+            {
+                _partMom[i].rotateZ(-phi);
+                _partMom[i].rotateY(-theta);
+            }
+            TAxes[0].set(0,0,1);
+        } // if pass == 1
 
-      // Find the ifast highest momentum particles and
-      // put the highest in Fast[0], next in Fast[1],....Fast[iFast-1].
-      // Fast[iFast] is just a workspace.
-    for ( unsigned  int i = 0; i < Fast.size(); i++ )
-    Fast[i].set(0,0,0);
+        // Find the ifast highest momentum particles and
+        // put the highest in Fast[0], next in Fast[1],....Fast[iFast-1].
+        // Fast[iFast] is just a workspace.
+        for ( unsigned  int i = 0; i < Fast.size(); i++ )
+            Fast[i].set(0,0,0);
 
-      for ( unsigned int i = 0; i < _partMom.size(); i++ )
-    {
-      for ( int ifast = iFastMax -1; ifast >= 0 ; ifast-- )
+        for ( unsigned int i = 0; i < _partMom.size(); i++ )
         {
-          if (_partMom[i].mag2() > Fast[ifast].mag2() )
-        {
-          Fast[ifast + 1] = Fast[ifast];
-          if (ifast == 0) Fast[ifast] = _partMom[i];
-        }
-          else
-        {
-          Fast[ifast + 1] = _partMom[i];
-          break;
-        } // if p>p_fast
-        } // for ifast 
-    } // for i 
-
-      // Find axis with highest thrust (case 0)/ highest major (case 1).
-for ( unsigned int iw = 0; iw < Workv.size(); iw++ )
-    {
-      Workf[iw] = 0.;
-    }
-      int p = (int) min( iFastMax,_partMom.size() ) - 1 ;
-      int nc = 1 << p;
-      for ( int n = 0; n < nc; n++ )
-    {
-      tdi.set(0,0,0);
-      for (int i = 0; i < min(iFastMax,nc) ; i++)
-        {
-          if ( (1 << (i+1)) * ( (n + (1<<i)) / (1<<(i+1)) ) >= n+1) //i+1 
-        { sgn = -1;} else {sgn = 1;}
-          tdi += sgn*Fast[i];
-          if (pass==1) tdi.setZ(0);
+            for ( int ifast = iFastMax -1; ifast >= 0 ; ifast-- )
+            {
+                if (_partMom[i].mag2() > Fast[ifast].mag2() )
+                {
+                    Fast[ifast + 1] = Fast[ifast];
+                    if (ifast == 0) Fast[ifast] = _partMom[i];
+                }
+                else
+                {
+                    Fast[ifast + 1] = _partMom[i];
+                    break;
+                } // if p>p_fast
+            } // for ifast 
         } // for i 
-      tds = tdi.mag2();
-      for ( int iw = (int) min(n,9); iw >= 0; iw-- )
-        {
-          if (tds > Workf[iw])
-        {
-          Workf[iw+1] = Workf[iw];
-          Workv[iw+1] = Workv[iw];
-          if (iw == 0)
-            { Workv[iw] = tdi; Workf[iw] = tds;}
-        }
-          else // if tds 
-        {
-          Workv[iw+1] = tdi;
-          Workf[iw+1] = tds;
-        } // if tds 
-        } // for iw
-    } // for n 
 
-      // Iterate direction of axis until stable maximum.
-    dThrustRazor[pass] = 0;
-      int nagree = 0;
-      for ( int iw = 0; iw < min(nc,10) && nagree < iGood; iw++ )
-    {
-      thp = 0;
-      thps = -99999.;
-      while ( thp > thps + dConv )
+        // Find axis with highest thrust (case 0)/ highest major (case 1).
+        for ( unsigned int iw = 0; iw < Workv.size(); iw++ )
         {
-          thps = thp;
-          if ( thp <= 1E-10 )
-        { tdi = Workv[iw]; } else { tdi=tpr; }
-          tpr.set(0,0,0);
-          for ( unsigned int i = 0; i < _partMom.size(); i++ )
+            Workf[iw] = 0.;
+        }
+        int p = (int) min( iFastMax,_partMom.size() ) - 1 ;
+        int nc = 1 << p;
+        for ( int n = 0; n < nc; n++ )
         {
-          sgn = (int) sign(1,tdi.dot(_partMom[i]));
-          tpr += sgn*_partMom[i];
-          if (pass == 1) { tpr.setZ(0); } // ###
-        } // for i 
-          thp = tpr.mag()/tmax;
-        } // while 
-      // Save good axis. Try new initial axis until enough
-      // tries agree.
-      if ( thp < dThrustRazor[pass] - dConv ) continue;
-      if ( thp > dThrustRazor[pass] + dConv )
+            tdi.set(0,0,0);
+            for (int i = 0; i < min(iFastMax,nc) ; i++)
+            {
+                if ( (1 << (i+1)) * ( (n + (1<<i)) / (1<<(i+1)) ) >= n+1) //i+1 
+                { sgn = -1;} else {sgn = 1;}
+                tdi += sgn*Fast[i];
+                if (pass==1) tdi.setZ(0);
+            } // for i 
+            tds = tdi.mag2();
+            for ( int iw = (int) min(n,9); iw >= 0; iw-- )
+            {
+                if (tds > Workf[iw])
+                {
+                    Workf[iw+1] = Workf[iw];
+                    Workv[iw+1] = Workv[iw];
+                    if (iw == 0)
+                    { Workv[iw] = tdi; Workf[iw] = tds;}
+                }
+                else // if tds 
+                {
+                    Workv[iw+1] = tdi;
+                    Workf[iw+1] = tds;
+                } // if tds 
+            } // for iw
+        } // for n 
+
+        // Iterate direction of axis until stable maximum.
+        dThrustRazor[pass] = 0;
+        int nagree = 0;
+        for ( int iw = 0; iw < min(nc,10) && nagree < iGood; iw++ )
         {
-          nagree = 0;
-          //          if (myrnd.flat() > 0.49999)
-          //        {sgn = 1;} else {sgn=-1;}
-          sgn = 1;
-          TAxes[pass] = sgn*tpr/(tmax*thp);
-          dThrustRazor[pass] = thp;
-        } // if thp
-      nagree++;
-    } // for iw (2)
+            thp = 0;
+            thps = -99999.;
+            while ( thp > thps + dConv )
+            {
+                thps = thp;
+                if ( thp <= 1E-10 )
+                { tdi = Workv[iw]; } else { tdi=tpr; }
+                tpr.set(0,0,0);
+                for ( unsigned int i = 0; i < _partMom.size(); i++ )
+                {
+                    sgn = (int) sign(1,tdi.dot(_partMom[i]));
+                    tpr += sgn*_partMom[i];
+                    if (pass == 1) { tpr.setZ(0); } // ###
+                } // for i 
+                thp = tpr.mag()/tmax;
+            } // while 
+            // Save good axis. Try new initial axis until enough
+            // tries agree.
+            if ( thp < dThrustRazor[pass] - dConv ) continue;
+            if ( thp > dThrustRazor[pass] + dConv )
+            {
+                nagree = 0;
+                //          if (myrnd.flat() > 0.49999)
+                //        {sgn = 1;} else {sgn=-1;}
+                sgn = 1;
+                TAxes[pass] = sgn*tpr/(tmax*thp);
+                dThrustRazor[pass] = thp;
+            } // if thp
+            nagree++;
+        } // for iw (2)
     } // for pass ...
     // Find minor axis and value by orthogonality.
-  if (myrnd.flat() > 0.49999)
+    if (myrnd.flat() > 0.49999)
     {sgn = 1;} else {sgn=-1;}
-  TAxes[2].set( -sgn*TAxes[1].y(), sgn*TAxes[1].x(), 0);
-  thp = 0.;
-  for ( unsigned int i = 0; i < _partMom.size(); i++ )
+    TAxes[2].set( -sgn*TAxes[1].y(), sgn*TAxes[1].x(), 0);
+    thp = 0.;
+    for ( unsigned int i = 0; i < _partMom.size(); i++ )
     {
-      thp += fabs(TAxes[2].dot(_partMom[i]) );
+        thp += fabs(TAxes[2].dot(_partMom[i]) );
     } // for i 
-  dThrustRazor[2] = thp/tmax;
+    dThrustRazor[2] = thp/tmax;
 
-  // Rotate back to original coordinate system.
-  for ( unsigned int i = 0;i < TAxes.size(); i++)
+    // Rotate back to original coordinate system.
+    for ( unsigned int i = 0;i < TAxes.size(); i++)
     {
-      TAxes[i].rotateY(theta);
-      TAxes[i].rotateZ(phi);
+        TAxes[i].rotateY(theta);
+        TAxes[i].rotateZ(phi);
     }
-  dOblateness = dThrustRazor[1] - dThrustRazor[2];
+    dOblateness = dThrustRazor[1] - dThrustRazor[2];
 
-  _principleThrustRazorValue = dThrustRazor[0];
-  _majorThrustRazorValue     = dThrustRazor[1];
-  _minorThrustRazorValue     = dThrustRazor[2];
-  _principleThrustRazorAxis  =   TAxes[0];
-  _majorThrustRazorAxis      =   TAxes[1];
-  _minorThrustRazorAxis      =   TAxes[2];
+    _principleThrustRazorValue = dThrustRazor[0];
+    _majorThrustRazorValue     = dThrustRazor[1];
+    _minorThrustRazorValue     = dThrustRazor[2];
+    _principleThrustRazorAxis  =   TAxes[0];
+    _majorThrustRazorAxis      =   TAxes[1];
+    _minorThrustRazorAxis      =   TAxes[2];
 
 
-  return  0;
+    return  0;
 }
 
 //______________________________________________________________
 // helper function to get sign of b
 double ThrustRazor::sign(double a, double b)
 {
-  if ( b < 0 )
+    if ( b < 0 )
     { return -fabs(a); } else { return fabs(a); }
 }
 //______________________________________________________________
 double ThrustRazor::min(double a, double b)
 {
-  if ( a < b )
+    if ( a < b )
     { return a; } else { return b; }
 }
 //______________________________________________________________
