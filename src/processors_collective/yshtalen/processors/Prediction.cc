@@ -78,22 +78,56 @@ void Prediction::processEvent( LCEvent * evt ) {
 
     LCCollection* col = evt->getCollection( _colName ) ;
 
+    vector<int*> particles;
     int stat, id =0;
     double tot_mom[]={0, 0};
+    double compEn_e=0;
+    double compEn_p=0;
     // this will only be entered if the collection is available
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
 
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
-           MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
-        
-            id = hit->getPDG();
-            stat = hit->getGeneratorStatus();
+            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
+            MyParticle particle = new MyParticle(hit);
+
+            id = particle.getPDG();
+            stat = particle.getStat();
             if(stat==1){
-                cout << "TEST: " << hit->getMomentum()[0] << endl;
+                //only final state particles in vector
+                particles.push_back(&particle); 
                 cout << "Particle " << hitIndex << " with ID: " << id << endl;
+                //find highest energy electron and positron
+                if(id==11){
+                    if(particle.getEnergy() > compEn_e){compEn_e=particle.getEnergy();}    
+                }
+                else if(id==-11){
+                    if(particle.getEnergy() > compEn_p){compEn_p=particle.getEnergy();}    
+                }
+                //set all other particle types to hadronic system
+                else{
+                    particle.setHadronic(true);
+                    particle.setDetectable(true);
+                }
             }//end final state   
         }//end for
+
+        for(MyParticle* particle : particles){
+            if(id==11 && particle->getEnergy()==compEn_e){particle->setElectronic(true);}    
+            else if(id==-11 && particle->getEnergy()==compEn_p){particle->setElectronic(true);}
+            else{
+                if(abs(id)==12||abs(id)==14||abs(id)==16||abs(id)==18){particle->setDetectable(false);}    
+            }
+        }
+
+        for(MyParticle* particle : particles){
+            if(particle->isElectronic){
+                cout << "ELECTRONIC:: id: " << particle->id() << " Energy: " << particle->energy() << endl;
+            }    
+            if(particle->isHadronic){
+                cout << "HADRONIC:: id: " << particle->id() << " Energy: " << particle->energy() << endl;
+            }
+        }
          
     }
 

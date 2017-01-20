@@ -39,11 +39,15 @@ using namespace std;
 first first;
 
 static TFile* _rootfile;
-static TH2F* _hitmap;
-static TH1F* _energy;
-static TH1F* _phi1;
-static TH1F* _phi2;
-static TH1F* _phi3;
+static TH2F* _hitmap1;
+static TH2F* _hitmap2;
+static TH2F* _hitmap3;
+static TH2F* _hitmap4;
+
+//static TH1F* _energy;
+//static TH1F* _phi1;
+//static TH1F* _phi2;
+//static TH1F* _phi3;
 first::first() : Processor("first") {
     // modify processor description
     _description = "Protype Processor" ;
@@ -59,11 +63,14 @@ void first::init() {
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
     cout << "Initialized" << endl;
     _rootfile = new TFile("Phi_Bhabha.root","RECREATE");
-    _energy = new TH1F("energy", "Energy", 520.0,  0.0, 260.0);
-    _hitmap = new TH2F("pos", "Position Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
-    _phi1 = new TH1F("phi_s", "Angle Difference (Electron - Positron) From 0-2π", 500, 0, 6.28);
-    _phi2 = new TH1F("phi_m", "Angle Difference (Electron - Positron) From 1-π", 500, 1, 3.14);
-    _phi3 = new TH1F("phi_t", "Angle Difference (Electron - Positron) From 0-1rad", 500, 0, .1);
+    //    _energy = new TH1F("energy", "Energy", 520.0,  0.0, 260.0);
+    _hitmap1 = new TH2F("pos1", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
+    _hitmap2 = new TH2F("pos2", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
+    _hitmap3 = new TH2F("pos3", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
+    _hitmap4 = new TH2F("pos4", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
+    //    _phi1 = new TH1F("phi_s", "Angle Difference (Electron - Positron) From 0-2π", 500, 0, 6.28);
+    //    _phi2 = new TH1F("phi_m", "Angle Difference (Electron - Positron) From 1-π", 500, 1, 3.14);
+    //    _phi3 = new TH1F("phi_t", "Angle Difference (Electron - Positron) From 0-1rad", 500, 0, .1);
 
     //printParameters() ;
     _nEvt = 0 ;
@@ -109,6 +116,7 @@ class Bundle{
   void addPhoton(MCParticle*);
   double getMagnitude(MCParticle*);
   double getDotProduct(MCParticle*, MCParticle*);
+  void graphHitStatus(double,double);
 private:
 };
 
@@ -147,23 +155,54 @@ void first::end(){
     _rootfile->Write();
 }
 
+
+void Bundle::graphHitStatus(double x, double y){
+  switch(scipp_ilc::get_hitStatus(x, y)){
+    case(1):
+      _hitmap1->Fill(x, y);
+      break;
+    case(2):
+      _hitmap2->Fill(x, y);
+      break;
+    case(3):
+      _hitmap3->Fill(x, y);
+      break;
+    case(4):
+      _hitmap4->Fill(x, y);
+      break;
+    }
+}
 //Implementation of the Bundle Class
 void Bundle::initialize(){
   /*  Trial 1: Getting angle between electron and positron.
-      double p_phi = getPhi(positron);
-      double e_phi = getPhi(electron);
-      double del_phi = p_phi-e_phi; */
-  //Trial 2: Getting angle between elctron and positron using covariant angles.
+v  double p_phi = getPhi(positron);
+  double e_phi = getPhi(electron);
+  double del_phi = p_phi-e_phi; */
+  /* Trial 2: Getting angle between elctron and positron using covariant angles.
   double dot = getDotProduct(positron, electron);
   double mag_A = getMagnitude(positron);
   double mag_B = getMagnitude(electron);
   double val = -dot/(mag_A*mag_B);
-  double del_phi = acos(val);
+  double del_phi = acos(val);  */
+  double p_px = positron->getMomentum()[0];
+  double p_E = positron->getEnergy();
+  double e_px = electron->getMomentum()[0];
+  double e_E = electron->getEnergy();
 
+  scipp_ilc::transform_to_lab(p_px, p_E, p_px, p_E);
+  scipp_ilc::transform_to_lab(e_px, e_E, e_px, e_E);
+  
   //Put in graph
-  _phi1->Fill(del_phi);
-  _phi2->Fill(del_phi);
-  _phi3->Fill(del_phi);
+  graphHitStatus(e_px, electron->getMomentum()[1]);
+  graphHitStatus(p_px, positron->getMomentum()[1]);
+
+  //  _e_hitmap->Fill(p_px, positron->getMomentum()[1]);
+  //  _p_hitmap->Fill(e_px, electron->getMomentum()[1]);
+  //  _hitmap->Fill(positron->getMomentum()[0], positron->getMomentum()[1]);
+  //  _hitmap->Fill(electron->getMomentum()[0], electron->getMomentum()[1]);
+    //  _phi1->Fill(del_phi);
+    //  _phi2->Fill(del_phi);
+    //  _phi3->Fill(del_phi);
 }
 
 //Returns the total number of particles added. MAX is 4 right now.

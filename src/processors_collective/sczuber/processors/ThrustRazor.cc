@@ -54,6 +54,8 @@ using namespace std;
 
 static TFile* _rootfile;
 
+static TH1F* _RPlot;
+
 ThrustRazor ThrustRazor;
 
 ThrustRazor::ThrustRazor() : Processor("ThrustRazor") {
@@ -74,7 +76,8 @@ ThrustRazor::ThrustRazor() : Processor("ThrustRazor") {
 void ThrustRazor::init() { 
     streamlog_out(DEBUG)  << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("thrust_test.root","RECREATE");
+    _rootfile = new TFile("ThrustRazor.root","RECREATE");
+    _RPlot = new TH1F("RPlot", "R =MTR/MR",100,0,10);
     // irameters() ;
 
     // config ranlux 
@@ -198,6 +201,7 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
     cout << "  minor: " << _minorThrustRazorValue << " TV: " << _minorThrustRazorAxis << endl;
 
     double vec[2][3][4]; // jet 1, jet 2 : true detectable, detected : energy, momx, momy, momz 
+    double Rvec[3][4]; // true, detectable, detected : energy, px, py, pz 
     int id, stat; 
     for (int n=0;n<_inParVec->getNumberOfElements() ;n++){
 
@@ -277,13 +281,59 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
             }
         }
     }
+    double beta = (vec[0][2][0]-vec[1][2][0])/(vec[0][2][3]-vec[1][2][3]);
+    double beta2 = pow(beta,2);
+    double gamma = 1/(sqrt(1-beta2));
     for (int n=0;n<_inParVec->getNumberOfElements() ;n++){
 
         MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
         const double* partMom = aPart->getMomentum();
         
-
+        try{
+            id = aPart->getPDG();
+            stat = aPart->getGeneratorStatus();
+        }
+        catch(const std::exception& e){
+            cout << "exception caught with message " << e.what() << "\n";
+        }
+        double part4Vec[4] = {aPart->getEnergy(), partMom[0], partMom[1], partMom[2] };
+        double R4Vec[4] = {gamma*part4Vec[0]-gamma*beta*part4Vec[3], part4Vec[1], part4Vec[2], 
+                            -gamma*beta*part4Vec[0]+gamma*part4Vec[3] }; 
+        bool isDarkMatter = (id == 1000022);
+        
+        bool isNeutrino = (
+                 id == 12 || id == -12 ||
+                 id == 14 || id == -14 ||
+                 id == 16 || id == -16 ||
+                 id == 18 || id == -18);
+        if(stat ==1){
+            if(!isDarkMatter && !isNeutrino){
+                Rvec[1][0]+=R4Vec[0];
+                Rvec[1][1]+=R4Vec[1];
+                Rvec[1][2]+=R4Vec[2];
+                Rvec[1][3]+=R4Vec[3];
+            }
+        }
+  
+ 
     }
+    double ETM[2] = {-Rvec[1][1], - Rvec[1][2]};
+    double ETMmag = sqrt(ETM[0]*ETM[0]+ETM[1]*ETM[1]);
+    
+    double ptj1mag = sqrt(vec[0][1][1]*vec[0][1][1]+vec[0][1][2]*vec[0][1][2]);
+    double ptj2mag = sqrt(vec[1][1][1]*vec[1][1][1]+vec[1][1][2]*vec[1][1][2]);
+    double ptmagsum = ptj1mag + ptj2mag; 
+
+    double ptvecsum[2] = {vec[0][1][1]+vec[1][1][1], vec[0][1][2]+vec[1][1][2]};
+    double ETMdotptvecsum = ETM[0]*ptvecsum[0]+ETM[1]*ptvecsum[1];
+    double MTR = sqrt((ETMmag*ptmagsum-ETMdotptvecsum)/2);
+    
+    double pj1 = sqrt(vec[0][1][1]*vec[0][1][1]+vec[0][1][2]*vec[0][1][2]+vec[0][1][3]*vec[0][1][3]);
+    double R = MTR/(2*pj1);
+    if(beta2<=1){
+        _RPlot->Fill(R);
+    }
+
     if (_principleThrustRazorValue >= _max) _max = _principleThrustRazorValue;
     if (_principleThrustRazorValue <= _min) _min = _principleThrustRazorValue;
 }

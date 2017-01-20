@@ -8,7 +8,6 @@
 #include "polar_coords.h"
 
 #include <EVENT/MCParticle.h>
-
 using namespace std;
 using namespace lcio;
 

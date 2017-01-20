@@ -157,8 +157,7 @@ void Bundle::initialize(){
   double dot = getDotProduct(positron, electron);
   double mag_A = getMagnitude(positron);
   double mag_B = getMagnitude(electron);
-  double val = mag_A*mag_B/dot;
-  cout << "Angle " << val << endl;
+  double val = -dot/(mag_A*mag_B);
   double del_phi = acos(val);
 
   //Put in graph
