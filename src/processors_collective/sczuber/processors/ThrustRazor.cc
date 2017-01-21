@@ -76,7 +76,7 @@ ThrustRazor::ThrustRazor() : Processor("ThrustRazor") {
 void ThrustRazor::init() { 
     streamlog_out(DEBUG)  << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("ThrustRazor.root","RECREATE");
+    _rootfile = new TFile("ThrustRazor_00.root","RECREATE");
     _RPlot = new TH1F("RPlot", "R =MTR/MR",100,0,10);
     // irameters() ;
 
@@ -242,26 +242,26 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
             if(dot>0){
                 vec[0][0][0]+= part4mom[0]; 
                 vec[0][0][1]+= part4mom[1];
-                vec[0][0][2]+=part4mom[2];
-                vec[0][0][3]+=part4mom[3];
+                vec[0][0][2]+= part4mom[2];
+                vec[0][0][3]+= part4mom[3];
                 if (!isDarkMatter && !isNeutrino){
-                    vec[0][1][0]+=part4mom[0];
-                    vec[0][1][1]+=part4mom[1];
-                    vec[0][1][2]+=part4mom[2];
-                    vec[0][1][3]+=part4mom[3];
+                    vec[0][1][0]+= part4mom[0];
+                    vec[0][1][1]+= part4mom[1];
+                    vec[0][1][2]+= part4mom[2];
+                    vec[0][1][3]+= part4mom[3];
                     if(!isForward){
-                        vec[0][2][0]+=part4mom[0];
-                        vec[0][2][1]+=part4mom[1];
-                        vec[0][2][2]+=part4mom[2];
-                        vec[0][2][3]+=part4mom[3];
+                        vec[0][2][0]+= part4mom[0];
+                        vec[0][2][1]+= part4mom[1];
+                        vec[0][2][2]+= part4mom[2];
+                        vec[0][2][3]+= part4mom[3];
                     }
                 }
             }
             if(dot<0){ 
                 vec[1][0][0]+= part4mom[0]; 
                 vec[1][0][1]+= part4mom[1];
-                vec[1][0][2]+=part4mom[2];
-                vec[1][0][3]+=part4mom[3];
+                vec[1][0][2]+= part4mom[2];
+                vec[1][0][3]+= part4mom[3];
                 if (!isDarkMatter && !isNeutrino){
                     vec[1][1][0]+=part4mom[0];
                     vec[1][1][1]+=part4mom[1];
@@ -281,7 +281,7 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
             }
         }
     }
-    double beta = (vec[0][2][0]-vec[1][2][0])/(vec[0][2][3]-vec[1][2][3]);
+    double beta = (vec[0][1][0]-vec[1][1][0])/(vec[0][1][3]-vec[1][1][3]); // beta using detectable
     double beta2 = pow(beta,2);
     double gamma = 1/(sqrt(1-beta2));
     for (int n=0;n<_inParVec->getNumberOfElements() ;n++){

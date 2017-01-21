@@ -78,7 +78,7 @@ void Prediction::processEvent( LCEvent * evt ) {
 
     LCCollection* col = evt->getCollection( _colName ) ;
 
-    vector<int*> particles;
+   /* vector<int*> particles;
     int stat, id =0;
     double tot_mom[]={0, 0};
     double compEn_e=0;
@@ -129,7 +129,7 @@ void Prediction::processEvent( LCEvent * evt ) {
             }
         }
          
-    }
+    }*/
 
     _nEvt ++ ;
 }

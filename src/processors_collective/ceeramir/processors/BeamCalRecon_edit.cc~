@@ -56,6 +56,8 @@ static TProfile* _radeff;
 static int _detected_num = 0;
 static TH2F* _hitmap_bgd;
 
+vector<pair<float,float>> bgd_plot;
+
 
 //auto _t1 = Clock::now();
 //auto _t2 = Clock::now();
@@ -80,7 +82,7 @@ void BeamCalRecon_edit::init() {
 
     _rootfile = new TFile(_root_file_name.c_str(),"RECREATE");
     _radeff = new TProfile("radeff","Radial Efficiency",14*2,0.0,140.0,0.0,1.0);
-    _hitmap_bgd = new TH2F("hitmap_bgd","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
+    _hitmap_bgd = new TH2F("hitmap_bgd","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
 
     //    _t1 = Clock::now();
 
