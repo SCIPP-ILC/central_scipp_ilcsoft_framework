@@ -82,7 +82,7 @@ void BeamCalRecon_edit::init() {
 
     _rootfile = new TFile(_root_file_name.c_str(),"RECREATE");
     _radeff = new TProfile("radeff","Radial Efficiency",14*2,0.0,140.0,0.0,1.0);
-    _hitmap_bgd = new TH2F("hitmap_bgd","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
+    _hitmap_bgd = new TH2F("hitmap_bgd","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
 
     //    _t1 = Clock::now();
 
@@ -128,11 +128,12 @@ void BeamCalRecon_edit::processEvent( LCEvent* signal_event ) {
     signal_cluster = scipp_ilc::beamcal_recon_C::reconstruct_beamcal_event(signal_event);
     bool detected = signal_cluster->exceeds_sigma_cut;
 
+    cout << "detected:  " << detected<< "        x-y: "<< endx << endy << endl;
 
     //Plot our results with respect to the radius of the signal electron.
     _radeff->Fill(radius,detected); //bools and ints are basically interchangeable...
     _detected_num += detected;
-    //    _hitmap_bgd->Fill(endx,endy,detected);
+    _hitmap_bgd->Fill(endx,endy,detected);
 
     cout << _nEvt++ << endl;;
 }

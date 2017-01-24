@@ -120,16 +120,33 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
     cout << _inParVec->getNumberOfElements() << endl;
     if (!_partMom.empty()) _partMom.clear();
 
+    int id, stat; 
     for (int n=0;n<_inParVec->getNumberOfElements() ;n++)
     {
+        
         MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
-        //MCParticle* aPart = _inParVec->getElementAt(n);
-        const double* partMom = aPart->getMomentum();
-        _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
-
-
+        try{
+            id = aPart->getPDG();
+            stat = aPart->getGeneratorStatus();
+        }
+        catch(const std::exception& e){
+            cout << "exception caught with message " << e.what() << "\n";
+        }
+        if(stat==1){
+        bool isDarkMatter = (id == 1000022);
+        bool isNeutrino = (
+                    id == 12 || id == -12 ||
+                    id == 14 || id == -14 ||
+                    id == 16 || id == -16 ||
+                    id == 18 || id == -18);
+        
+        if(!isDarkMatter && !isNeutrino){
+            //MCParticle* aPart = _inParVec->getElementAt(n);
+            const double* partMom = aPart->getMomentum();
+            _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
+        }
+}
     }
-
     _nEvt ++ ; // different from original-moved out of for loop - summer 
     //reset variables for output   
     _principleThrustRazorValue = -1;
@@ -202,7 +219,7 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
 
     double vec[2][3][4]; // jet 1, jet 2 : true detectable, detected : energy, momx, momy, momz 
     double Rvec[3][4]; // true, detectable, detected : energy, px, py, pz 
-    int id, stat; 
+    //int id, stat; 
     for (int n=0;n<_inParVec->getNumberOfElements() ;n++){
 
         MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
@@ -225,7 +242,9 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
 
             double pta[3] = {ptaX, ptaY, ptaZ};
 
-            cout << "Momentum: " << partMom[0] << partMom[1] << partMom[2]<< endl;
+            cout << "id      : " << id << endl;  
+            cout << "Momentum: " << partMom[0] <<" "<< partMom[1] <<" "<< partMom[2]<< endl;
+            cout << "Thrust A: " << ptaX << " "<< ptaY << " " << ptaZ << endl;
             double dot = ptaX*partMom[0]+ptaY*partMom[1]+ptaZ*partMom[2];
             cout << "dot " << dot << endl;
 
@@ -278,10 +297,27 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
             if(dot==0){
                 int jet = rand() % 2;
                 cout << " RANDOM " << jet << endl; 
+                vec[1][0][0]+= part4mom[0]; 
+                vec[1][0][1]+= part4mom[1];
+                vec[1][0][2]+= part4mom[2];
+                vec[1][0][3]+= part4mom[3];
+                if (!isDarkMatter && !isNeutrino){
+                    vec[1][1][0]+=part4mom[0];
+                    vec[1][1][1]+=part4mom[1];
+                    vec[1][1][2]+=part4mom[2];
+                    vec[1][1][3]+=part4mom[3];
+                    if(!isForward){
+                        vec[1][2][0]+=part4mom[0];
+                        vec[1][2][1]+=part4mom[1];
+                        vec[1][2][2]+=part4mom[2];
+                        vec[1][2][3]+=part4mom[3];
+                    }
+                }
             }
         }
     }
-    double beta = (vec[0][1][0]-vec[1][1][0])/(vec[0][1][3]-vec[1][1][3]); // beta using detectable
+    double beta = (vec[0][1][0]-vec[1][1][0])/(vec[0][1][3]-vec[1][1][3]); // beta using detectable particles
+    cout << "BETA " << beta << endl;  
     double beta2 = pow(beta,2);
     double gamma = 1/(sqrt(1-beta2));
     for (int n=0;n<_inParVec->getNumberOfElements() ;n++){
