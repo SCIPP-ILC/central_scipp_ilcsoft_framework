@@ -20,6 +20,9 @@
 #include <EVENT/LCCollection.h>
 #include <EVENT/MCParticle.h>
 
+using namespace lcio;
+using namespace std;
+
 class MyParticle;
 
 typedef std::vector<MyParticle*> MyParticleVec;
@@ -44,13 +47,13 @@ public:
 
     int stat(); 
     
-    int isHadronic();
+    bool isHadronic();
 
-    int isElectronic();
+    bool isElectronic();
 
-    int isDetectable();
+    bool isDetectable();
     
-    int isDetected();
+    bool isDetected();
 
     void setHadronic(bool set);
     

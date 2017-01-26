@@ -13,7 +13,7 @@ MyParticle::~MyParticle(){
 }
 
 //create editable momentum (non-constant)
-MyParticle::mom(){
+double* MyParticle::mom(){
     const double* temp_mom = source->getMomentum();
     momentum[0] = temp_mom[0];    
     momentum[1] = temp_mom[1];    
@@ -22,40 +22,40 @@ MyParticle::mom(){
     return momentum;    
 }
 
-MyParticle::energy(){
+double MyParticle::energy(){
     en = source->getEnergy();
     return en;    
 }
 
-MyParticle::id(){
+int MyParticle::id(){
     return source->getPDG();    
 }
 
-MyParticle::stat(){
+int MyParticle::stat(){
     return source->getGeneratorStatus();
 }
 
 //booleans
-MyParticle::isHadronic(){return had;}
+bool MyParticle::isHadronic(){return had;}
 
-MyParticle::isElectronic(){return elec;}
+bool MyParticle::isElectronic(){return elec;}
 
-MyParticle::isDetectable(){return able;}
+bool MyParticle::isDetectable(){return able;}
 
-MyParticle::isDetected(){return detect;}
+bool MyParticle::isDetected(){return detect;}
 
 //setters
-MyParticle::setHadronic(set){had=set;}
+void MyParticle::setHadronic(bool set){had=set;}
 
-MyParticle::setElectronic(set){elec=set;}
+void MyParticle::setElectronic(bool set){elec=set;}
 
-MyParticle::setDetectable(set){able=set;}
+void MyParticle::setDetectable(bool set){able=set;}
 
-MyParticle::setDetected(set){detect=set;}
+void MyParticle::setDetected(bool set){detect=set;}
 
 //transform momentum to lab frame from CM frame
-MyParticle::getLorentzMom(){
-    scipp_ilc::transform_to_lab(double momentum[0], double momentum[3], double& momentum[0], double& momentum[3])   
+double* MyParticle::getLorentzMom(){
+    scipp_ilc::transform_to_lab(momentum[0], momentum[3], momentum[0], momentum[3]);   
     return momentum;
 }
 

@@ -41,6 +41,7 @@ typedef std::chrono::high_resolution_clock Clock;
 
 #include <TFile.h>
 #include <TProfile.h>
+#include <TProfile2D.h>
 #include <TH2D.h>
 
 
@@ -54,8 +55,11 @@ BeamCalRecon_edit BeamCalRecon_edit;
 static TFile* _rootfile;
 static TProfile* _radeff;
 static int _detected_num = 0;
-static TH2F* _hitmap_bgd;
-
+static int _test_num = 0;
+//static TH2F* _hitmap_bgd;
+//static TH2D* _hitmap_bgd;
+static TProfile2D* _hitmap_bgd;
+static TProfile2D* _test_slice;
 vector<pair<float,float>> bgd_plot;
 
 
@@ -82,8 +86,10 @@ void BeamCalRecon_edit::init() {
 
     _rootfile = new TFile(_root_file_name.c_str(),"RECREATE");
     _radeff = new TProfile("radeff","Radial Efficiency",14*2,0.0,140.0,0.0,1.0);
-    _hitmap_bgd = new TH2F("hitmap_bgd","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
-
+    _hitmap_bgd = new TProfile2D("hitmap_bgd","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
+    _test_slice = new TProfile2D("hitmap_slice","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
+    // TH2F
+    // TProfile2D
     //    _t1 = Clock::now();
 
     //Load up all the bgd events, and initialize the reconstruction algorithm.
@@ -128,14 +134,23 @@ void BeamCalRecon_edit::processEvent( LCEvent* signal_event ) {
     signal_cluster = scipp_ilc::beamcal_recon_C::reconstruct_beamcal_event(signal_event);
     bool detected = signal_cluster->exceeds_sigma_cut;
 
-    cout << "detected:  " << detected<< "        x-y: "<< endx << endy << endl;
-
+    if(!detected){
+      cout << "detected:  " << detected<< "        x-y: "<< endx << "\t" <<endy << endl;
+    }
     //Plot our results with respect to the radius of the signal electron.
     _radeff->Fill(radius,detected); //bools and ints are basically interchangeable...
     _detected_num += detected;
+
+    if(detected && endx > 0 && endy < 0){
+      _test_num += detected;
+      _test_slice->Fill(endx,endy,detected);
+    }
+    //    if(detected){
+      //      _hitmap_bgd->Fill(endx,endy);
+      //    }
     _hitmap_bgd->Fill(endx,endy,detected);
 
-    cout << _nEvt++ << endl;;
+    cout << _nEvt++ << endl;
 }
 
 
@@ -148,6 +163,7 @@ void BeamCalRecon_edit::check( LCEvent * evt ) {
 
 void BeamCalRecon_edit::end(){ 
     cout << "\ndetected: " << _detected_num << endl;
+    cout << "\n in \'slice\' of beamcal: " << _test_num << endl;
 
     //    _t2 = Clock::now();
     //    cout << "*******************this is the end***********************" << endl;
