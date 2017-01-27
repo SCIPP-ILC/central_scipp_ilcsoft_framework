@@ -174,16 +174,17 @@ void Bundle::graphHitStatus(double x, double y){
 }
 //Implementation of the Bundle Class
 void Bundle::initialize(){
-  /*  Trial 1: Getting angle between electron and positron.
-v  double p_phi = getPhi(positron);
+  //  Trial 1: Getting angle between electron and positron.
+  double p_phi = getPhi(positron);
   double e_phi = getPhi(electron);
-  double del_phi = p_phi-e_phi; */
-  /* Trial 2: Getting angle between elctron and positron using covariant angles.
+  double del_phi = p_phi-e_phi; 
+ // Trial 2: Getting angle between elctron and positron using covariant angles.
   double dot = getDotProduct(positron, electron);
   double mag_A = getMagnitude(positron);
   double mag_B = getMagnitude(electron);
   double val = -dot/(mag_A*mag_B);
-  double del_phi = acos(val);  */
+  double del_phi = acos(val); 
+
   double p_px = positron->getMomentum()[0];
   double p_E = positron->getEnergy();
   double e_px = electron->getMomentum()[0];
@@ -200,9 +201,9 @@ v  double p_phi = getPhi(positron);
   //  _p_hitmap->Fill(e_px, electron->getMomentum()[1]);
   //  _hitmap->Fill(positron->getMomentum()[0], positron->getMomentum()[1]);
   //  _hitmap->Fill(electron->getMomentum()[0], electron->getMomentum()[1]);
-    //  _phi1->Fill(del_phi);
-    //  _phi2->Fill(del_phi);
-    //  _phi3->Fill(del_phi);
+  _phi1->Fill(del_phi);
+  _phi2->Fill(del_phi);
+  _phi3->Fill(del_phi);
 }
 
 //Returns the total number of particles added. MAX is 4 right now.
