@@ -1,0 +1,69 @@
+#ifndef mybundle
+#define mybundle
+
+#include "scipp_ilc_utilities.h"
+#include <string>
+
+using namespace lcio;
+using namespace std;
+
+
+class Bundle{
+public:
+  const static bool VERBOSE = false;
+  //Setting PDG constants to particle names (DID NOT VERIFY)
+  const static int PHOTON = 22;
+  const static int POSITRON = 11;
+  const static int ELECTRON = -11;
+
+  //Setting errors static so I can spell check them easily.
+  const string ERROR_NOT_BAHBAH_PARTICLE = "Not a Bahbah particle User-Error: Trying to add a particle that is not accounted for.";
+  const string ERROR_MAX_PHOTONS = "Max Photon User-Error: Trying to add photon but it is already full.";
+  const string ERROR_ALREADY_PARTICLE = "Particle Already There User-Error: Trying to add a paticle but the space is not NULL.";
+
+ 
+  MCParticle* photonA = NULL;
+  MCParticle* photonB = NULL;
+  MCParticle* positron = NULL;
+  MCParticle* electron = NULL;
+  MCParticle* photons[2] = {NULL, NULL};
+
+  Bundle(){
+    positron = NULL;
+    electron = NULL;
+  }
+
+  void err(string _input);
+
+  void graphHitStatus(double x, double y);
+
+  //Implementation of the Bundle Class
+  void initialize();
+
+  //Returns the total number of particles added. MAX is 4 right now.
+  int getCount();
+
+  MCParticle* getElectron();
+  MCParticle* getPositron();
+
+  //-- Physics Section --\\
+  //returns the angle from the x-y axis
+  double getTheta(MCParticle* _input);
+
+  //returns the angle from the z axis
+  double getPhi(MCParticle* _input);
+
+  //Checks to see if particle is already there, then adds it for processing. Once full it runs initialize.
+  void addParticle(MCParticle* _input);
+
+  //Preparing for updating class for n photons. Currently max is 2 photons.
+  void addPhoton(MCParticle* _input);
+
+  //Gets the norm of the vector and finds it's manitude.
+  double getMagnitude(MCParticle* _input);
+
+  double getDotProduct(MCParticle* A, MCParticle* B);
+
+};
+
+#endif

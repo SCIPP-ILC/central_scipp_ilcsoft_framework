@@ -57,6 +57,71 @@ static int miss = 0;
 //static TH1F* _phi1;
 //static TH1F* _phi2;
 //static TH1F* _phi3;
+static TH1F * _cosE;
+static TH1F * _cosP;
+static TH1F * _cos;
+
+class Bundle{
+public:
+  const static bool VERBOSE = false;
+  //Setting PDG constants to particle names (DID NOT VERIFY)
+  const static int PHOTON = 22;
+  const static int POSITRON = 11;
+  const static int ELECTRON = -11;
+
+  //Setting errors static so I can spell check them easily.
+  const string ERROR_NOT_BAHBAH_PARTICLE = "Not a Bahbah particle User-Error: Trying to add a particle that is not accounted for.";
+  const string ERROR_MAX_PHOTONS = "Max Photon User-Error: Trying to add photon but it is already full.";
+  const string ERROR_ALREADY_PARTICLE = "Particle Already There User-Error: Trying to add a paticle but the space is not NULL.";
+
+ 
+  MCParticle* photonA = NULL;
+  MCParticle* photonB = NULL;
+  MCParticle* positron = NULL;
+  MCParticle* electron = NULL;
+  MCParticle* photons[2] = {NULL, NULL};
+
+  Bundle(){
+    positron = NULL;
+    electron = NULL;
+  }
+
+  void err(string _input);
+
+  void graphHitStatus(double x, double y);
+
+  //Returns the total number of particles added. MAX is 4 right now.
+  int getCount();
+
+  MCParticle* getElectron();
+  MCParticle* getPositron();
+
+  //-- Physics Section --\\
+  //returns the angle from the x-y axis
+  double getPhi(MCParticle* _input);
+
+  //returns the angle from the z axis
+  double getTheta(MCParticle* _input,bool);
+
+  //Checks to see if particle is already there, then adds it for processing. Once full it runs initialize.
+  void addParticle(MCParticle* _input);
+
+  //Preparing for updating class for n photons. Currently max is 2 photons.
+  void addPhoton(MCParticle* _input);
+
+  //Gets the norm of the vector and finds it's manitude.
+  double getMagnitude(MCParticle* _input);
+
+  double getDotProduct(MCParticle* A, MCParticle* B);
+
+};
+
+//Prototypes\\
+void graphHitStatus(double x, double y);
+void initialize(Bundle* b);
+
+
+
 first::first() : Processor("first") {
     // modify processor description
     _description = "Protype Processor" ;
@@ -79,12 +144,14 @@ void first::init() {
     _hitmap3 = new TH2F("pos3", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     _hitmap4 = new TH2F("pos4", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     //    static TH2F* _e_hitmap;
-    _e_hitmap = new TH2F("pos4", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
+    _e_hitmap = new TH2F("hitmap", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     //    _hitmap4 = new TH2F("pos4", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
-    //    _phi1 = new TH1F("phi_s", "Angle Difference (Electron - Positron) From 0-2π", 500, 0, 6.28);
-    //    _phi2 = new TH1F("phi_m", "Angle Difference (Electron - Positron) From 1-π", 500, 1, 3.14);
-    //    _phi3 = new TH1F("phi_t", "Angle Difference (Electron - Positron) From 0-1rad", 500, 0, .1);
-
+    //    _theta1 = new TH1F("theta_s", "Angle Difference (Electron - Positron) From 0-2π", 500, 0, 6.28);
+    //    _theta2 = new TH1F("theta_m", "Angle Difference (Electron - Positron) From 1-π", 500, 1, 3.14);
+    //    _theta3 = new TH1F("theta_t", "Angle Difference (Electron - Positron) From 0-1rad", 500, 0, .1);
+    _cosE = new TH1F("electron_corth", "Cosine Theta Distribution For Electrons", 350, 0, 6.28);
+    _cosP = new TH1F("positron_costh", "Cosine Theta Distribution For Positrons", 350, 0, 6.28);
+    _cos = new TH1F("costh", "Cosine Theta Distribution", 350, 0, 6.28);
     //printParameters() ;
     _nEvt = 0 ;
 
@@ -98,40 +165,6 @@ void first::processRunHeader( LCRunHeader* run) {
 //    _nRun++ ;
 } 
 
-//Making a bundle to store and process my event because the data is being given to me nicly.
-class Bundle{
- public:
-  const static bool VERBOSE = false;
-  //Setting PDG constants to particle names (DID NOT VERIFY)
-  const static int PHOTON = 22;
-  const static int POSITRON = 11;
-  const static int ELECTRON = -11;
-
-  //Setting errors static so I can spell check them easily.
-  const string ERROR_NOT_BAHBAH_PARTICLE = "Not a Bahbah particle User-Error: Trying to add a particle that is not accounted for.";
-  const string ERROR_MAX_PHOTONS = "Max Photon User-Error: Trying to add photon but it is already full.";
-  const string ERROR_ALREADY_PARTICLE = "Particle Already There User-Error: Trying to add a paticle but the space is not NULL.";
-
-  int count = 0;
-  MCParticle* photonA = NULL;
-  MCParticle* photonB = NULL;
-  MCParticle* positron = NULL;
-  MCParticle* electron = NULL;
-  MCParticle* photons[2] = {NULL, NULL};
-
-  Bundle(){}//No constructor
-  void initialize();
-  int getCount();
-  double getTheta(MCParticle*);
-  double getPhi(MCParticle*);
-  void err(string);
-  void addParticle(MCParticle*);
-  void addPhoton(MCParticle*);
-  double getMagnitude(MCParticle*);
-  double getDotProduct(MCParticle*, MCParticle*);
-  void graphHitStatus(double,double);
-private:
-};
 
 void first::processEvent( LCEvent * evt ) { 
     LCCollection* col = evt->getCollection( _colName );
@@ -148,11 +181,13 @@ void first::processEvent( LCEvent * evt ) {
             if(stat==1){
 	      //hit is an end particle:
 	      bundle->addParticle(hit); //I add it to a Bahbah class to do the rest of the work.
-
+	      if(bundle->getPositron() != NULL && bundle->getElectron() != NULL){
+		initialize(bundle);
+	      }
             }//end final state   
         }//end for
     }
-//    delete[] bundle;
+    delete bundle;
     _nEvt ++ ;
 }
 
@@ -171,97 +206,125 @@ void first::end(){
 }
 
 
-void Bundle::graphHitStatus(double x, double y){
-  switch(scipp_ilc::get_hitStatus(x, y)){
-    case(1):
-      hit++;
-      _hitmiss->Fill(1);
-      _hitmap1->Fill(x, y);
-      break;
-    case(2):
-      miss++;
-      _hitmiss->Fill(0);
-      _hitmap2->Fill(x, y);
-      break;
-    case(3):
-      miss++;
-      _hitmiss->Fill(0);
-      _hitmap3->Fill(x, y);
-      break;
-    case(4):
-      miss++;
-      _hitmiss->Fill(0);
-      _hitmap4->Fill(x, y);
-      break;
-    }
-}
 //Implementation of the Bundle Class
-void Bundle::initialize(){
-  /*  //  Trial 1: Getting angle between electron and positron.
-  double p_phi = getPhi(positron);
-  double e_phi = getPhi(electron);
-  double del_phi = p_phi-e_phi; 
- // Trial 2: Getting angle between elctron and positron using covariant angles.
-  double dot = getDotProduct(positron, electron);
-  double mag_A = getMagnitude(positron);
-  double mag_B = getMagnitude(electron);
-  double val = -dot/(mag_A*mag_B);
-  double del_phi = acos(val); */
+void initialize(Bundle* b){  
+  //CosineTheta Not doing center to mass frame.
+  double cosE = cos(b->getTheta(b->getElectron(), true));
+  double cosP = cos(b->getTheta(b->getPositron(), true));
+  _cosE->Fill(cosE);
+  _cosP->Fill(cosP);
+  _cos->Fill(cosE);
+  _cos->Fill(cosP);
+}
 
-  double p_px = positron->getMomentum()[0];
-  double p_E = positron->getEnergy();
-  double e_px = electron->getMomentum()[0];
-  double e_E = electron->getEnergy();
+void init_hitmap_general(Bundle* b){
+  double p_px = b->positron->getMomentum()[0];
+  double p_E = b->positron->getEnergy();
+  double e_px = b->electron->getMomentum()[0];
+  double e_E = b->electron->getEnergy();
 
   scipp_ilc::transform_to_lab(p_px, p_E, p_px, p_E);
   scipp_ilc::transform_to_lab(e_px, e_E, e_px, e_E);
   
-  //Put in graph
-  graphHitStatus(e_px, electron->getMomentum()[1]);
-  graphHitStatus(p_px, positron->getMomentum()[1]);
+  //Put in graphp
+  //  graphHitStatus(e_px, b->electron->getMomentum()[1]);
+  //  graphHitStatus(p_px, b->positron->getMomentum()[1]);
 
-  _e_hitmap->Fill(p_px, positron->getMomentum()[1]);
-  _e_hitmap->Fill(e_px, electron->getMomentum()[1]);
+  _e_hitmap->Fill(p_px, b->positron->getMomentum()[1]);
+  _e_hitmap->Fill(e_px, b->electron->getMomentum()[1]);
+}
+
+void graphHitStatus(double x, double y, TH1F* hm = NULL, TH2F* hm1 = NULL, TH2F* hm2 = NULL, TH2F* hm3 = NULL, TH2F* hm4 = NULL){
+  switch(scipp_ilc::get_hitStatus(x, y)){
+  case(1):
+    hit++;
+    hm->Fill(1);
+    hm1->Fill(x, y);
+    break;
+  case(2):
+    miss++;
+    hm->Fill(0);
+    hm2->Fill(x, y);
+    break;
+  case(3):
+    miss++;
+    hm->Fill(0);
+    hm3->Fill(x, y);
+    break;
+  case(4):
+    miss++;
+    hm->Fill(0);
+    hm4->Fill(x, y);
+    break;
+  }
+}
+void init_angleBetweenEP_1(){
+  /*  //  Trial 1: Getting angle between electron and positron.
+      double p_theta = getTheta(positron);
+      double e_theta = getTheta(electron);
+      double del_theta = p_theta-e_theta; 
+
+
   //  _hitmap->Fill(positron->getMomentum()[0], positron->getMomentum()[1]);
   //  _hitmap->Fill(electron->getMomentum()[0], electron->getMomentum()[1]);
-  //  _phi1->Fill(del_phi);
-  //  _phi2->Fill(del_phi);
-  //  _phi3->Fill(del_phi);
+  //  _theta1->Fill(del_theta);
+  //  _theta2->Fill(del_theta);
+  //  _theta3->Fill(del_theta);
+  */
 }
-
-//Returns the total number of particles added. MAX is 4 right now.
-int Bundle::getCount(){
-  return count;
+void init_angleBetweenEP_2(){
+/*// Trial 2: Getting angle between elctron and positron using covariant angles.
+double dot = getDotProduct(positron, electron);
+double mag_A = getMagnitude(positron);
+double mag_B = getMagnitude(electron);
+double val = -dot/(mag_A*mag_B);
+double del_theta = acos(val); */
 }
-
-//-- Physics Section --\\
-//returns the angle from the x-y axis
-double Bundle::getTheta(MCParticle* _input){
-  return atan(_input->getMomentum()[0]/_input->getMomentum()[1]);
-}
-//returns the angle from the z axis
-double Bundle::getPhi(MCParticle* _input){
-  //Get the norm in the x,y plane:
-  const double m_x = (_input->getMomentum())[0];
-  const double m_y = (_input->getMomentum())[1];
-  const double m_z = _input->getMomentum()[2];
-  double norm = sqrt(m_x*m_x + m_y*m_y);
-  double phi = atan(norm/m_z);
-
-  //The norm in the opposite side, and the z axis is the same side.
-  return phi;
-}
-
-  //-- CompSci Section --\\
-  //Helper function, can be set to the namespace for general use. I could not find println(), so I made it.
 void Bundle::err(string _input){
   cout << _input << endl;
 }
 
+//-- Physics Section --\\
+//returns the angle from the x-y axis
+double Bundle::getPhi(MCParticle* _input){
+  return atan(_input->getMomentum()[0]/_input->getMomentum()[1]);
+}
+//returns the angle from the z axis
+double Bundle::getTheta(MCParticle* _input, bool lab = false){
+  //Get the norm in the x,y plane:
+  const double m_x = (_input->getMomentum())[0];
+  const double m_y = (_input->getMomentum())[1];
+  const double m_z = _input->getMomentum()[2];
+  double p_x = m_x;
+  if(lab){
+    double energy = _input->getEnergy();
+    scipp_ilc::transform_to_lab(p_x, energy, p_x, energy);
+  }
+  double norm = sqrt(p_x*p_x + m_y*m_y);
+  double theta = atan(norm/m_z);
+
+  //The norm in the opposite side, and the z axis is the same side.
+  return theta;
+
+}
+
+//-- CompSci Section --\\
+
+MCParticle* Bundle::getElectron(){
+  //  if(electron == NULL)cout << "\nElectron is NUll\n";
+  return electron;
+}
+
+MCParticle* Bundle::getPositron(){
+  //  if(electron == NULL)cout << "\nPositron is NUll\n";
+  return positron;
+}
 
 
 //Checks to see if particle is already there, then adds it for processing. Once full it runs initialize.
 void Bundle::addParticle(MCParticle* _input){
+  //  if(positron == NULL) cout << "pNULL" << endl;
+  //  if(electron == NULL) cout << "eNULL" << endl;
   switch(_input->getPDG()){
   case(PHOTON):
     addPhoton(_input);
@@ -278,9 +341,6 @@ void Bundle::addParticle(MCParticle* _input){
     break;
   default:
     if(VERBOSE)err(ERROR_NOT_BAHBAH_PARTICLE);
-  } 
-  if(++count == 4){
-    initialize();
   }
 }
     

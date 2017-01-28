@@ -35,9 +35,11 @@ class MyParticle{
 
 public: 
 
-    MyParticle(MCParticle* in_particle);
+    MyParticle();
 
     ~MyParticle();
+    
+    void setSource(MCParticle* in_part); 
 
     double* mom();
     

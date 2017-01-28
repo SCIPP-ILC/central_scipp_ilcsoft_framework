@@ -1,0 +1,87 @@
+#include "include/util.h"
+#include <string>
+#include <iostream>
+#include <EVENT/MCParticle.h>
+
+using namespace std;
+
+void Bundle::err(string _input){
+  cout << _input << endl;
+}
+
+//Returns the total number of particles added. MAX is 4 right now.
+int Bundle::getCount(){
+  return count;
+}
+
+//-- Physics Section --\\
+//returns the angle from the x-y axis
+double Bundle::getTheta(MCParticle* _input){
+  return atan(_input->getMomentum()[0]/_input->getMomentum()[1]);
+}
+//returns the angle from the z axis
+double Bundle::getPhi(MCParticle* _input){
+  //Get the norm in the x,y plane:
+  const double m_x = (_input->getMomentum())[0];
+  const double m_y = (_input->getMomentum())[1];
+  const double m_z = _input->getMomentum()[2];
+  double norm = sqrt(m_x*m_x + m_y*m_y);
+  double phi = atan(norm/m_z);
+
+  //The norm in the opposite side, and the z axis is the same side.
+  return phi;
+}
+
+//-- CompSci Section --\\
+
+//Checks to see if particle is already there, then adds it for processing. Once full it runs initialize.
+void Bundle::addParticle(MCParticle* _input){
+  switch(_input->getPDG()){
+  case(PHOTON):
+    addPhoton(_input);
+    break;
+  case(POSITRON):
+    if(positron == NULL){
+      positron = _input;
+    }else if(VERBOSE) err(ERROR_ALREADY_PARTICLE);
+    break;
+  case(ELECTRON):
+    if(electron == NULL){
+      electron = _input;
+    }else if(VERBOSE)err(ERROR_ALREADY_PARTICLE);
+    break;
+  default:
+    if(VERBOSE)err(ERROR_NOT_BAHBAH_PARTICLE);
+  } 
+  if(++count == 4){
+    initialize();
+  }
+}
+    
+//Preparing for updating class for n photons. Currently max is 2 photons.
+void Bundle::addPhoton(MCParticle* _input){
+  if(photonA == NULL){
+    photonA = _input;
+    photons[0] = photonA;
+  }else if(photonB ==NULL){
+    photonB = _input;
+    photons[1] = photonB;
+  }else if(VERBOSE)err(ERROR_MAX_PHOTONS);
+}
+
+//Gets the norm of the vector and finds it's manitude.
+double Bundle::getMagnitude(MCParticle* _input){
+  const double m_x = (_input->getMomentum())[0];
+  const double m_y = (_input->getMomentum())[1];
+  const double m_z = _input->getMomentum()[2];
+  return sqrt(m_x*m_x + m_y*m_y + m_z*m_z);
+}
+double Bundle::getDotProduct(MCParticle* A, MCParticle* B){
+  const double a_x = (A->getMomentum())[0];
+  const double a_y = (A->getMomentum())[1];
+  const double a_z = A->getMomentum()[2];
+  const double b_x = (B->getMomentum())[0];
+  const double b_y = (B->getMomentum())[1];
+  const double b_z = B->getMomentum()[2];
+  return (a_x*b_x + a_y*b_y + a_z*b_z);
+}

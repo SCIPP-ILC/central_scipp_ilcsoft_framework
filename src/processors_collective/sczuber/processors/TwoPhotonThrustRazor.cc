@@ -73,11 +73,10 @@ TwoPhotonThrustRazor::TwoPhotonThrustRazor() : Processor("TwoPhotonThrustRazor")
 
 
 
-void TwoPhotonThrustRazor::init() {
-    cout << "PRINTING SOMETHING IN INIT" << endl; 
+void TwoPhotonThrustRazor::init() { 
     streamlog_out(DEBUG)  << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("TwoPhotonThrustRazor_00.root","RECREATE");
+    _rootfile = new TFile("TwoPhotonThrustRazor_.eW.pW.I39212.root","RECREATE");
     _RPlot = new TH1F("RPlot", "R = MTR/MR",100,0,10);
     // irameters() ;
 
@@ -99,16 +98,13 @@ void TwoPhotonThrustRazor::init() {
     } // if file not existusually a good idea to
     //printParameters() ;
     _nEvt = 0 ;
-    cout << " END OF INIT " << endl; 
-
 }
 
 
 
 void TwoPhotonThrustRazor::processRunHeader( LCRunHeader* run) { 
     //run->parameters().setValue("thrust",12300321);
-    //    _nRun++ ;
-    cout << "PRINTING A THING IN PROCESS RUN HEADER" << endl;
+    //    _nRun++ ; 
 
 } 
 

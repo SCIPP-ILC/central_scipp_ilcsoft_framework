@@ -76,7 +76,7 @@ ThrustRazor::ThrustRazor() : Processor("ThrustRazor") {
 void ThrustRazor::init() { 
     streamlog_out(DEBUG)  << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("ThrustRazor_00.root","RECREATE");
+    _rootfile = new TFile("ThrustRazor_.39133.root","RECREATE");
     _RPlot = new TH1F("RPlot", "R =MTR/MR",100,0,10);
     // irameters() ;
 
@@ -106,8 +106,6 @@ void ThrustRazor::init() {
 void ThrustRazor::processRunHeader( LCRunHeader* run) { 
     //run->parameters().setValue("thrust",12300321);
     //    _nRun++ ;
-    cout << "PRINTING A THING IN PROCESS RUN HEADER" << endl;
-
 } 
 
 
@@ -123,7 +121,7 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
     int id, stat; 
     for (int n=0;n<_inParVec->getNumberOfElements() ;n++)
     {
-        
+
         MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
         try{
             id = aPart->getPDG();
@@ -133,19 +131,18 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
             cout << "exception caught with message " << e.what() << "\n";
         }
         if(stat==1){
-        bool isDarkMatter = (id == 1000022);
-        bool isNeutrino = (
+            bool isDarkMatter = (id == 1000022);
+            bool isNeutrino = (
                     id == 12 || id == -12 ||
                     id == 14 || id == -14 ||
                     id == 16 || id == -16 ||
                     id == 18 || id == -18);
-        
-        if(!isDarkMatter && !isNeutrino){
-            //MCParticle* aPart = _inParVec->getElementAt(n);
-            const double* partMom = aPart->getMomentum();
-            _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
+
+            if(!isDarkMatter && !isNeutrino){  
+                const double* partMom = aPart->getMomentum();
+                _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
+            }
         }
-}
     }
     _nEvt ++ ; // different from original-moved out of for loop - summer 
     //reset variables for output   
@@ -324,7 +321,7 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
 
         MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
         const double* partMom = aPart->getMomentum();
-        
+
         try{
             id = aPart->getPDG();
             stat = aPart->getGeneratorStatus();
@@ -334,14 +331,14 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
         }
         double part4Vec[4] = {aPart->getEnergy(), partMom[0], partMom[1], partMom[2] };
         double R4Vec[4] = {gamma*part4Vec[0]-gamma*beta*part4Vec[3], part4Vec[1], part4Vec[2], 
-                            -gamma*beta*part4Vec[0]+gamma*part4Vec[3] }; 
+            -gamma*beta*part4Vec[0]+gamma*part4Vec[3] }; 
         bool isDarkMatter = (id == 1000022);
-        
+
         bool isNeutrino = (
-                 id == 12 || id == -12 ||
-                 id == 14 || id == -14 ||
-                 id == 16 || id == -16 ||
-                 id == 18 || id == -18);
+                id == 12 || id == -12 ||
+                id == 14 || id == -14 ||
+                id == 16 || id == -16 ||
+                id == 18 || id == -18);
         if(stat ==1){
             if(!isDarkMatter && !isNeutrino){
                 Rvec[1][0]+=R4Vec[0];
@@ -350,12 +347,12 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
                 Rvec[1][3]+=R4Vec[3];
             }
         }
-  
- 
+
+
     }
     double ETM[2] = {-Rvec[1][1], - Rvec[1][2]};
     double ETMmag = sqrt(ETM[0]*ETM[0]+ETM[1]*ETM[1]);
-    
+
     double ptj1mag = sqrt(vec[0][1][1]*vec[0][1][1]+vec[0][1][2]*vec[0][1][2]);
     double ptj2mag = sqrt(vec[1][1][1]*vec[1][1][1]+vec[1][1][2]*vec[1][1][2]);
     double ptmagsum = ptj1mag + ptj2mag; 
@@ -363,7 +360,7 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
     double ptvecsum[2] = {vec[0][1][1]+vec[1][1][1], vec[0][1][2]+vec[1][1][2]};
     double ETMdotptvecsum = ETM[0]*ptvecsum[0]+ETM[1]*ptvecsum[1];
     double MTR = sqrt((ETMmag*ptmagsum-ETMdotptvecsum)/2);
-    
+
     double pj1 = sqrt(vec[0][1][1]*vec[0][1][1]+vec[0][1][2]*vec[0][1][2]+vec[0][1][3]*vec[0][1][3]);
     double R = MTR/(2*pj1);
     if(beta2<=1){

@@ -59,7 +59,9 @@ static int _test_num = 0;
 //static TH2F* _hitmap_bgd;
 //static TH2D* _hitmap_bgd;
 static TProfile2D* _hitmap_bgd;
+static TProfile2D* _hitmap_zeros;
 static TProfile2D* _test_slice;
+
 vector<pair<float,float>> bgd_plot;
 
 
@@ -87,7 +89,9 @@ void BeamCalRecon_edit::init() {
     _rootfile = new TFile(_root_file_name.c_str(),"RECREATE");
     _radeff = new TProfile("radeff","Radial Efficiency",14*2,0.0,140.0,0.0,1.0);
     _hitmap_bgd = new TProfile2D("hitmap_bgd","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
-    _test_slice = new TProfile2D("hitmap_bgd","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
+    _test_slice = new TProfile2D("hitmap_zeros","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
+    _test_slice = new TProfile2D("hitmap_slice","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
+
     // TH2F
     // TProfile2D
     //    _t1 = Clock::now();
@@ -148,7 +152,12 @@ void BeamCalRecon_edit::processEvent( LCEvent* signal_event ) {
     //    if(detected){
       //      _hitmap_bgd->Fill(endx,endy);
       //    }
-    _hitmap_bgd->Fill(endx,endy,detected);
+    if(detected){
+      _hitmap_bgd->Fill(endx,endy,detected);
+    }else{
+      _hitmap_zeros->Fill(endx,endy,detected);
+    }
+
 
     cout << _nEvt++ << endl;
 }

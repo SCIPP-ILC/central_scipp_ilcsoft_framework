@@ -5,12 +5,16 @@
 
 #include "MyParticle.h"
 
-MyParticle::MyParticle(MCParticle* in_particle) : source{in_particle}{}
+//MyParticle::MyParticle(MCParticle* in_particle) : source{in_particle}{cout << "MyParticle object created" << endl;}
+MyParticle::MyParticle(){cout << "MyParticle object created" << endl;}
 
-MyParticle::~MyParticle(){ 
+/*MyParticle::~MyParticle(){ 
+    cout << "MyParticle object destroyed" << endl;
     delete source; 
     delete momentum; 
-}
+}*/
+
+void MyParticle::setSource(MCParticle* in_part){source=in_part;}
 
 //create editable momentum (non-constant)
 double* MyParticle::mom(){

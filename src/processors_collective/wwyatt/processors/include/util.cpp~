@@ -1,0 +1,163 @@
+class Bundle{
+public
+  const static bool VERBOSE = false;
+  //Setting PDG constants to particle names (DID NOT VERIFY)
+  const static int PHOTON = 22;
+  const static int POSITRON = 11;
+  const static int ELECTRON = -11;
+
+  //Setting errors static so I can spell check them easily.
+  const static string ERROR_NOT_BAHBAH_PARTICLE = "Not a Bahbah particle User-Error: Trying to add a particle that is not accounted for.";
+  const static string ERROR_MAX_PHOTONS = "Max Photon User-Error: Trying to add photon but it is already full.";
+  const static string ERROR_ALREADY_PARTICLE = "Particle Already There User-Error: Trying to add a paticle but the space is not NULL.";
+
+  int count = 0;
+  MCParticle* photonA = NULL;
+  MCParticle* photonB = NULL;
+  MCParticle* positron = NULL;
+  MCParticle* electron = NULL;
+  MCParticle* photons[2] = {NULL, NULL};
+
+  inline void err(string _input){
+    cout << _input << endl;
+  }
+
+  void graphHitStatus(double x, double y){
+    switch(scipp_ilc::get_hitStatus(x, y)){
+    case(1):
+      hit++;
+      _hitmiss->Fill(1);
+      _hitmap1->Fill(x, y);
+      break;
+    case(2):
+      miss++;
+      _hitmiss->Fill(0);
+      _hitmap2->Fill(x, y);
+      break;
+    case(3):
+      miss++;
+      _hitmiss->Fill(0);
+      _hitmap3->Fill(x, y);
+      break;
+    case(4):
+      miss++;
+      _hitmiss->Fill(0);
+      _hitmap4->Fill(x, y);
+      break;
+    }
+  }
+  //Implementation of the Bundle Class
+  void initialize(){
+    /*  //  Trial 1: Getting angle between electron and positron.
+	double p_phi = getPhi(positron);
+	double e_phi = getPhi(electron);
+	double del_phi = p_phi-e_phi; 
+	// Trial 2: Getting angle between elctron and positron using covariant angles.
+	double dot = getDotProduct(positron, electron);
+	double mag_A = getMagnitude(positron);
+	double mag_B = getMagnitude(electron);
+	double val = -dot/(mag_A*mag_B);
+	double del_phi = acos(val); */
+
+    double p_px = positron->getMomentum()[0];
+    double p_E = positron->getEnergy();
+    double e_px = electron->getMomentum()[0];
+    double e_E = electron->getEnergy();
+
+    scipp_ilc::transform_to_lab(p_px, p_E, p_px, p_E);
+    scipp_ilc::transform_to_lab(e_px, e_E, e_px, e_E);
+  
+    //Put in graph
+    graphHitStatus(e_px, electron->getMomentum()[1]);
+    graphHitStatus(p_px, positron->getMomentum()[1]);
+
+    _e_hitmap->Fill(p_px, positron->getMomentum()[1]);
+    _e_hitmap->Fill(e_px, electron->getMomentum()[1]);
+    //  _hitmap->Fill(positron->getMomentum()[0], positron->getMomentum()[1]);
+    //  _hitmap->Fill(electron->getMomentum()[0], electron->getMomentum()[1]);
+    //  _phi1->Fill(del_phi);
+    //  _phi2->Fill(del_phi);
+    //  _phi3->Fill(del_phi);
+  }
+
+  //Returns the total number of particles added. MAX is 4 right now.
+  int getCount(){
+    return count;
+  }
+
+  //-- Physics Section --\\
+  //returns the angle from the x-y axis
+  double getTheta(MCParticle* _input){
+    return atan(_input->getMomentum()[0]/_input->getMomentum()[1]);
+  }
+  //returns the angle from the z axis
+  double getPhi(MCParticle* _input){
+    //Get the norm in the x,y plane:
+    const double m_x = (_input->getMomentum())[0];
+    const double m_y = (_input->getMomentum())[1];
+    const double m_z = _input->getMomentum()[2];
+    double norm = sqrt(m_x*m_x + m_y*m_y);
+    double phi = atan(norm/m_z);
+
+    //The norm in the opposite side, and the z axis is the same side.
+    return phi;
+  }
+
+  //-- CompSci Section --\\
+  //Helper function, can be set to the namespace for general use. I could not find println(), so I made it.
+
+
+
+  //Checks to see if particle is already there, then adds it for processing. Once full it runs initialize.
+  void addParticle(MCParticle* _input){
+    switch(_input->getPDG()){
+    case(PHOTON):
+      addPhoton(_input);
+      break;
+    case(POSITRON):
+      if(positron == NULL){
+	positron = _input;
+      }else if(VERBOSE) err(ERROR_ALREADY_PARTICLE);
+      break;
+    case(ELECTRON):
+      if(electron == NULL){
+	electron = _input;
+      }else if(VERBOSE)err(ERROR_ALREADY_PARTICLE);
+      break;
+    default:
+      if(VERBOSE)err(ERROR_NOT_BAHBAH_PARTICLE);
+    } 
+    if(++count == 4){
+      initialize();
+    }
+  }
+    
+  //Preparing for updating class for n photons. Currently max is 2 photons.
+  void addPhoton(MCParticle* _input){
+    if(photonA == NULL){
+      photonA = _input;
+      photons[0] = photonA;
+    }else if(photonB ==NULL){
+      photonB = _input;
+      photons[1] = photonB;
+    }else if(VERBOSE)err(ERROR_MAX_PHOTONS);
+  }
+
+  //Gets the norm of the vector and finds it's manitude.
+  double getMagnitude(MCParticle* _input){
+    const double m_x = (_input->getMomentum())[0];
+    const double m_y = (_input->getMomentum())[1];
+    const double m_z = _input->getMomentum()[2];
+    return sqrt(m_x*m_x + m_y*m_y + m_z*m_z);
+  }
+  double getDotProduct(MCParticle* A, MCParticle* B){
+    const double a_x = (A->getMomentum())[0];
+    const double a_y = (A->getMomentum())[1];
+    const double a_z = A->getMomentum()[2];
+    const double b_x = (B->getMomentum())[0];
+    const double b_y = (B->getMomentum())[1];
+    const double b_z = B->getMomentum()[2];
+    return (a_x*b_x + a_y*b_y + a_z*b_z);
+  }
+
+}
