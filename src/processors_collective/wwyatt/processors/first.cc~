@@ -57,7 +57,9 @@ static int miss = 0;
 //static TH1F* _phi1;
 //static TH1F* _phi2;
 //static TH1F* _phi3;
-
+static TH1F * _cosE;
+static TH1F * _cosP;
+static TH1F * _cos;
 
 class Bundle{
 public:
@@ -96,10 +98,10 @@ public:
 
   //-- Physics Section --\\
   //returns the angle from the x-y axis
-  double getTheta(MCParticle* _input);
+  double getPhi(MCParticle* _input);
 
   //returns the angle from the z axis
-  double getPhi(MCParticle* _input);
+  double getTheta(MCParticle* _input,bool);
 
   //Checks to see if particle is already there, then adds it for processing. Once full it runs initialize.
   void addParticle(MCParticle* _input);
@@ -144,10 +146,12 @@ void first::init() {
     //    static TH2F* _e_hitmap;
     _e_hitmap = new TH2F("hitmap", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     //    _hitmap4 = new TH2F("pos4", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
-    //    _phi1 = new TH1F("phi_s", "Angle Difference (Electron - Positron) From 0-2π", 500, 0, 6.28);
-    //    _phi2 = new TH1F("phi_m", "Angle Difference (Electron - Positron) From 1-π", 500, 1, 3.14);
-    //    _phi3 = new TH1F("phi_t", "Angle Difference (Electron - Positron) From 0-1rad", 500, 0, .1);
-
+    //    _theta1 = new TH1F("theta_s", "Angle Difference (Electron - Positron) From 0-2π", 500, 0, 6.28);
+    //    _theta2 = new TH1F("theta_m", "Angle Difference (Electron - Positron) From 1-π", 500, 1, 3.14);
+    //    _theta3 = new TH1F("theta_t", "Angle Difference (Electron - Positron) From 0-1rad", 500, 0, .1);
+    _cosE = new TH1F("electron_corth", "Cosine Theta Distribution For Electrons", 350, 0, 6.28);
+    _cosP = new TH1F("positron_costh", "Cosine Theta Distribution For Positrons", 350, 0, 6.28);
+    _cos = new TH1F("costh", "Cosine Theta Distribution", 350, 0, 6.28);
     //printParameters() ;
     _nEvt = 0 ;
 
@@ -201,43 +205,19 @@ void first::end(){
   _rootfile->Write();
 }
 
-void graphHitStatus(double x, double y){
-  switch(scipp_ilc::get_hitStatus(x, y)){
-  case(1):
-    hit++;
-    _hitmiss->Fill(1);
-    _hitmap1->Fill(x, y);
-    break;
-  case(2):
-    miss++;
-    _hitmiss->Fill(0);
-    _hitmap2->Fill(x, y);
-    break;
-  case(3):
-    miss++;
-    _hitmiss->Fill(0);
-    _hitmap3->Fill(x, y);
-    break;
-  case(4):
-    miss++;
-    _hitmiss->Fill(0);
-    _hitmap4->Fill(x, y);
-    break;
-  }
-}
-//Implementation of the Bundle Class
-void initialize(Bundle* b){
-  /*  //  Trial 1: Getting angle between electron and positron.
-      double p_phi = getPhi(positron);
-      double e_phi = getPhi(electron);
-      double del_phi = p_phi-e_phi; 
-      // Trial 2: Getting angle between elctron and positron using covariant angles.
-      double dot = getDotProduct(positron, electron);
-      double mag_A = getMagnitude(positron);
-      double mag_B = getMagnitude(electron);
-      double val = -dot/(mag_A*mag_B);
-      double del_phi = acos(val); */
 
+//Implementation of the Bundle Class
+void initialize(Bundle* b){  
+  //CosineTheta Not doing center to mass frame.
+  double cosE = cos(b->getTheta(b->getElectron(), true));
+  double cosP = cos(b->getTheta(b->getPositron(), true));
+  _cosE->Fill(cosE);
+  _cosP->Fill(cosP);
+  _cos->Fill(cosE);
+  _cos->Fill(cosP);
+}
+
+void init_hitmap_general(Bundle* b){
   double p_px = b->positron->getMomentum()[0];
   double p_E = b->positron->getEnergy();
   double e_px = b->electron->getMomentum()[0];
@@ -247,16 +227,58 @@ void initialize(Bundle* b){
   scipp_ilc::transform_to_lab(e_px, e_E, e_px, e_E);
   
   //Put in graphp
-  graphHitStatus(e_px, b->electron->getMomentum()[1]);
-  graphHitStatus(p_px, b->positron->getMomentum()[1]);
+  //  graphHitStatus(e_px, b->electron->getMomentum()[1]);
+  //  graphHitStatus(p_px, b->positron->getMomentum()[1]);
 
   _e_hitmap->Fill(p_px, b->positron->getMomentum()[1]);
   _e_hitmap->Fill(e_px, b->electron->getMomentum()[1]);
+}
+
+void graphHitStatus(double x, double y, TH1F* hm = NULL, TH2F* hm1 = NULL, TH2F* hm2 = NULL, TH2F* hm3 = NULL, TH2F* hm4 = NULL){
+  switch(scipp_ilc::get_hitStatus(x, y)){
+  case(1):
+    hit++;
+    hm->Fill(1);
+    hm1->Fill(x, y);
+    break;
+  case(2):
+    miss++;
+    hm->Fill(0);
+    hm2->Fill(x, y);
+    break;
+  case(3):
+    miss++;
+    hm->Fill(0);
+    hm3->Fill(x, y);
+    break;
+  case(4):
+    miss++;
+    hm->Fill(0);
+    hm4->Fill(x, y);
+    break;
+  }
+}
+void init_angleBetweenEP_1(){
+  /*  //  Trial 1: Getting angle between electron and positron.
+      double p_theta = getTheta(positron);
+      double e_theta = getTheta(electron);
+      double del_theta = p_theta-e_theta; 
+
+
   //  _hitmap->Fill(positron->getMomentum()[0], positron->getMomentum()[1]);
   //  _hitmap->Fill(electron->getMomentum()[0], electron->getMomentum()[1]);
-  //  _phi1->Fill(del_phi);
-  //  _phi2->Fill(del_phi);
-  //  _phi3->Fill(del_phi);
+  //  _theta1->Fill(del_theta);
+  //  _theta2->Fill(del_theta);
+  //  _theta3->Fill(del_theta);
+  */
+}
+void init_angleBetweenEP_2(){
+/*// Trial 2: Getting angle between elctron and positron using covariant angles.
+double dot = getDotProduct(positron, electron);
+double mag_A = getMagnitude(positron);
+double mag_B = getMagnitude(electron);
+double val = -dot/(mag_A*mag_B);
+double del_theta = acos(val); */
 }
 void Bundle::err(string _input){
   cout << _input << endl;
@@ -264,20 +286,26 @@ void Bundle::err(string _input){
 
 //-- Physics Section --\\
 //returns the angle from the x-y axis
-double Bundle::getTheta(MCParticle* _input){
+double Bundle::getPhi(MCParticle* _input){
   return atan(_input->getMomentum()[0]/_input->getMomentum()[1]);
 }
 //returns the angle from the z axis
-double Bundle::getPhi(MCParticle* _input){
+double Bundle::getTheta(MCParticle* _input, bool lab = false){
   //Get the norm in the x,y plane:
   const double m_x = (_input->getMomentum())[0];
   const double m_y = (_input->getMomentum())[1];
   const double m_z = _input->getMomentum()[2];
-  double norm = sqrt(m_x*m_x + m_y*m_y);
-  double phi = atan(norm/m_z);
+  double p_x = m_x;
+  if(lab){
+    double energy = _input->getEnergy();
+    scipp_ilc::transform_to_lab(p_x, energy, p_x, energy);
+  }
+  double norm = sqrt(p_x*p_x + m_y*m_y);
+  double theta = atan(norm/m_z);
 
   //The norm in the opposite side, and the z axis is the same side.
-  return phi;
+  return theta;
+
 }
 
 //-- CompSci Section --\\
