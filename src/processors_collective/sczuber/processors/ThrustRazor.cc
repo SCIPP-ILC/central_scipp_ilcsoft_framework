@@ -130,6 +130,10 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
         catch(const std::exception& e){
             cout << "exception caught with message " << e.what() << "\n";
         }
+
+        const double* partMom = aPart->getMomentum();
+        double partMomMag = sqrt(partMom[0]*partMom[0]+partMom[1]*partMom[1]+partMom[2]*partMom[2]);
+
         if(stat==1){
             bool isDarkMatter = (id == 1000022);
             bool isNeutrino = (
@@ -138,7 +142,12 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
                     id == 16 || id == -16 ||
                     id == 18 || id == -18);
 
-            if(!isDarkMatter && !isNeutrino){  
+            double cos = partMom[2]/partMomMag;
+            bool isForward = ( cos > 0.9 || cos < - 0.9);
+            bool isDetectable = (!isDarkMatter && !isNeutrino);
+            bool isDetected = (isDetectable &&  !isForward  );
+
+            if(isDetectable){  
                 const double* partMom = aPart->getMomentum();
                 _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
             }
@@ -205,6 +214,8 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
         }
     }
 
+
+    // these are the final values:
     streamlog_out( DEBUG4 ) << " thrust: " << _principleThrustRazorValue << " TV: " << _principleThrustRazorAxis << endl;
     streamlog_out( DEBUG4 ) << "  major: " << _majorThrustRazorValue << " TV: " << _majorThrustRazorAxis << endl;
     streamlog_out( DEBUG4 ) << "  minor: " << _minorThrustRazorValue << " TV: " << _minorThrustRazorAxis << endl;
@@ -216,6 +227,7 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
 
     double vec[2][3][4]; // jet 1, jet 2 : true detectable, detected : energy, momx, momy, momz 
     double Rvec[3][4]; // true, detectable, detected : energy, px, py, pz 
+
     //int id, stat; 
     for (int n=0;n<_inParVec->getNumberOfElements() ;n++){
 
@@ -255,64 +267,31 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
                     id == 18 || id == -18);
             double cos = partMom[2]/(sqrt(partMom[0]*partMom[0]+partMom[1]*partMom[1]+partMom[2]*partMom[2]));
             bool isForward = ( cos > 0.9 || cos < - 0.9);
-            if(dot>0){
-                vec[0][0][0]+= part4mom[0]; 
-                vec[0][0][1]+= part4mom[1];
-                vec[0][0][2]+= part4mom[2];
-                vec[0][0][3]+= part4mom[3];
-                if (!isDarkMatter && !isNeutrino){
-                    vec[0][1][0]+= part4mom[0];
-                    vec[0][1][1]+= part4mom[1];
-                    vec[0][1][2]+= part4mom[2];
-                    vec[0][1][3]+= part4mom[3];
-                    if(!isForward){
-                        vec[0][2][0]+= part4mom[0];
-                        vec[0][2][1]+= part4mom[1];
-                        vec[0][2][2]+= part4mom[2];
-                        vec[0][2][3]+= part4mom[3];
-                    }
-                }
-            }
-            if(dot<0){ 
-                vec[1][0][0]+= part4mom[0]; 
-                vec[1][0][1]+= part4mom[1];
-                vec[1][0][2]+= part4mom[2];
-                vec[1][0][3]+= part4mom[3];
-                if (!isDarkMatter && !isNeutrino){
-                    vec[1][1][0]+=part4mom[0];
-                    vec[1][1][1]+=part4mom[1];
-                    vec[1][1][2]+=part4mom[2];
-                    vec[1][1][3]+=part4mom[3];
-                    if(!isForward){
-                        vec[1][2][0]+=part4mom[0];
-                        vec[1][2][1]+=part4mom[1];
-                        vec[1][2][2]+=part4mom[2];
-                        vec[1][2][3]+=part4mom[3];
-                    }
-                }
-            }
+            int i; // jet #
+            if(dot>0){i=0;}
+            if(dot<0){i=1;}
             if(dot==0){
-                int jet = rand() % 2;
-                cout << " RANDOM " << jet << endl; 
-                vec[1][0][0]+= part4mom[0]; 
-                vec[1][0][1]+= part4mom[1];
-                vec[1][0][2]+= part4mom[2];
-                vec[1][0][3]+= part4mom[3];
-                if (!isDarkMatter && !isNeutrino){
-                    vec[1][1][0]+=part4mom[0];
-                    vec[1][1][1]+=part4mom[1];
-                    vec[1][1][2]+=part4mom[2];
-                    vec[1][1][3]+=part4mom[3];
-                    if(!isForward){
-                        vec[1][2][0]+=part4mom[0];
-                        vec[1][2][1]+=part4mom[1];
-                        vec[1][2][2]+=part4mom[2];
-                        vec[1][2][3]+=part4mom[3];
-                    }
+                i = rand() % 2;
+                cout << " RANDOM " << i << endl;}
+            vec[i][0][0]+= part4mom[0]; 
+            vec[i][0][1]+= part4mom[1];
+            vec[i][0][2]+= part4mom[2];
+            vec[i][0][3]+= part4mom[3];
+            if (!isDarkMatter && !isNeutrino){
+                vec[i][1][0]+= part4mom[0];
+                vec[i][1][1]+= part4mom[1];
+                vec[i][1][2]+= part4mom[2];
+                vec[i][1][3]+= part4mom[3];
+                if(!isForward){
+                    vec[i][2][0]+= part4mom[0];
+                    vec[i][2][1]+= part4mom[1];
+                    vec[i][2][2]+= part4mom[2];
+                    vec[i][2][3]+= part4mom[3];
                 }
             }
-        }
+        }           
     }
+
     double beta = (vec[0][1][0]-vec[1][1][0])/(vec[0][1][3]-vec[1][1][3]); // beta using detectable particles
     cout << "BETA " << beta << endl;  
     double beta2 = pow(beta,2);
@@ -347,8 +326,6 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
                 Rvec[1][3]+=R4Vec[3];
             }
         }
-
-
     }
     double ETM[2] = {-Rvec[1][1], - Rvec[1][2]};
     double ETMmag = sqrt(ETM[0]*ETM[0]+ETM[1]*ETM[1]);

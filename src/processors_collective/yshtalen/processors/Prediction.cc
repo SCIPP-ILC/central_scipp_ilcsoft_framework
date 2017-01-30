@@ -103,7 +103,8 @@ void Prediction::processEvent( LCEvent * evt ) {
         cout << endl;
         cout << endl;
         cout << endl;
-        cout << "EVENT: " << _nEvt << endl;
+        cout << "************************EVENT: " << _nEvt << "*****************************" << endl;
+        cout << "****************************** " << _nEvt << "*****************************" << endl;
         scatter = false;
 
         //INITIAL CYCLE THROUGH COLLECTION
@@ -120,9 +121,9 @@ void Prediction::processEvent( LCEvent * evt ) {
             if(stat==1){
                 //add to particle vector
                 final_system.push_back(particle); 
-                cout << "Particle " << hitIndex << " with ID: " << id; 
-                cout << " with mom " << particle->getMomentum()[0] << ", " << particle->getMomentum()[1] << ", " << particle->getMomentum()[2]; 
-                cout << " with energy: " << particle->getEnergy() << endl;
+                //cout << "Particle " << hitIndex << " with ID: " << id; 
+                //cout << " with mom " << particle->getMomentum()[0] << ", " << particle->getMomentum()[1] << ", " << particle->getMomentum()[2]; 
+                //cout << " with energy: " << particle->getEnergy() << endl;
 
                 //find highest energy electron and positron
                 if(id==11){
@@ -139,8 +140,8 @@ void Prediction::processEvent( LCEvent * evt ) {
             }//end final state   
         }//end for
 
-                cout << endl;
-                cout << endl;
+        cout << endl;
+        cout << endl;
         //SECOND PASS THROUGH FINAL STATE PARTICLES ONLY
         /*for(MyParticle* particle : particles){
             //assign electronic system e+/e-
@@ -166,30 +167,43 @@ void Prediction::processEvent( LCEvent * evt ) {
         cout << "Highest energies: " << compEn_e << ", " << compEn_p << endl;
 
         for(MCParticle* particle : final_system){
+            id = particle->getPDG();
+
             if(particle->getEnergy()==compEn_e){
                 mom_e[0]=particle->getMomentum()[0];    
                 mom_e[1]=particle->getMomentum()[1];    
                 mom_e[2]=particle->getMomentum()[2];
                 mom_e[3]=particle->getEnergy();
-                cout << "HEElectron: [" << mom_e[0] << ", " << mom_e[1] << ", " << mom_e[2] << ", " << mom_e[3] << "]" << endl; 
+                //cout << "HEElectron: [" << mom_e[0] << ", " << mom_e[1] << ", " << mom_e[2] << ", " << mom_e[3] << "]" << endl; 
                 if(abs(mom_e[0])!=0||abs(mom_e[1])!=0){
+                    scatter = true;
                     scipp_ilc::transform_to_lab(mom_e[0], mom_e[3], mom_e[0], mom_e[3]);
                     cout << "HEElectron after transform: [" << mom_e[0] << ", " << mom_e[1] << ", " << mom_e[2] << ", " << mom_e[3] << "]" << endl; 
                     electronic[0]+=mom_e[0];    
                     electronic[1]+=mom_e[1];    
                     electronic[2]+=mom_e[2];    
                     electronic[3]+=mom_e[3];    
-                }    
+                }   
+                else{ 
+                    scipp_ilc::transform_to_lab(mom_e[0], mom_e[3], mom_e[0], mom_e[3]);
+                    hadronic[0]+=mom_e[0];    
+                    hadronic[1]+=mom_e[1];    
+                    hadronic[2]+=mom_e[2];    
+                    hadronic[3]+=mom_e[3];    
+                    cout << "Hadronic Particle ID: " << id <<" MOM [" << mom_e[0] << ", " << mom_e[1] << ", " << mom_e[2] << ", " << mom_e[3] << "]" << endl; 
+                    double tmag = sqrt(pow(mom_e[0], 2)+pow(mom_e[1], 2));
+                    mag+=tmag;
+                }
             }    
             else if(particle->getEnergy()==compEn_p){
                 mom_p[0]=particle->getMomentum()[0];    
                 mom_p[1]=particle->getMomentum()[1];    
                 mom_p[2]=particle->getMomentum()[2];
                 mom_p[3]=particle->getEnergy();
-                cout << "HEPositron: [" << mom_p[0] << ", " << mom_p[1] << ", " << mom_p[2] << ", " << mom_p[3] << "]" << endl; 
-            
+                //cout << "HEPositron: [" << mom_p[0] << ", " << mom_p[1] << ", " << mom_p[2] << ", " << mom_p[3] << "]" << endl; 
                 if(abs(mom_p[0])!=0||abs(mom_p[1])!=0){
                     scatter = true;
+                    cout << "----------------------------SCATTERED POSITRON------------------------------" << endl;
                     scipp_ilc::transform_to_lab(mom_p[0], mom_p[3], mom_p[0], mom_p[3]);
                     cout << "HEPositron after transform: [" << mom_p[0] << ", " << mom_p[1] << ", " << mom_p[2] << ", " << mom_p[3] << "]" << endl; 
                     electronic[0]+=mom_p[0];    
@@ -208,14 +222,14 @@ void Prediction::processEvent( LCEvent * evt ) {
                 hadronic[1]+=mom[1];    
                 hadronic[2]+=mom[2];    
                 hadronic[3]+=mom[3];    
-                cout << "Hadronic Particle: [" << hadronic[0] << ", " << hadronic[1] << ", " << hadronic[2] << ", " << hadronic[3] << "]" << endl; 
+                cout << "Hadronic Particle ID: " << id <<" MOM [" << mom[0] << ", " << mom[1] << ", " << mom[2] << ", " << mom[3] << "]" << endl; 
                 double tmag = sqrt(pow(mom[0], 2)+pow(mom[1], 2));
                 mag+=tmag;
             }    
-        }
+        }//end for
 
         cout << endl;
-        cout << "Hadronic: [" << hadronic[0] << ", " << hadronic[1] << ", " << hadronic[2] << ", " << hadronic[3] << "]" << endl; 
+        cout << "Hadronic Vector: [" << hadronic[0] << ", " << hadronic[1] << ", " << hadronic[2] << ", " << hadronic[3] << "]" << endl; 
         
         if(scatter == true){
             //create prediction vector
@@ -231,7 +245,7 @@ void Prediction::processEvent( LCEvent * evt ) {
             double e_mag = sqrt(pow(electronic[0], 2)+pow(electronic[1], 2)+pow(electronic[2], 2)); 
             double p_mag = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[2], 2)); 
             theta = acos(dot/(e_mag*p_mag));
-            
+            cout << "Angle between vectors: " << theta << endl;           
             _prediction->Fill(theta);       
         }
          
