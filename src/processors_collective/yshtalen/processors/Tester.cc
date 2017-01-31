@@ -39,8 +39,7 @@ using namespace std;
 Tester Tester;
 
 static TFile* _rootfile;
-static TH2F* _hitmap;
-static TH1F* _vector;
+static TH1F* _tmom;
 
 Tester::Tester() : Processor("Tester") {
     // modify processor description
@@ -57,7 +56,8 @@ Tester::Tester() : Processor("Tester") {
 void Tester::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("eBpB_vector.root","RECREATE");
+    _rootfile = new TFile("WB_tester.root","RECREATE");
+    _tmom = new TH1F("tmom", "Total Final State Transverse Momentum", 100, 0.0, 20.0);
     // usually a good idea to
     //printParameters() ;
     _nEvt = 0 ;
@@ -75,7 +75,7 @@ void Tester::processRunHeader( LCRunHeader* run) {
 void Tester::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
-
+    double tot[]={0, 0, 0};
     LCCollection* col = evt->getCollection( _colName ) ;
 
     int stat, id =0;
@@ -90,11 +90,26 @@ void Tester::processEvent( LCEvent * evt ) {
             id = hit->getPDG();
             stat = hit->getGeneratorStatus();
             if(stat==1){
-                cout << "TEST: " << hit->getMomentum()[0] << endl;
                 cout << "Particle " << hitIndex << " with ID: " << id << endl;
+
+                double mom[4];
+                mom[0] = hit->getMomentum()[0]; 
+                mom[1] = hit->getMomentum()[1]; 
+                mom[2] = hit->getMomentum()[2];
+                mom[3] = hit->getEnergy();
+
+                scipp_ilc::transform_to_lab(mom[0], mom[3], mom[0], mom[3]);
+
+                tot[0]+=mom[0];
+                tot[1]+=mom[1];
+                tot[2]+=mom[2];
+                 
             }//end final state   
         }//end for
          
+        double transverse = sqrt(pow(tot[0], 2)+pow(tot[1], 2));
+        cout << "TRANSVERSE MOMENTUM MAGNITUDE: " << transverse << endl;
+        _tmom->Fill(transverse);  
     }
 
     _nEvt ++ ;

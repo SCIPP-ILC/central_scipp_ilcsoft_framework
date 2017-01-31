@@ -74,9 +74,9 @@ namespace scipp_ilc {
 	     //*    |gamma*beta         gamma|*|pX| = TRANSOFORMED4vector |pX'|
 	     //*        
 	     //*                                     *                                     *      
-
+        double e_temp = E;
 	    E_new = E*gamma + gamma*beta*pX;
-	    pX_new = pX*gamma + gamma*beta*E;
+	    pX_new = pX*gamma + gamma*beta*e_temp;
    }
 
    //to be used on cartesian position in Beamcal coordinate system
