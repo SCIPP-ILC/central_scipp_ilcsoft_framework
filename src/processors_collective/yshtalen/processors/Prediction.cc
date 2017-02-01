@@ -40,6 +40,7 @@ Prediction Prediction;
 
 static TFile* _rootfile;
 static TH1F* _prediction;
+static TH1F* _vector;
 
 Prediction::Prediction() : Processor("Prediction") {
     // modify processor description
@@ -56,10 +57,11 @@ Prediction::Prediction() : Processor("Prediction") {
 void Prediction::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("predict_test.root","RECREATE");
+    _rootfile = new TFile("WB_CM.root","RECREATE");
     // usually a good idea to
     //printParameters() ;
     _prediction = new TH1F("predict", "Prediction", 200, 0.0, 0.05);
+    _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
     _nEvt = 0 ;
 
 }
@@ -217,7 +219,7 @@ void Prediction::processEvent( LCEvent * evt ) {
                 mom[1]=particle->getMomentum()[1];    
                 mom[2]=particle->getMomentum()[2];
                 mom[3]=particle->getEnergy();
-                scipp_ilc::transform_to_lab(mom[0], mom[3], mom[0], mom[3]);
+                //scipp_ilc::transform_to_lab(mom[0], mom[3], mom[0], mom[3]);
                 hadronic[0]+=mom[0];    
                 hadronic[1]+=mom[1];    
                 hadronic[2]+=mom[2];    
@@ -246,8 +248,15 @@ void Prediction::processEvent( LCEvent * evt ) {
             double e_mag = sqrt(pow(electronic[0], 2)+pow(electronic[1], 2)+pow(electronic[2], 2)); 
             double p_mag = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[2], 2)); 
             theta = acos(dot/(e_mag*p_mag));
-            //cout << "Angle between vectors: " << theta << endl;           
-            _prediction->Fill(theta);
+            //cout << "Angle between vectors: " << theta << endl;
+            double x = hadronic[0]+electronic[0];
+            double y = hadronic[1]+electronic[1];
+            double vector = sqrt(pow(x, 2)+pow(y, 2));           
+            cout << "V: " << vector << endl;
+            _vector->Fill(vector);
+            if(vector<0.001){
+                _prediction->Fill(theta);
+            }
             
             //if(theta>0.005){
                 //cout << "****************************EVENT " << _nEvt << "*******************************************" << endl;
