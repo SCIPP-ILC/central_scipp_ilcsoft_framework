@@ -57,7 +57,7 @@ Prediction::Prediction() : Processor("Prediction") {
 void Prediction::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("WB_CM.root","RECREATE");
+    _rootfile = new TFile("BW_CM.root","RECREATE");
     // usually a good idea to
     //printParameters() ;
     _prediction = new TH1F("predict", "Prediction", 200, 0.0, 0.05);
@@ -91,8 +91,8 @@ void Prediction::processEvent( LCEvent * evt ) {
     double mom_e[4];
     double mom_p[4];
 
-    double tmom, theta, mag;
-
+    double tmom, theta, mag, eT, pT;
+    
     bool scatter;
 
     double hadronic[] = {0, 0, 0, 0};
@@ -177,11 +177,12 @@ void Prediction::processEvent( LCEvent * evt ) {
         for(MCParticle* particle : final_system){
             id = particle->getPDG();
 
-            if(particle->getEnergy()==compEn_p){
+            if(particle->getEnergy()==compEn_e){
                 mom_e[0]=particle->getMomentum()[0];    
                 mom_e[1]=particle->getMomentum()[1];    
                 mom_e[2]=particle->getMomentum()[2];
                 mom_e[3]=particle->getEnergy();
+                eT = sqrt(pow(mom_e[0], 2)+pow(mom_e[1], 2));
                 //cout << "HEElectron: [" << mom_e[0] << ", " << mom_e[1] << ", " << mom_e[2] << ", " << mom_e[3] << "]" << endl; 
                 if(abs(mom_e[0])!=0||abs(mom_e[1])!=0){
                     scatter = true;
@@ -197,11 +198,12 @@ void Prediction::processEvent( LCEvent * evt ) {
                     //cout << "HEElectron after transform: [" << mom_e[0] << ", " << mom_e[1] << ", " << mom_e[2] << ", " << mom_e[3] << "]" << endl; 
                 }   
             }//end beam electron    
-            else if(particle->getEnergy()==compEn_e){
+            else if(particle->getEnergy()==compEn_p){
                 mom_p[0]=particle->getMomentum()[0];    
                 mom_p[1]=particle->getMomentum()[1];    
                 mom_p[2]=particle->getMomentum()[2];
                 mom_p[3]=particle->getEnergy();
+                pT = sqrt(pow(mom_p[0], 2)+pow(mom_p[1], 2));
                 //cout << "HEPositron: [" << mom_p[0] << ", " << mom_p[1] << ", " << mom_p[2] << ", " << mom_p[3] << "]" << endl; 
                 if(abs(mom_p[0])!=0||abs(mom_p[1])!=0){
                     scatter = true;
@@ -235,11 +237,15 @@ void Prediction::processEvent( LCEvent * evt ) {
         //cout << "Hadronic Vector: [" << hadronic[0] << ", " << hadronic[1] << ", " << hadronic[2] << ", " << hadronic[3] << "]" << endl; 
         
         if(scatter == true){
+
             //create prediction vector
             double predict[3];
             predict[0] = -hadronic[0];
             predict[1] = -hadronic[1];
-            predict[2] = sqrt(pow(250.0-hadronic[3], 2) - pow(mag, 2));
+            double alpha = 500 - hadronic[3] - hadronic[2];
+            double beta = 500 - hadronic[3] + hadronic[2];
+            //predict[2] = -(pow(eT, 2)-pow(alpha, 2))/(2*alpha);
+            predict[2] = (pow(eT, 2)-pow(beta, 2))/(2*beta);
             
             //cout << "Electronic Vector: [" << electronic[0] << ", " << electronic[1] << ", " << electronic[2] << "]" << endl;
             //cout << "Prediction Vector: [" << predict[0] << ", " << predict[1] << ", " << predict[2] << "]" << endl;
