@@ -17,7 +17,7 @@
  * author Summer Zuber 
  * January 18, 2017 
  *
- * Using thrust reconstruction code by: _____
+ * Using thrust reconstruction algorithm by: _____
  */
 
 #include "TwoPhotonThrustRazor.h"
@@ -69,6 +69,9 @@ TwoPhotonThrustRazor::TwoPhotonThrustRazor() : Processor("TwoPhotonThrustRazor")
     registerProcessorParameter( "typeOfTwoPhotonThrustRazorFinder" ,
             "Type of thrust reconstruction algorithm to be used:\n#\t1 : Tasso algorithm\n#\t2 : JetSet algorithm"  ,
             _typeOfTwoPhotonThrustRazorFinder , 2 ) ;
+    registerProcessorParameter( "ThrustDetectability" ,
+            "Detectability Level of the Thrust and Thrust Axis:\n#\t0 : True\n#\t1 : Detectable\n#\t2 : Detected" ,
+            _ThrustDetectability, 0  );
 }
 
 
@@ -78,7 +81,7 @@ void TwoPhotonThrustRazor::init() {
 
     _rootfile = new TFile("TwoPhotonThrustRazor_.eW.pW.I39212.root","RECREATE");
     _RPlot = new TH1F("RPlot", "R = MTR/MR",100,0,10);
-    // irameters() ;
+    //irameters() ;
 
     // config ranlux 
     filename = "Ranlux.coonf";
@@ -122,7 +125,7 @@ void TwoPhotonThrustRazor::processEvent( LCEvent * evt ) {
     int id, stat; 
     for (int n=0;n<_inParVec->getNumberOfElements() ;n++)
     {
-        
+
         MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
         try{
             id = aPart->getPDG();
@@ -132,20 +135,34 @@ void TwoPhotonThrustRazor::processEvent( LCEvent * evt ) {
             cout << "exception caught with message " << e.what() << "\n";
         }
         if(stat==1){
-        bool isDarkMatter = (id == 1000022);
-        bool isNeutrino = (
+            const double* partMom = aPart->getMomentum();
+            double momMag = sqrt(partMom[0]*partMom[0]+partMom[1]*partMom[1]+partMom[2]*partMom[2]);
+            double cos = partMom[2]/momMag;
+            bool isForward = (cos > 0.9 || cos < -0.9);
+            bool isDarkMatter = (id == 1000022);
+            bool isNeutrino = (
                     id == 12 || id == -12 ||
                     id == 14 || id == -14 ||
                     id == 16 || id == -16 ||
                     id == 18 || id == -18);
-        
-        if(!isDarkMatter && !isNeutrino){
-            //MCParticle* aPart = _inParVec->getElementAt(n);
-            const double* partMom = aPart->getMomentum();
-            _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
-        }
-}
-    }
+            bool isDetectable = (!isDarkMatter && !isNeutrino);
+            bool isDetected = (isDetectable && !isForward); 
+
+            if(_ThrustDetectability == 0){ 
+                _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
+            }
+            if(_ThrustDetectability == 1){
+                if(isDetectable){
+                    _partMom.push_back(Hep3Vector(partMom[0], partMom[1], partMom[2]));
+                }
+            }
+            if(_ThrustDetectability == 2){
+                if(isDetected){
+                    _partMom.push_back(Hep3Vector(partMom[0], partMom[1], partMom[2]));
+                }
+            }
+        } //stat==1
+    } // for particle 
     _nEvt ++ ; // different from original-moved out of for loop - summer 
     //reset variables for output   
     _principleTwoPhotonThrustRazorValue = -1;
@@ -216,6 +233,12 @@ void TwoPhotonThrustRazor::processEvent( LCEvent * evt ) {
     cout << "  major: " << _majorTwoPhotonThrustRazorValue << " TV: " << _majorTwoPhotonThrustRazorAxis << endl;
     cout << "  minor: " << _minorTwoPhotonThrustRazorValue << " TV: " << _minorTwoPhotonThrustRazorAxis << endl;
 
+    double ptaX = _principleTwoPhotonThrustRazorAxis.x();
+    double ptaY = _principleTwoPhotonThrustRazorAxis.y();
+    double ptaZ = _principleTwoPhotonThrustRazorAxis.z();
+
+    double pta[3] = {ptaX, ptaY, ptaZ};
+
     double vec[2][3][4]; // jet 1, jet 2 : true detectable, detected : energy, momx, momy, momz 
     double Rvec[3][4]; // true, detectable, detected : energy, px, py, pz 
     //int id, stat; 
@@ -233,19 +256,12 @@ void TwoPhotonThrustRazor::processEvent( LCEvent * evt ) {
 
         if(stat==1){
             const double* partMom = aPart->getMomentum();
-            double part4mom[4] = {aPart->getEnergy(), partMom[0], partMom[1], partMom[2]};
-
-            double ptaX = _principleTwoPhotonThrustRazorAxis.x();
-            double ptaY = _principleTwoPhotonThrustRazorAxis.y();
-            double ptaZ = _principleTwoPhotonThrustRazorAxis.z();
-
-            double pta[3] = {ptaX, ptaY, ptaZ};
+            double part4mom[4] = {aPart->getEnergy(), partMom[0], partMom[1], partMom[2]} ;
 
             cout << "id      : " << id << endl;  
             cout << "Momentum: " << partMom[0] <<" "<< partMom[1] <<" "<< partMom[2]<< endl;
-            cout << "Thrust A: " << ptaX << " "<< ptaY << " " << ptaZ << endl;
-            double dot = ptaX*partMom[0]+ptaY*partMom[1]+ptaZ*partMom[2];
-            cout << "dot " << dot << endl;
+
+            double dot = ptaX*partMom[0]+ptaY*partMom[1]+ptaZ*partMom[2]; 
 
             // need momentum and energy of entire jet 
 
@@ -257,65 +273,33 @@ void TwoPhotonThrustRazor::processEvent( LCEvent * evt ) {
                     id == 18 || id == -18);
             double cos = partMom[2]/(sqrt(partMom[0]*partMom[0]+partMom[1]*partMom[1]+partMom[2]*partMom[2]));
             bool isForward = ( cos > 0.9 || cos < - 0.9);
-            if(dot>0){
-                vec[0][0][0]+= part4mom[0]; 
-                vec[0][0][1]+= part4mom[1];
-                vec[0][0][2]+= part4mom[2];
-                vec[0][0][3]+= part4mom[3];
-                if (!isDarkMatter && !isNeutrino){
-                    vec[0][1][0]+= part4mom[0];
-                    vec[0][1][1]+= part4mom[1];
-                    vec[0][1][2]+= part4mom[2];
-                    vec[0][1][3]+= part4mom[3];
-                    if(!isForward){
-                        vec[0][2][0]+= part4mom[0];
-                        vec[0][2][1]+= part4mom[1];
-                        vec[0][2][2]+= part4mom[2];
-                        vec[0][2][3]+= part4mom[3];
-                    }
+
+            int i; // jet # 
+            if(dot>0){i=0;}
+            if(dot<0){i=1;}
+            // if dot == 0 do nothing for now 
+
+            vec[i][0][0]+= part4mom[0]; 
+            vec[i][0][1]+= part4mom[1];
+            vec[i][0][2]+= part4mom[2];
+            vec[i][0][3]+= part4mom[3];
+            if (!isDarkMatter && !isNeutrino){
+                vec[i][1][0]+= part4mom[0];
+                vec[i][1][1]+= part4mom[1];
+                vec[i][1][2]+= part4mom[2];
+                vec[i][1][3]+= part4mom[3];
+                if(!isForward){
+                    vec[i][2][0]+= part4mom[0];
+                    vec[i][2][1]+= part4mom[1];
+                    vec[i][2][2]+= part4mom[2];
+                    vec[i][2][3]+= part4mom[3];
                 }
             }
-            if(dot<0){ 
-                vec[1][0][0]+= part4mom[0]; 
-                vec[1][0][1]+= part4mom[1];
-                vec[1][0][2]+= part4mom[2];
-                vec[1][0][3]+= part4mom[3];
-                if (!isDarkMatter && !isNeutrino){
-                    vec[1][1][0]+=part4mom[0];
-                    vec[1][1][1]+=part4mom[1];
-                    vec[1][1][2]+=part4mom[2];
-                    vec[1][1][3]+=part4mom[3];
-                    if(!isForward){
-                        vec[1][2][0]+=part4mom[0];
-                        vec[1][2][1]+=part4mom[1];
-                        vec[1][2][2]+=part4mom[2];
-                        vec[1][2][3]+=part4mom[3];
-                    }
-                }
-            }
-            if(dot==0){
-                int jet = rand() % 2;
-                cout << " RANDOM " << jet << endl; 
-                vec[1][0][0]+= part4mom[0]; 
-                vec[1][0][1]+= part4mom[1];
-                vec[1][0][2]+= part4mom[2];
-                vec[1][0][3]+= part4mom[3];
-                if (!isDarkMatter && !isNeutrino){
-                    vec[1][1][0]+=part4mom[0];
-                    vec[1][1][1]+=part4mom[1];
-                    vec[1][1][2]+=part4mom[2];
-                    vec[1][1][3]+=part4mom[3];
-                    if(!isForward){
-                        vec[1][2][0]+=part4mom[0];
-                        vec[1][2][1]+=part4mom[1];
-                        vec[1][2][2]+=part4mom[2];
-                        vec[1][2][3]+=part4mom[3];
-                    }
-                }
-            }
-        }
-    }
-    double beta = (vec[0][1][0]-vec[1][1][0])/(vec[0][1][3]-vec[1][1][3]); // beta using detectable particles
+        } //stat == 1 
+    } // for particle
+    int d = _ThrustDetectability;
+    //cout << "d "<<d<<endl; 
+    double beta = (vec[0][d][0]-vec[1][d][0])/(vec[0][d][3]-vec[1][d][3]); // beta using detectable particles
     cout << "BETA " << beta << endl;  
     double beta2 = pow(beta,2);
     double gamma = 1/(sqrt(1-beta2));
@@ -323,7 +307,7 @@ void TwoPhotonThrustRazor::processEvent( LCEvent * evt ) {
 
         MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
         const double* partMom = aPart->getMomentum();
-        
+
         try{
             id = aPart->getPDG();
             stat = aPart->getGeneratorStatus();
@@ -333,37 +317,50 @@ void TwoPhotonThrustRazor::processEvent( LCEvent * evt ) {
         }
         double part4Vec[4] = {aPart->getEnergy(), partMom[0], partMom[1], partMom[2] };
         double R4Vec[4] = {gamma*part4Vec[0]-gamma*beta*part4Vec[3], part4Vec[1], part4Vec[2], 
-                            -gamma*beta*part4Vec[0]+gamma*part4Vec[3] }; 
+            -gamma*beta*part4Vec[0]+gamma*part4Vec[3] }; 
         bool isDarkMatter = (id == 1000022);
-        
+
         bool isNeutrino = (
-                 id == 12 || id == -12 ||
-                 id == 14 || id == -14 ||
-                 id == 16 || id == -16 ||
-                 id == 18 || id == -18);
+                id == 12 || id == -12 ||
+                id == 14 || id == -14 ||
+                id == 16 || id == -16 ||
+                id == 18 || id == -18);
+        double cos = part4Vec[3]/sqrt(part4Vec[1]*part4Vec[1]+part4Vec[2]*part4Vec[2]+part4Vec[3]*part4Vec[3]);
+        bool isForward = (cos > 0.9 || cos < -0.9);
         if(stat ==1){
+            Rvec[0][0]+=R4Vec[0];
+            Rvec[0][1]+=R4Vec[1];
+            Rvec[0][2]+=R4Vec[2];
+            Rvec[0][3]+=R4Vec[3];
             if(!isDarkMatter && !isNeutrino){
                 Rvec[1][0]+=R4Vec[0];
                 Rvec[1][1]+=R4Vec[1];
                 Rvec[1][2]+=R4Vec[2];
                 Rvec[1][3]+=R4Vec[3];
+                if(!isForward){
+                    Rvec[2][0]+=R4Vec[0];
+                    Rvec[2][1]+=R4Vec[1];
+                    Rvec[2][2]+=R4Vec[2];
+                    Rvec[2][3]+=R4Vec[3];
+                
+                }
             }
         }
-  
- 
+
+
     }
-    double ETM[2] = {-Rvec[1][1], - Rvec[1][2]};
+    double ETM[2] = {-Rvec[d][1], - Rvec[d][2]};
     double ETMmag = sqrt(ETM[0]*ETM[0]+ETM[1]*ETM[1]);
-    
-    double ptj1mag = sqrt(vec[0][1][1]*vec[0][1][1]+vec[0][1][2]*vec[0][1][2]);
-    double ptj2mag = sqrt(vec[1][1][1]*vec[1][1][1]+vec[1][1][2]*vec[1][1][2]);
+
+    double ptj1mag = sqrt(vec[0][d][1]*vec[0][d][1]+vec[0][d][2]*vec[0][d][2]);
+    double ptj2mag = sqrt(vec[1][d][1]*vec[1][d][1]+vec[1][d][2]*vec[1][d][2]);
     double ptmagsum = ptj1mag + ptj2mag; 
 
-    double ptvecsum[2] = {vec[0][1][1]+vec[1][1][1], vec[0][1][2]+vec[1][1][2]};
+    double ptvecsum[2] = {vec[0][d][1]+vec[1][d][1], vec[0][d][2]+vec[1][d][2]};
     double ETMdotptvecsum = ETM[0]*ptvecsum[0]+ETM[1]*ptvecsum[1];
     double MTR = sqrt((ETMmag*ptmagsum-ETMdotptvecsum)/2);
-    
-    double pj1 = sqrt(vec[0][1][1]*vec[0][1][1]+vec[0][1][2]*vec[0][1][2]+vec[0][1][3]*vec[0][1][3]);
+
+    double pj1 = sqrt(vec[0][d][1]*vec[0][d][1]+vec[0][d][2]*vec[0][d][2]+vec[0][d][3]*vec[0][d][3]);
     double R = MTR/(2*pj1);
     if(beta2<=1){
         _RPlot->Fill(R);

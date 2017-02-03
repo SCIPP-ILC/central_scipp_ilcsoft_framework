@@ -51,7 +51,10 @@ static TH1F* _hitmiss;
 
 static int hit = 0;
 static int miss = 0;
-
+static int hh = 0;
+static int hm = 0;
+static int mh = 0;
+static int mm = 0;
 
 //static TH1F* _energy;
 //static TH1F* _phi1;
@@ -74,7 +77,10 @@ public:
   const string ERROR_MAX_PHOTONS = "Max Photon User-Error: Trying to add photon but it is already full.";
   const string ERROR_ALREADY_PARTICLE = "Particle Already There User-Error: Trying to add a paticle but the space is not NULL.";
 
- 
+  int particlesRegistered = 0;
+  bool electronHit = false;
+  bool positronHit = false;
+
   MCParticle* photonA = NULL;
   MCParticle* photonB = NULL;
   MCParticle* positron = NULL;
@@ -88,8 +94,8 @@ public:
 
   void err(string _input);
 
-  void graphHitStatus(double x, double y);
-
+  //  void graphHitStatus(double x, double y);
+  void graphHitStatus(double x, double y, int id,Bundle* b);
   //Returns the total number of particles added. MAX is 4 right now.
   int getCount();
 
@@ -119,7 +125,7 @@ public:
 //Prototypes\\
 void graphHitStatus(double x, double y);
 void initialize(Bundle* b);
-
+void init_hitmap_general(Bundle* b);
 
 
 first::first() : Processor("first") {
@@ -136,7 +142,7 @@ first::first() : Processor("first") {
 void first::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
     cout << "Initialized" << endl;
-    _rootfile = new TFile("Phi_Bhabha.root","RECREATE");
+    //    _rootfile = new TFile("Phi_Bhabha.root","RECREATE");
     //    _energy = new TH1F("energy", "Energy", 520.0,  0.0, 260.0);
     _hitmiss = new TH1F("hm", "Hit Miss Ratio", 5, -1, 2);
     _hitmap1 = new TH2F("pos1", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
@@ -201,20 +207,27 @@ void first::check( LCEvent * evt ) {
 
 void first::end(){ 
   cout << "\n Hits: " << hit << endl;
+
   cout << " Miss: " << miss << endl;
+  cout << " HH: " << hh << endl;
+  cout << " MM: " << mm << endl;
+  cout << " HM: " << hm << endl;
+  cout << " MH: " << mh << endl;
   _rootfile->Write();
 }
 
 
 //Implementation of the Bundle Class
 void initialize(Bundle* b){  
-  //CosineTheta Not doing center to mass frame.
+  /*  //CosineTheta Not doing center to mass frame.
   double cosE = cos(b->getTheta(b->getElectron(), true));
   double cosP = cos(b->getTheta(b->getPositron(), true));
   _cosE->Fill(cosE);
   _cosP->Fill(cosP);
   _cos->Fill(cosE);
-  _cos->Fill(cosP);
+  _cos->Fill(cosP);*/
+
+  init_hitmap_general(b);
 }
 
 void init_hitmap_general(Bundle* b){
@@ -227,35 +240,70 @@ void init_hitmap_general(Bundle* b){
   scipp_ilc::transform_to_lab(e_px, e_E, e_px, e_E);
   
   //Put in graphp
-  //  graphHitStatus(e_px, b->electron->getMomentum()[1]);
-  //  graphHitStatus(p_px, b->positron->getMomentum()[1]);
+  b->graphHitStatus(e_px, b->electron->getMomentum()[1], b->ELECTRON, b);
+  b->graphHitStatus(p_px, b->positron->getMomentum()[1], b->POSITRON, b);
 
-  _e_hitmap->Fill(p_px, b->positron->getMomentum()[1]);
-  _e_hitmap->Fill(e_px, b->electron->getMomentum()[1]);
+  //  _e_hitmap->Fill(p_px, b->positron->getMomentum()[1]);
+  //  _e_hitmap->Fill(e_px, b->electron->getMomentum()[1]);
 }
 
-void graphHitStatus(double x, double y, TH1F* hm = NULL, TH2F* hm1 = NULL, TH2F* hm2 = NULL, TH2F* hm3 = NULL, TH2F* hm4 = NULL){
+void Bundle::graphHitStatus(double x, double y, int id, Bundle* b){
   switch(scipp_ilc::get_hitStatus(x, y)){
-  case(1):
+  case(1): //hit beamcal
     hit++;
-    hm->Fill(1);
-    hm1->Fill(x, y);
+    //    hm->Fill(1);
+    //    hm1->Fill(x, y);
+    if(id == b->ELECTRON){
+      b->electronHit = true;
+    }else if(id==b->POSITRON){
+      b->positronHit = true;
+    }
+    ++b->particlesRegistered;
     break;
-  case(2):
+  case(2): //outside beamcal
     miss++;
-    hm->Fill(0);
-    hm2->Fill(x, y);
+    //    hm->Fill(0);
+    //    hm2->Fill(x, y);
+    if(id == b->ELECTRON){
+      b->electronHit = true;
+    }else if(id==b->POSITRON){
+      b->positronHit = true;
+    }
+    ++b->particlesRegistered;
     break;
-  case(3):
+  case(3): //outgoing beampipe
     miss++;
-    hm->Fill(0);
-    hm3->Fill(x, y);
+    //    hm->Fill(0);
+    //    hm3->Fill(x, y);
+    if(id == b->ELECTRON){
+      b->electronHit = false;
+    }else if(id==b->POSITRON){
+      b->positronHit = false;
+    }
+    ++b->particlesRegistered;
     break;
-  case(4):
+  case(4): //incoming beampipe
     miss++;
-    hm->Fill(0);
-    hm4->Fill(x, y);
+    //    hm->Fill(0);
+    //    hm4->Fill(x, y);
+    if(id == b->ELECTRON){
+      b->electronHit = false;
+    }else if(id==b->POSITRON){
+      b->positronHit = false;
+    }
+    ++b->particlesRegistered;
     break;
+  }
+  if(b->particlesRegistered == 2){
+    if(b->electronHit && b->positronHit){
+      ++hh;
+    }else if(~b->electronHit && ~b->positronHit){
+      ++mm;
+    }else if(b->electronHit && ~b->positronHit){
+      ++hm;
+    }else if(~b->electronHit && b->positronHit){
+      ++mh;
+    }
   }
 }
 

@@ -258,6 +258,8 @@ void graphHitStatus(double x, double y, TH1F* hm = NULL, TH2F* hm1 = NULL, TH2F*
     break;
   }
 }
+
+//Function used to calculate anglee difference using norms and phi to get theta.
 void init_angleBetweenEP_1(){
   /*  //  Trial 1: Getting angle between electron and positron.
       double p_theta = getTheta(positron);
@@ -272,8 +274,10 @@ void init_angleBetweenEP_1(){
   //  _theta3->Fill(del_theta);
   */
 }
+
+//Function used to calculate the angle difference using dot products.
 void init_angleBetweenEP_2(){
-/*// Trial 2: Getting angle between elctron and positron using covariant angles.
+/*// Trial 2: Getting angle between elctron and positron using dot products.
 double dot = getDotProduct(positron, electron);
 double mag_A = getMagnitude(positron);
 double mag_B = getMagnitude(electron);

@@ -77,6 +77,7 @@ class TwoPhotonThrustRazor : public Processor {
       /** Input collection name.
        */
         int _typeOfTwoPhotonThrustRazorFinder;
+        int _ThrustDetectability; // added 2/2/17 SZ 
 
         float _principleTwoPhotonThrustRazorValue;
         float _majorTwoPhotonThrustRazorValue;
