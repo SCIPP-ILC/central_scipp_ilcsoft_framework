@@ -60,9 +60,9 @@ static int mm = 0;
 //static TH1F* _phi1;
 //static TH1F* _phi2;
 //static TH1F* _phi3;
-static TH1F * _cosE;
-static TH1F * _cosP;
-static TH1F * _cos;
+static TH2F* _hh;
+static TH2F* _mm;
+static TH2F* _hm;
 
 class Bundle{
 public:
@@ -77,9 +77,9 @@ public:
   const string ERROR_MAX_PHOTONS = "Max Photon User-Error: Trying to add photon but it is already full.";
   const string ERROR_ALREADY_PARTICLE = "Particle Already There User-Error: Trying to add a paticle but the space is not NULL.";
 
-  int particlesRegistered = 0;
-  bool electronHit = false;
-  bool positronHit = false;
+  bool init = false;
+
+  int info = 0;
 
   MCParticle* photonA = NULL;
   MCParticle* photonB = NULL;
@@ -142,15 +142,15 @@ first::first() : Processor("first") {
 void first::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
     cout << "Initialized" << endl;
-    //    _rootfile = new TFile("Phi_Bhabha.root","RECREATE");
+    _rootfile = new TFile("Phi_Bhabha.root","RECREATE");
     //    _energy = new TH1F("energy", "Energy", 520.0,  0.0, 260.0);
-    _hitmiss = new TH1F("hm", "Hit Miss Ratio", 5, -1, 2);
+    /*    _hitmiss = new TH1F("hm", "Hit Miss Ratio", 5, -1, 2);
     _hitmap1 = new TH2F("pos1", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     _hitmap2 = new TH2F("pos2", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     _hitmap3 = new TH2F("pos3", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     _hitmap4 = new TH2F("pos4", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     //    static TH2F* _e_hitmap;
-    _e_hitmap = new TH2F("hitmap", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
+
     //    _hitmap4 = new TH2F("pos4", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     //    _theta1 = new TH1F("theta_s", "Angle Difference (Electron - Positron) From 0-2π", 500, 0, 6.28);
     //    _theta2 = new TH1F("theta_m", "Angle Difference (Electron - Positron) From 1-π", 500, 1, 3.14);
@@ -158,6 +158,12 @@ void first::init() {
     _cosE = new TH1F("electron_corth", "Cosine Theta Distribution For Electrons", 350, 0, 6.28);
     _cosP = new TH1F("positron_costh", "Cosine Theta Distribution For Positrons", 350, 0, 6.28);
     _cos = new TH1F("costh", "Cosine Theta Distribution", 350, 0, 6.28);
+    */
+
+    _hh = new TH2F("hh", "Hit-Hit Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
+    _mm = new TH2F("mm", "Miss-Miss Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
+    _hm = new TH2F("hm", "Hit-Miss Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
+    //    hh=hm=mh=mm=0;
     //printParameters() ;
     _nEvt = 0 ;
 
@@ -174,7 +180,7 @@ void first::processRunHeader( LCRunHeader* run) {
 
 void first::processEvent( LCEvent * evt ) { 
     LCCollection* col = evt->getCollection( _colName );
-    
+    //    cout << "NEW Event Started." << endl;
     Bundle* bundle = new Bundle; //Created a bundle to process the data for the bahbah event.
 
     int stat, id =0;
@@ -206,9 +212,9 @@ void first::check( LCEvent * evt ) {
 
 
 void first::end(){ 
-  cout << "\n Hits: " << hit << endl;
+  //  cout << "\n Hits: " << hit << endl;
 
-  cout << " Miss: " << miss << endl;
+  //  cout << " Miss: " << miss << endl;
   cout << " HH: " << hh << endl;
   cout << " MM: " << mm << endl;
   cout << " HM: " << hm << endl;
@@ -219,6 +225,7 @@ void first::end(){
 
 //Implementation of the Bundle Class
 void initialize(Bundle* b){  
+  if(b->init++)return;
   /*  //CosineTheta Not doing center to mass frame.
   double cosE = cos(b->getTheta(b->getElectron(), true));
   double cosP = cos(b->getTheta(b->getPositron(), true));
@@ -254,55 +261,64 @@ void Bundle::graphHitStatus(double x, double y, int id, Bundle* b){
     //    hm->Fill(1);
     //    hm1->Fill(x, y);
     if(id == b->ELECTRON){
-      b->electronHit = true;
+      b->info += 10;
     }else if(id==b->POSITRON){
-      b->positronHit = true;
+      b->info += 100;
     }
-    ++b->particlesRegistered;
+    b->info += 1;
     break;
   case(2): //outside beamcal
     miss++;
     //    hm->Fill(0);
     //    hm2->Fill(x, y);
     if(id == b->ELECTRON){
-      b->electronHit = true;
+      b->info += 10;
     }else if(id==b->POSITRON){
-      b->positronHit = true;
+      b->info += 100;
     }
-    ++b->particlesRegistered;
+    b->info += 1;
     break;
   case(3): //outgoing beampipe
     miss++;
     //    hm->Fill(0);
     //    hm3->Fill(x, y);
     if(id == b->ELECTRON){
-      b->electronHit = false;
+      b->info += 70;
     }else if(id==b->POSITRON){
-      b->positronHit = false;
+      b->info += 700;
     }
-    ++b->particlesRegistered;
+    b->info += 1;
+
     break;
   case(4): //incoming beampipe
     miss++;
     //    hm->Fill(0);
     //    hm4->Fill(x, y);
     if(id == b->ELECTRON){
-      b->electronHit = false;
+      b->info += 70;
     }else if(id==b->POSITRON){
-      b->positronHit = false;
+      b->info += 700;
     }
-    ++b->particlesRegistered;
+    b->info += 1;
     break;
   }
-  if(b->particlesRegistered == 2){
-    if(b->electronHit && b->positronHit){
+  //cout << "# " << b->info << endl;
+  // 1=hit; 7=miss; positron>electron;
+  if(b->info%10==2){
+    if(b->info%100/10==1 && b->info%1000/100==1){ 
       ++hh;
-    }else if(~b->electronHit && ~b->positronHit){
+      _hh->Fill(b->getPositron()->getMomentum()[0], b->getPositron()->getMomentum()[1]);
+      _hh->Fill(b->getElectron()->getMomentum()[0], b->getElectron()->getMomentum()[1]);
+    }
+    if(b->info%100/10==7 && b->info%1000/100==7){
       ++mm;
-    }else if(b->electronHit && ~b->positronHit){
-      ++hm;
-    }else if(~b->electronHit && b->positronHit){
-      ++mh;
+      _mm->Fill(b->getPositron()->getMomentum()[0], b->getPositron()->getMomentum()[1]);
+      _mm->Fill(b->getElectron()->getMomentum()[0], b->getElectron()->getMomentum()[1]);
+    }
+    if((b->info%100/10==7 && b->info%1000/100==1) || (b->info%100/10==1 && b->info%1000/100==7)){
+      +hm;
+      _hm->Fill(b->getPositron()->getMomentum()[0], b->getPositron()->getMomentum()[1]);
+      _hm->Fill(b->getElectron()->getMomentum()[0], b->getElectron()->getMomentum()[1]);
     }
   }
 }
