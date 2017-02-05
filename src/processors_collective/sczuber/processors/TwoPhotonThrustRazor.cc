@@ -54,7 +54,7 @@ using namespace std;
 
 static TFile* _rootfile;
 
-static TH1F* _R_DABLE;
+static TH1F* _R_DED;
 
 TwoPhotonThrustRazor TwoPhotonThrustRazor;
 
@@ -71,7 +71,7 @@ TwoPhotonThrustRazor::TwoPhotonThrustRazor() : Processor("TwoPhotonThrustRazor")
             _typeOfTwoPhotonThrustRazorFinder , 2 ) ;
     registerProcessorParameter( "ThrustDetectability" ,
             "Detectability Level of the Thrust and Thrust Axis:\n#\t0 : True\n#\t1 : Detectable\n#\t2 : Detected" ,
-            _ThrustDetectability, 1  );
+            _ThrustDetectability, 2  );
 }
 
 
@@ -81,12 +81,11 @@ void TwoPhotonThrustRazor::init() {
 
 
     if(_ThrustDetectability==0){_rootfile = new TFile("TwoPhotonThrustRazor_.eW.pW.I39212_T.root","RECREATE");}
-    if(_ThrustDetectability==1){_rootfile = new TFile("TwoPhotonThrustRazor_.blahblah_DABLE.root","RECREATE");
+    if(_ThrustDetectability==1){_rootfile = new TFile("TwoPhotonThrustRazor_.eW.pW.I39212._DAB.root","RECREATE");
     cout << "Detectable is Printing now "<< endl;}
-    if(_ThrustDetectability==2){_rootfile = new TFile("TwoPhotonThrustRazor_.eW.pW.I39212_DED.root","RECREATE");
-    cout << "DED PRINTING " << endl;}
+    if(_ThrustDetectability==2){_rootfile = new TFile("TwoPhotonThrustRazor_.eW.pW.I39212._DED.root","RECREATE");;}
     
-    _R_DABLE = new TH1F("R_DABLE", "R = MTR/MR",100,0,10);
+    _R_DED = new TH1F("R_DED", "R = MTR/MR",100,0,10);
     //irameters() ;
 
     // config ranlux 
@@ -233,7 +232,7 @@ void TwoPhotonThrustRazor::processEvent( LCEvent * evt ) {
     streamlog_out( DEBUG4 ) << " thrust: " << _principleTwoPhotonThrustRazorValue << " TV: " << _principleTwoPhotonThrustRazorAxis << endl;
     streamlog_out( DEBUG4 ) << "  major: " << _majorTwoPhotonThrustRazorValue << " TV: " << _majorTwoPhotonThrustRazorAxis << endl;
     streamlog_out( DEBUG4 ) << "  minor: " << _minorTwoPhotonThrustRazorValue << " TV: " << _minorTwoPhotonThrustRazorAxis << endl;
-    //cout << "EVENT: " << _nEvt << endl;
+    cout << "EVENT: " << _nEvt << endl;
     //cout << " thrust: " << _principleTwoPhotonThrustRazorValue << " TV: " << _principleTwoPhotonThrustRazorAxis << endl;
     //cout <<"                       "<< _principleTwoPhotonThrustRazorAxis.x()<<","<< _principleTwoPhotonThrustRazorAxis.y()<< ","<<_principleTwoPhotonThrustRazorAxis.z()<<endl;
     //cout << "  major: " << _majorTwoPhotonThrustRazorValue << " TV: " << _majorTwoPhotonThrustRazorAxis << endl;
@@ -369,7 +368,7 @@ void TwoPhotonThrustRazor::processEvent( LCEvent * evt ) {
     double pj1 = sqrt(vec[0][d][1]*vec[0][d][1]+vec[0][d][2]*vec[0][d][2]+vec[0][d][3]*vec[0][d][3]);
     double R = MTR/(2*pj1);
     if(beta2<=1){
-        _R_DABLE->Fill(R);
+        _R_DED->Fill(R);
     }
 
     if (_principleTwoPhotonThrustRazorValue >= _max) _max = _principleTwoPhotonThrustRazorValue;
