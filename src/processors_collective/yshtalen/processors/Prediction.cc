@@ -40,6 +40,7 @@ Prediction Prediction;
 
 static TFile* _rootfile;
 static TH1F* _prediction;
+static TH1F* _predict_u;
 static TH1F* _vector;
 
 Prediction::Prediction() : Processor("Prediction") {
@@ -57,10 +58,11 @@ Prediction::Prediction() : Processor("Prediction") {
 void Prediction::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("BW_CM.root","RECREATE");
+    _rootfile = new TFile("BW_CM_wrongkinematics.root","RECREATE");
     // usually a good idea to
     //printParameters() ;
-    _prediction = new TH1F("predict", "Prediction", 200, 0.0, 0.05);
+    _prediction = new TH1F("predict", "Prediction Scattered", 2000, 0.0, 5.0);
+    _predict_u = new TH1F("upredict", "Prediction Unscattered", 2000, 0.0, 500.0);
     _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
     _nEvt = 0 ;
 
@@ -91,12 +93,13 @@ void Prediction::processEvent( LCEvent * evt ) {
     double mom_e[4];
     double mom_p[4];
 
-    double tmom, theta, mag, eT, pT;
+    double tmom, theta, thetau, mag, eT, pT;
     
     bool scatter;
 
     double hadronic[] = {0, 0, 0, 0};
     double electronic[] = {0, 0, 0, 0};
+    double unscat[] = {0, 0, 0, 0};
 
     // this will only be entered if the collection is available
     if( col != NULL ){
@@ -110,13 +113,10 @@ void Prediction::processEvent( LCEvent * evt ) {
         
         scatter = false;
 
-        //INITIAL CYCLE THROUGH COLLECTION
+//****************************************************INITIAL*****PASS******************************************************************************
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
-            //cast to MCParticle and create MyParticle object for each
+            //cast to MCParticle
             MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
-            //cout << "MCParticle* cast, typeof: " << typeid(hit).name() << endl;
-            //MyParticle particle;
-            //particle.setSource(hit);
 
             id = particle->getPDG();
             stat = particle->getGeneratorStatus();
@@ -150,33 +150,10 @@ void Prediction::processEvent( LCEvent * evt ) {
 
         cout << endl;
         cout << endl;
-        //SECOND PASS THROUGH FINAL STATE PARTICLES ONLY
-        /*for(MyParticle* particle : particles){
-            //assign electronic system e+/e-
-            if(id==11 && particle->energy()==compEn_e){particle->setElectronic(true);}    
-            else if(id==-11 && particle->energy()==compEn_p){particle->setElectronic(true);}
-            //all rest of particles are hadronic
-            else{
-                //all other particles are hadronic 
-                particle->setHadronic(true);
-                //exclude neutrinos
-                if(abs(id)==12||abs(id)==14||abs(id)==16||abs(id)==18){particle->setDetectable(false);}    
-            }
-        }
-
-        for(MyParticle* particle : particles){
-            if(particle->isElectronic()){
-                cout << "ELECTRONIC:: id: " << particle->id() << " Energy: " << particle->energy() << endl;
-            }    
-            if(particle->isHadronic()){
-                cout << "HADRONIC:: id: " << particle->id() << " Energy: " << particle->energy() << endl;
-            }
-        }*/
-        //cout << "Highest energies: " << compEn_e << ", " << compEn_p << endl;
-
+//****************************************************SECOND*****PASS******************************************************************************
         for(MCParticle* particle : final_system){
             id = particle->getPDG();
-
+            //UNSCATTERED BEAM PARTICLE
             if(particle->getEnergy()==compEn_e){
                 mom_e[0]=particle->getMomentum()[0];    
                 mom_e[1]=particle->getMomentum()[1];    
@@ -194,28 +171,32 @@ void Prediction::processEvent( LCEvent * evt ) {
                     electronic[3]+=mom_e[3];    
                 }
                 else{
+                    unscat[0]=mom_e[0];
+                    unscat[1]=mom_e[1];
+                    unscat[2]=mom_e[2];
                     //scipp_ilc::transform_to_lab(mom_e[0], mom_e[3], mom_e[0], mom_e[3]);
                     //cout << "HEElectron after transform: [" << mom_e[0] << ", " << mom_e[1] << ", " << mom_e[2] << ", " << mom_e[3] << "]" << endl; 
                 }   
-            }//end beam electron    
+            }//end unscattered    
+            //SCATTERED BEAM PARTICLE
             else if(particle->getEnergy()==compEn_p){
                 mom_p[0]=particle->getMomentum()[0];    
                 mom_p[1]=particle->getMomentum()[1];    
                 mom_p[2]=particle->getMomentum()[2];
                 mom_p[3]=particle->getEnergy();
                 pT = sqrt(pow(mom_p[0], 2)+pow(mom_p[1], 2));
-                //cout << "HEPositron: [" << mom_p[0] << ", " << mom_p[1] << ", " << mom_p[2] << ", " << mom_p[3] << "]" << endl; 
+                //cout << "Scattered: [" << mom_p[0] << ", " << mom_p[1] << ", " << mom_p[2] << ", " << mom_p[3] << "]" << endl; 
                 if(abs(mom_p[0])!=0||abs(mom_p[1])!=0){
                     scatter = true;
-                    //cout << "----------------------------SCATTERED POSITRON------------------------------" << endl;
                     //scipp_ilc::transform_to_lab(mom_p[0], mom_p[3], mom_p[0], mom_p[3]);
-                    //cout << "HEPositron after transform: [" << mom_p[0] << ", " << mom_p[1] << ", " << mom_p[2] << ", " << mom_p[3] << "]" << endl; 
+                    //cout << "Scattered after transform: [" << mom_p[0] << ", " << mom_p[1] << ", " << mom_p[2] << ", " << mom_p[3] << "]" << endl; 
                     electronic[0]+=mom_p[0];    
                     electronic[1]+=mom_p[1];    
                     electronic[2]+=mom_p[2];    
                     electronic[3]+=mom_p[3];    
                 }    
-            }//end beam positron
+            }//end scattered
+            //HADRONIC SYSTEM
             else{
                 mom[0]=particle->getMomentum()[0];    
                 mom[1]=particle->getMomentum()[1];    
@@ -244,48 +225,64 @@ void Prediction::processEvent( LCEvent * evt ) {
             predict[1] = -hadronic[1];
             double alpha = 500 - hadronic[3] - hadronic[2];
             double beta = 500 - hadronic[3] + hadronic[2];
-            //predict[2] = -(pow(eT, 2)-pow(alpha, 2))/(2*alpha);
-            predict[2] = (pow(eT, 2)-pow(beta, 2))/(2*beta);
-            
+            predict[2] = -(pow(eT, 2)-pow(alpha, 2))/(2*alpha);
+            //predict[2] = (pow(eT, 2)-pow(beta, 2))/(2*beta);
+
+            double upredict[3];
+            upredict[0]=unscat[0];
+            upredict[1]=unscat[1];
+            upredict[2]=hadronic[2]-electronic[2];
+
+
+
+
             //cout << "Electronic Vector: [" << electronic[0] << ", " << electronic[1] << ", " << electronic[2] << "]" << endl;
             //cout << "Prediction Vector: [" << predict[0] << ", " << predict[1] << ", " << predict[2] << "]" << endl;
 
             double dot = electronic[0]*predict[0] + electronic[1]*predict[1] + electronic[2]*predict[2];
             double e_mag = sqrt(pow(electronic[0], 2)+pow(electronic[1], 2)+pow(electronic[2], 2)); 
             double p_mag = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[2], 2)); 
-            theta = acos(dot/(e_mag*p_mag));
-            //cout << "Angle between vectors: " << theta << endl;
+            theta = acos(dot/(e_mag*p_mag)); 
+            cout << endl;
+            cout << "Scattered Prediction Efficiency: " << theta << endl;
+            _prediction->Fill(theta);
+
+            cout << endl;
+            cout << "Unscattered Actual: " << unscat[0] << " " << unscat[1] << " " << unscat[2] << endl;
+            cout << "Unscattered Predict: " << upredict[0] << " " << upredict[1] << " " << upredict[2] << endl;
+            double diff = abs(upredict[2]-unscat[2]);
+            cout << "Unscattered Prediction Efficiency: " << diff << endl;
+            _predict_u->Fill(diff);
+            cout << endl;
+            
+            
             double x = hadronic[0]+electronic[0];
             double y = hadronic[1]+electronic[1];
             double vector = sqrt(pow(x, 2)+pow(y, 2));           
             cout << "V: " << vector << endl;
             _vector->Fill(vector);
-            if(vector<0.001){
-                _prediction->Fill(theta);
-            }
+
             
-            //if(theta>0.005){
+            /*if(theta>0.005){
                 //cout << "****************************EVENT " << _nEvt << "*******************************************" << endl;
                 //cout << "********************************************************************************************" << endl;
-                for(MCParticle* particle : final_system){ 
-                    double x, e;
+                //for(MCParticle* particle : final_system){ 
+                    //double x, e;
                     //scipp_ilc::transform_to_lab(particle->getMomentum()[0], particle->getEnergy(), x, e);   
-                    /*cout << "Particle with ID: " << particle->getPDG(); 
+                    /cout << "Particle with ID: " << particle->getPDG(); 
                     cout << " with mom " << x << ", " << particle->getMomentum()[1] << ", " << particle->getMomentum()[2]; 
-                    cout << " with energy: " << e << endl;*/
+                    cout << " with energy: " << e << endl;/
 
-                }
+                //}
                 cout << endl;
                 cout << endl;
                 cout << "Hadronic Vector: [" << hadronic[0] << ", " << hadronic[1] << ", " << hadronic[2] << ", " << hadronic[3] << "]" << endl; 
                 double h_trans = sqrt(pow(hadronic[0], 2)+pow(hadronic[1], 2));
-                cout << "Hadronic Transverse Momentum Magnitude: " << h_trans << endl;
                 cout << "Electronic Vector: [" << electronic[0] << ", " << electronic[1] << ", " << electronic[2] << "]" << endl;
                 double e_trans = sqrt(pow(electronic[0], 2)+pow(electronic[1], 2));
-                cout << "Electronic Transverse Momentum Magnitude: " << e_trans << endl;
                 cout << "Prediction Vector: [" << predict[0] << ", " << predict[1] << ", " << predict[2] << "]" << endl;
                 cout << "Angle between vectors: " << theta << endl;           
-            //}       
+           }*/       
         }
          
     }//end collection

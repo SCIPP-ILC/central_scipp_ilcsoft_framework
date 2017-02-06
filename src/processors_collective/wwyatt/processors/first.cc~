@@ -60,9 +60,9 @@ static int mm = 0;
 //static TH1F* _phi1;
 //static TH1F* _phi2;
 //static TH1F* _phi3;
-static TH1F * _cosE;
-static TH1F * _cosP;
-static TH1F * _cos;
+static TH2F* _hh;
+static TH2F* _mm;
+static TH2F* _hm;
 
 class Bundle{
 public:
@@ -120,7 +120,14 @@ public:
 
   double getDotProduct(MCParticle* A, MCParticle* B);
 
+  double* getMomentum(MCParticle* _input);
 };
+
+struct Momentum{
+  double x = 0;
+  double y = 0;
+  double z = 0;
+}
 
 //Prototypes\\
 void graphHitStatus(double x, double y);
@@ -142,7 +149,7 @@ first::first() : Processor("first") {
 void first::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
     cout << "Initialized" << endl;
-    //    _rootfile = new TFile("Phi_Bhabha.root","RECREATE");
+    _rootfile = new TFile("Phi_Bhabha.root","RECREATE");
     //    _energy = new TH1F("energy", "Energy", 520.0,  0.0, 260.0);
     /*    _hitmiss = new TH1F("hm", "Hit Miss Ratio", 5, -1, 2);
     _hitmap1 = new TH2F("pos1", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
@@ -150,7 +157,7 @@ void first::init() {
     _hitmap3 = new TH2F("pos3", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     _hitmap4 = new TH2F("pos4", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     //    static TH2F* _e_hitmap;
-    _e_hitmap = new TH2F("hitmap", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
+
     //    _hitmap4 = new TH2F("pos4", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     //    _theta1 = new TH1F("theta_s", "Angle Difference (Electron - Positron) From 0-2π", 500, 0, 6.28);
     //    _theta2 = new TH1F("theta_m", "Angle Difference (Electron - Positron) From 1-π", 500, 1, 3.14);
@@ -159,7 +166,11 @@ void first::init() {
     _cosP = new TH1F("positron_costh", "Cosine Theta Distribution For Positrons", 350, 0, 6.28);
     _cos = new TH1F("costh", "Cosine Theta Distribution", 350, 0, 6.28);
     */
-    hh=hm=mh=mm=0;
+
+    _hh = new TH2F("hh", "Hit-Hit Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
+    _mm = new TH2F("mm", "Miss-Miss Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
+    _hm = new TH2F("hm", "Hit-Miss Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
+    //    hh=hm=mh=mm=0;
     //printParameters() ;
     _nEvt = 0 ;
 
@@ -215,7 +226,7 @@ void first::end(){
   cout << " MM: " << mm << endl;
   cout << " HM: " << hm << endl;
   cout << " MH: " << mh << endl;
-  //  _rootfile->Write();
+  _rootfile->Write();
 }
 
 
@@ -234,23 +245,14 @@ void initialize(Bundle* b){
 }
 
 void init_hitmap_general(Bundle* b){
-  double p_px = b->positron->getMomentum()[0];
-  double p_E = b->positron->getEnergy();
-  double e_px = b->electron->getMomentum()[0];
-  double e_E = b->electron->getEnergy();
-
-  scipp_ilc::transform_to_lab(p_px, p_E, p_px, p_E);
-  scipp_ilc::transform_to_lab(e_px, e_E, e_px, e_E);
-  
-  //Put in graphp
-  b->graphHitStatus(e_px, b->electron->getMomentum()[1], b->ELECTRON, b);
-  b->graphHitStatus(p_px, b->positron->getMomentum()[1], b->POSITRON, b);
-
-  //  _e_hitmap->Fill(p_px, b->positron->getMomentum()[1]);
-  //  _e_hitmap->Fill(e_px, b->electron->getMomentum()[1]);
+  //Put in graph
+  b->graphHitStatus(b->getMomentum(b->getElectron())[0], b->electron->getMomentum()[1], b->ELECTRON, b);
+  b->graphHitStatus(b->getMomentum(b->getPositron()), b->POSITRON, b);
 }
 
-void Bundle::graphHitStatus(double x, double y, int id, Bundle* b){
+void Bundle::graphHitStatus(double[] momentum, int id, Bundle* b){
+  double x = momentum[0];
+  double y = momentum[1];
   switch(scipp_ilc::get_hitStatus(x, y)){
   case(1): //hit beamcal
     hit++;
@@ -262,6 +264,7 @@ void Bundle::graphHitStatus(double x, double y, int id, Bundle* b){
       b->info += 100;
     }
     b->info += 1;
+    
     break;
   case(2): //outside beamcal
     miss++;
@@ -298,12 +301,25 @@ void Bundle::graphHitStatus(double x, double y, int id, Bundle* b){
     b->info += 1;
     break;
   }
-  //  cout << "# " << b->info << endl;
+  //cout << "# " << b->info << endl;
+  // 1=hit; 7=miss; positron>electron;
   if(b->info%10==2){
-    if(b->info%100/10==1&&b->info%1000/100==1) ++hh;
-    else if(b->info%100/10==1&&b->info%1000/100==7) ++hm;
-    else if(b->info%100/10==7&&b->info%1000/100==1) ++mh;
-    else if(b->info%100/10==7&&b->info%1000/100==7) ++mm;
+    if(b->info%100/10==1 && b->info%1000/100==1){ 
+      ++hh;
+      _hh->Fill(b->getMomentum(b->getPositron())[0], b->getPositron()->getMomentum()[1]);
+      _hh->Fill(b->getMomentum(b->getElectron())[0], b->getElectron()->getMomentum()[1]);
+    }
+    if(b->info%100/10==7 && b->info%1000/100==7){
+      ++mm;
+      _mm->Fill(b->getPositron()->getMomentum()[0], b->getPositron()->getMomentum()[1]);
+      _mm->Fill(b->getElectron()->getMomentum()[0], b->getElectron()->getMomentum()[1]);
+    }
+    if((b->info%100/10==7 && b->info%1000/100==1) || (b->info%100/10==1 && b->info%1000/100==7)){
+      if(b->info%100/10==1)++hm;
+      else ++mh;
+      _hm->Fill(b->getPositron()->getMomentum()[0], b->getPositron()->getMomentum()[1]);
+      _hm->Fill(b->getElectron()->getMomentum()[0], b->getElectron()->getMomentum()[1]);
+    }
   }
 }
 
@@ -422,4 +438,12 @@ double Bundle::getDotProduct(MCParticle* A, MCParticle* B){
   const double b_y = (B->getMomentum())[1];
   const double b_z = B->getMomentum()[2];
   return (a_x*b_x + a_y*b_y + a_z*b_z);
+}
+double* Bundle::getMomentum(MCParticle* _input){
+  double x = _input->getMomentum()[0];
+  double y = _input->getMomentum()[1];
+  double z = _input->getMomentum()[2];
+  double e = _input->getEnergy();
+  scipp_ilc::transform_to_lab(e,x,e,x);
+  return new double[3]{x,y,z};
 }
