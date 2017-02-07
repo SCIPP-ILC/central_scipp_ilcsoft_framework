@@ -95,7 +95,7 @@ public:
   void err(string _input);
 
   //  void graphHitStatus(double x, double y);
-  void graphHitStatus(double x, double y, int id,Bundle* b);
+  void graphHitStatus(double*, int id,Bundle* b);
   //Returns the total number of particles added. MAX is 4 right now.
   int getCount();
 
@@ -123,11 +123,6 @@ public:
   double* getMomentum(MCParticle* _input);
 };
 
-struct Momentum{
-  double x = 0;
-  double y = 0;
-  double z = 0;
-}
 
 //Prototypes\\
 void graphHitStatus(double x, double y);
@@ -246,11 +241,11 @@ void initialize(Bundle* b){
 
 void init_hitmap_general(Bundle* b){
   //Put in graph
-  b->graphHitStatus(b->getMomentum(b->getElectron())[0], b->electron->getMomentum()[1], b->ELECTRON, b);
+  b->graphHitStatus(b->getMomentum(b->getElectron()), b->ELECTRON, b);
   b->graphHitStatus(b->getMomentum(b->getPositron()), b->POSITRON, b);
 }
 
-void Bundle::graphHitStatus(double[] momentum, int id, Bundle* b){
+void Bundle::graphHitStatus(double*  momentum, int id, Bundle* b){
   double x = momentum[0];
   double y = momentum[1];
   switch(scipp_ilc::get_hitStatus(x, y)){
@@ -439,7 +434,7 @@ double Bundle::getDotProduct(MCParticle* A, MCParticle* B){
   const double b_z = B->getMomentum()[2];
   return (a_x*b_x + a_y*b_y + a_z*b_z);
 }
-double* Bundle::getMomentum(MCParticle* _input){
+double*  Bundle::getMomentum(MCParticle* _input){
   double x = _input->getMomentum()[0];
   double y = _input->getMomentum()[1];
   double z = _input->getMomentum()[2];

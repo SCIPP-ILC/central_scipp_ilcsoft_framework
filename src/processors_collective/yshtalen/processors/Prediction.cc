@@ -40,8 +40,9 @@ Prediction Prediction;
 
 static TFile* _rootfile;
 static TH1F* _prediction;
-static TH1F* _predict_u;
+static TH1F* _prediction2;
 static TH1F* _vector;
+static TH1F* _z;
 
 Prediction::Prediction() : Processor("Prediction") {
     // modify processor description
@@ -58,12 +59,13 @@ Prediction::Prediction() : Processor("Prediction") {
 void Prediction::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("BW_CM_wrongkinematics.root","RECREATE");
+    _rootfile = new TFile("WB_CM_conserve.root","RECREATE");
     // usually a good idea to
     //printParameters() ;
-    _prediction = new TH1F("predict", "Prediction Scattered", 2000, 0.0, 5.0);
-    _predict_u = new TH1F("upredict", "Prediction Unscattered", 2000, 0.0, 500.0);
+    _prediction = new TH1F("predict", "Prediction Scattered, Mom Almost Conserved", 500, 0.0, 0.005);
+    _prediction2 = new TH1F("predict2", "Prediction Unscattered, Mom Not Conserved", 500, 0.0, 0.05);
     _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
+    _z = new TH1F("zdiff", "Z-mom Difference between Electron and Positron", 2000, -250.0, 250.0);
     _nEvt = 0 ;
 
 }
@@ -154,7 +156,7 @@ void Prediction::processEvent( LCEvent * evt ) {
         for(MCParticle* particle : final_system){
             id = particle->getPDG();
             //UNSCATTERED BEAM PARTICLE
-            if(particle->getEnergy()==compEn_e){
+            if(particle->getEnergy()==compEn_p){
                 mom_e[0]=particle->getMomentum()[0];    
                 mom_e[1]=particle->getMomentum()[1];    
                 mom_e[2]=particle->getMomentum()[2];
@@ -179,7 +181,7 @@ void Prediction::processEvent( LCEvent * evt ) {
                 }   
             }//end unscattered    
             //SCATTERED BEAM PARTICLE
-            else if(particle->getEnergy()==compEn_p){
+            else if(particle->getEnergy()==compEn_e){
                 mom_p[0]=particle->getMomentum()[0];    
                 mom_p[1]=particle->getMomentum()[1];    
                 mom_p[2]=particle->getMomentum()[2];
@@ -212,7 +214,8 @@ void Prediction::processEvent( LCEvent * evt ) {
                 mag+=tmag;
             }//end hadronic system    
         }//end for
-
+        double zdiff = mom_e[2]+mom_p[2];
+        _z->Fill(zdiff);
         cout << endl;
         cout << endl;
         //cout << "Hadronic Vector: [" << hadronic[0] << ", " << hadronic[1] << ", " << hadronic[2] << ", " << hadronic[3] << "]" << endl; 
@@ -231,7 +234,7 @@ void Prediction::processEvent( LCEvent * evt ) {
             double upredict[3];
             upredict[0]=unscat[0];
             upredict[1]=unscat[1];
-            upredict[2]=hadronic[2]-electronic[2];
+            upredict[2]=-hadronic[2]-electronic[2];
 
 
 
@@ -245,22 +248,29 @@ void Prediction::processEvent( LCEvent * evt ) {
             theta = acos(dot/(e_mag*p_mag)); 
             cout << endl;
             cout << "Scattered Prediction Efficiency: " << theta << endl;
-            _prediction->Fill(theta);
+        
+            double x = hadronic[0]+electronic[0];
+            double y = hadronic[1]+electronic[1];
+            double vector = sqrt(pow(x, 2)+pow(y, 2));           
+            cout << "V: " << vector << endl;
+            _vector->Fill(vector);
+            
+            if(vector<0.001){
+                _prediction->Fill(theta);
+            }
+            else{
+                _prediction2->Fill(theta);
+            }
 
             cout << endl;
             cout << "Unscattered Actual: " << unscat[0] << " " << unscat[1] << " " << unscat[2] << endl;
             cout << "Unscattered Predict: " << upredict[0] << " " << upredict[1] << " " << upredict[2] << endl;
             double diff = abs(upredict[2]-unscat[2]);
             cout << "Unscattered Prediction Efficiency: " << diff << endl;
-            _predict_u->Fill(diff);
             cout << endl;
             
             
-            double x = hadronic[0]+electronic[0];
-            double y = hadronic[1]+electronic[1];
-            double vector = sqrt(pow(x, 2)+pow(y, 2));           
-            cout << "V: " << vector << endl;
-            _vector->Fill(vector);
+
 
             
             /*if(theta>0.005){
