@@ -107,11 +107,7 @@ void Prediction::processEvent( LCEvent * evt ) {
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
         cout << endl;
-        cout << endl;
-        cout << endl;
-        cout << endl;
-        cout << "************************EVENT: " << _nEvt << "*****************************" << endl;
-        cout << "****************************** " << _nEvt << "*****************************" << endl;
+        //cout << "************************EVENT: " << _nEvt << "*****************************" << endl;
         
         scatter = false;
 
@@ -131,10 +127,10 @@ void Prediction::processEvent( LCEvent * evt ) {
             if(stat==1){
                 //add to particle vector
                 final_system.push_back(particle); 
-                cout << "Particle " << hitIndex << " with ID: " << id; 
+                /*cout << "Particle " << hitIndex << " with ID: " << id; 
                 cout << " with mom " << particle->getMomentum()[0] << ", " << particle->getMomentum()[1] << ", " << particle->getMomentum()[2]; 
                 cout << " with energy: " << particle->getEnergy() << endl;
-
+                */
                 //find highest energy electron and positron
                 if(id==11){
                     if(particle->getEnergy() > compEn_e){compEn_e=particle->getEnergy();}    
@@ -246,27 +242,84 @@ void Prediction::processEvent( LCEvent * evt ) {
             double e_mag = sqrt(pow(electronic[0], 2)+pow(electronic[1], 2)+pow(electronic[2], 2)); 
             double p_mag = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[2], 2)); 
             theta = acos(dot/(e_mag*p_mag)); 
-            cout << endl;
-            cout << "Scattered Prediction Efficiency: " << theta << endl;
-        
-            double x = hadronic[0]+electronic[0];
-            double y = hadronic[1]+electronic[1];
-            double vector = sqrt(pow(x, 2)+pow(y, 2));           
-            cout << "V: " << vector << endl;
-            _vector->Fill(vector);
-            
-            if(vector<0.001){
-                _prediction->Fill(theta);
-            }
-            else{
-                _prediction2->Fill(theta);
-            }
 
             cout << endl;
-            cout << "Unscattered Actual: " << unscat[0] << " " << unscat[1] << " " << unscat[2] << endl;
-            cout << "Unscattered Predict: " << upredict[0] << " " << upredict[1] << " " << upredict[2] << endl;
+            //cout << "Scattered Prediction Efficiency: " << theta << endl;
+        
+            double x = hadronic[0]+electronic[0];
+            double pseudo_x = -x; 
+            double y = hadronic[1]+electronic[1];
+            double pseudo_y = -y;
+            double vector = sqrt(pow(x, 2)+pow(y, 2));           
+            //cout << "V: " << vector << endl;
+
+            _vector->Fill(vector);
+            
+            //if(vector<0.001){
+
+                    cout << endl;
+                    cout << endl;
+                //if(theta>0.003){
+                    cout << "************************EVENT: " << _nEvt << "*****************************" << endl;
+                    cout << "SUM VECTOR MAGNITUDE, V = " << vector << endl;
+                    cout << "Electronic Vector: [" << electronic[0] << ", " << electronic[1] << ", " << electronic[2] << "]" << endl;
+                    cout << "Prediction Vector: [" << predict[0] << ", " << predict[1] << ", " << predict[2] << "]" << endl;
+                    cout << "Theta Difference: " << theta << endl;
+
+                    double eTot = 0;
+                    double zMom = 0;
+                    for(MCParticle* particle : final_system){
+                        eTot+=particle->getEnergy();
+                        zMom+=particle->getMomentum()[2];
+
+
+                    }
+                    double pseudo_z=-zMom;
+                    cout << "Total Event Energy: " << eTot << endl;
+                    cout << "Total Event Z-Momentum: " << zMom << endl;
+                    hadronic[0]+=pseudo_x;
+                    hadronic[1]+=pseudo_y;
+                    hadronic[3]+=pseudo_z;
+                    x = hadronic[0]+electronic[0];
+                    y = hadronic[1]+electronic[1];
+                    vector = sqrt(pow(x, 2)+pow(y,2));
+                    cout << "****** After Adjustment *****" << endl;
+
+                    cout << "SUM VECTOR MAGNITUDE, V = " << vector << endl;
+                    double En = 500.0-eTot;
+                    double pseudo_En = sqrt(pow(pseudo_x, 2)+pow(pseudo_y,2)+pow(pseudo_z, 2));
+                    //create prediction vector
+                    predict[0] = -hadronic[0];
+                    predict[1] = -hadronic[1];
+                    En>pseudo_En ? hadronic[3]+=En : hadronic[3]+=pseudo_En;
+                    alpha = 500 - hadronic[3] - hadronic[2];
+                    beta = 500 - hadronic[3] + hadronic[2];
+                    predict[2] = -(pow(eT, 2)-pow(alpha, 2))/(2*alpha);
+                    dot = electronic[0]*predict[0] + electronic[1]*predict[1] + electronic[2]*predict[2];
+                    e_mag = sqrt(pow(electronic[0], 2)+pow(electronic[1], 2)+pow(electronic[2], 2)); 
+                    p_mag = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[2], 2)); 
+                    theta = acos(dot/(e_mag*p_mag)); 
+                    if(theta>0.002){
+                        interest = _nEvt;
+                        for(MCParticle* particle : final_system){ 
+                            id = particle->getPDG();
+                            cout << "Particle ID: " << id; 
+                            cout << " with mom " << particle->getMomentum()[0] << ", " << particle->getMomentum()[1] << ", " << particle->getMomentum()[2]; 
+                            cout << " with energy: " << particle->getEnergy() << endl;
+                        }
+                    }
+                    cout << "Electronic Vector: [" << electronic[0] << ", " << electronic[1] << ", " << electronic[2] << "]" << endl;
+                    cout << "Prediction Vector: [" << predict[0] << ", " << predict[1] << ", " << predict[2] << "]" << endl;
+                    cout << "Theta Difference: " << theta << endl;
+                    _prediction->Fill(theta);
+                //}
+            //}
+
+            cout << endl;
+            //cout << "Unscattered Actual: " << unscat[0] << " " << unscat[1] << " " << unscat[2] << endl;
+            //cout << "Unscattered Predict: " << upredict[0] << " " << upredict[1] << " " << upredict[2] << endl;
             double diff = abs(upredict[2]-unscat[2]);
-            cout << "Unscattered Prediction Efficiency: " << diff << endl;
+            //cout << "Unscattered Prediction Efficiency: " << diff << endl;
             cout << endl;
             
             
@@ -309,5 +362,6 @@ void Prediction::check( LCEvent * evt ) {
 
 
 void Prediction::end(){ 
+    cout << interest << endl;
     _rootfile->Write();
 }

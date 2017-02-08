@@ -64,6 +64,8 @@ class Prediction : public Processor {
         */
         std::string _colName ;
         std::string _root_file_name;
+        
+        int interest;
 
         int _nRun ;
         int _nEvt ;
