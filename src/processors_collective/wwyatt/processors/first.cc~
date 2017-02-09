@@ -306,14 +306,14 @@ void Bundle::graphHitStatus(double*  momentum, int id, Bundle* b){
     }
     if(b->info%100/10==7 && b->info%1000/100==7){
       ++mm;
-      _mm->Fill(b->getPositron()->getMomentum()[0], b->getPositron()->getMomentum()[1]);
-      _mm->Fill(b->getElectron()->getMomentum()[0], b->getElectron()->getMomentum()[1]);
+      _mm->Fill(b->getMomentum(b->getPositron())[0], b->getPositron()->getMomentum()[1]);
+      _mm->Fill(b->getMomentum(b->getElectron())[0], b->getElectron()->getMomentum()[1]);
     }
     if((b->info%100/10==7 && b->info%1000/100==1) || (b->info%100/10==1 && b->info%1000/100==7)){
+      _hm->Fill(b->getMomentum(b->getPositron())[0], b->getPositron()->getMomentum()[1]);
+      _hm->Fill(b->getMomentum(b->getElectron())[0], b->getElectron()->getMomentum()[1]);
       if(b->info%100/10==1)++hm;
       else ++mh;
-      _hm->Fill(b->getPositron()->getMomentum()[0], b->getPositron()->getMomentum()[1]);
-      _hm->Fill(b->getElectron()->getMomentum()[0], b->getElectron()->getMomentum()[1]);
     }
   }
 }
