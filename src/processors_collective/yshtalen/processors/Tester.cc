@@ -83,14 +83,18 @@ void Tester::processEvent( LCEvent * evt ) {
     // this will only be entered if the collection is available
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
+    cout << endl;
+    cout << endl;
+    cout << "***************************EVENT: " << _nEvt << "****************************" << endl;
 
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
         
             id = hit->getPDG();
             stat = hit->getGeneratorStatus();
-            if(stat==1){
-                cout << "Particle " << hitIndex << " with ID: " << id << endl;
+            if(stat==1){ 
+                cout << "Particle " << hitIndex << " with ID: " << id;
+                cout << " status: " << stat;
 
                 double mom[4];
                 mom[0] = hit->getMomentum()[0]; 
@@ -98,18 +102,11 @@ void Tester::processEvent( LCEvent * evt ) {
                 mom[2] = hit->getMomentum()[2];
                 mom[3] = hit->getEnergy();
 
-                scipp_ilc::transform_to_lab(mom[0], mom[3], mom[0], mom[3]);
+                cout << " momentum [" << mom[0] << ", " << mom[1] << ", " << mom[2] << "] with energy: " << mom[3] << endl;
 
-                tot[0]+=mom[0];
-                tot[1]+=mom[1];
-                tot[2]+=mom[2];
-                 
-            }//end final state   
+            }
         }//end for
          
-        double transverse = sqrt(pow(tot[0], 2)+pow(tot[1], 2));
-        cout << "TRANSVERSE MOMENTUM MAGNITUDE: " << transverse << endl;
-        _tmom->Fill(transverse);  
     }
 
     _nEvt ++ ;

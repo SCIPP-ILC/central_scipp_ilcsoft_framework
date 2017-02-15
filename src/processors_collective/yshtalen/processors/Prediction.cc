@@ -43,6 +43,9 @@ static TH1F* _prediction;
 static TH1F* _prediction2;
 static TH1F* _vector;
 static TH1F* _z;
+static TH1F* _eSum;
+static TH2F* _rad;
+static TH2F* _rad2;
 
 Prediction::Prediction() : Processor("Prediction") {
     // modify processor description
@@ -59,13 +62,16 @@ Prediction::Prediction() : Processor("Prediction") {
 void Prediction::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("WB_CM_conserve.root","RECREATE");
+    _rootfile = new TFile("WW_CM_conserve.root","RECREATE");
     // usually a good idea to
     //printParameters() ;
-    _prediction = new TH1F("predict", "Prediction Scattered, Mom Almost Conserved", 500, 0.0, 0.005);
-    _prediction2 = new TH1F("predict2", "Prediction Unscattered, Mom Not Conserved", 500, 0.0, 0.05);
+    _prediction = new TH1F("predict", "Prediction Efficiency Angle, Transverse Mom Conserved", 500, 0.0, 0.005);
+    _prediction2 = new TH1F("predict2", "Prediction Efficiency Angle, Transverse Mom Not Conserved", 500, 0.0, 0.005);
     _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
-    _z = new TH1F("zdiff", "Z-mom Difference between Electron and Positron", 2000, -250.0, 250.0);
+    _z = new TH1F("z", "Z-mom Hadronic", 5000, -250.0, 250.0);
+    _rad = new TH2F("rad", "Prediction Efficiency Due to Initial State Radiation", 500, 0.0, 0.01, 2000, 200.0, 500.0);
+    _rad2 = new TH2F("rad2", "Prediction Efficiency Due to Initial State Radiation", 500, 0.0, 0.01, 2000, 200.0, 500.0);
+    _eSum = new TH1F("eSum", "Sum of Electron/Positron Energies", 1000, 200.0, 500.0);
     _nEvt = 0 ;
 
 }
@@ -210,8 +216,7 @@ void Prediction::processEvent( LCEvent * evt ) {
                 mag+=tmag;
             }//end hadronic system    
         }//end for
-        double zdiff = mom_e[2]+mom_p[2];
-        _z->Fill(zdiff);
+        _z->Fill(hadronic[2]);
         cout << endl;
         cout << endl;
         //cout << "Hadronic Vector: [" << hadronic[0] << ", " << hadronic[1] << ", " << hadronic[2] << ", " << hadronic[3] << "]" << endl; 
@@ -242,7 +247,7 @@ void Prediction::processEvent( LCEvent * evt ) {
             double e_mag = sqrt(pow(electronic[0], 2)+pow(electronic[1], 2)+pow(electronic[2], 2)); 
             double p_mag = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[2], 2)); 
             theta = acos(dot/(e_mag*p_mag)); 
-
+            _prediction2->Fill(theta);
             cout << endl;
             //cout << "Scattered Prediction Efficiency: " << theta << endl;
         
@@ -253,8 +258,6 @@ void Prediction::processEvent( LCEvent * evt ) {
             double vector = sqrt(pow(x, 2)+pow(y, 2));           
             //cout << "V: " << vector << endl;
 
-            _vector->Fill(vector);
-            
             //if(vector<0.001){
 
                     cout << endl;
@@ -274,33 +277,33 @@ void Prediction::processEvent( LCEvent * evt ) {
 
 
                     }
-                    double pseudo_z=-zMom;
                     cout << "Total Event Energy: " << eTot << endl;
                     cout << "Total Event Z-Momentum: " << zMom << endl;
                     hadronic[0]+=pseudo_x;
                     hadronic[1]+=pseudo_y;
-                    hadronic[3]+=pseudo_z;
                     x = hadronic[0]+electronic[0];
                     y = hadronic[1]+electronic[1];
                     vector = sqrt(pow(x, 2)+pow(y,2));
-                    cout << "****** After Adjustment *****" << endl;
-
+                    cout << "****** After Adjustment *****" << endl;    
+                    _vector->Fill(vector);
                     cout << "SUM VECTOR MAGNITUDE, V = " << vector << endl;
-                    double En = 500.0-eTot;
-                    double pseudo_En = sqrt(pow(pseudo_x, 2)+pow(pseudo_y,2)+pow(pseudo_z, 2));
+                    //double En = 500.0-eTot;
                     //create prediction vector
                     predict[0] = -hadronic[0];
                     predict[1] = -hadronic[1];
-                    En>pseudo_En ? hadronic[3]+=En : hadronic[3]+=pseudo_En;
+                    //hadronic[3]+=En;
                     alpha = 500 - hadronic[3] - hadronic[2];
                     beta = 500 - hadronic[3] + hadronic[2];
                     predict[2] = -(pow(eT, 2)-pow(alpha, 2))/(2*alpha);
+                    //predict[2] = (pow(eT, 2)-pow(beta, 2))/(2*beta);
+                    
+                    //get prediction efficiency angle
                     dot = electronic[0]*predict[0] + electronic[1]*predict[1] + electronic[2]*predict[2];
                     e_mag = sqrt(pow(electronic[0], 2)+pow(electronic[1], 2)+pow(electronic[2], 2)); 
                     p_mag = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[2], 2)); 
                     theta = acos(dot/(e_mag*p_mag)); 
-                    if(theta>0.002){
-                        interest = _nEvt;
+                    if(theta<0.000001){
+                        interest++;
                         for(MCParticle* particle : final_system){ 
                             id = particle->getPDG();
                             cout << "Particle ID: " << id; 
@@ -312,6 +315,12 @@ void Prediction::processEvent( LCEvent * evt ) {
                     cout << "Prediction Vector: [" << predict[0] << ", " << predict[1] << ", " << predict[2] << "]" << endl;
                     cout << "Theta Difference: " << theta << endl;
                     _prediction->Fill(theta);
+                    double eSum = abs(mom_e[3]+mom_p[3]+hadronic[3]);
+                    _eSum->Fill(eSum);
+                    if(theta>0.001){
+                        _rad->Fill(theta, eSum);
+                    }
+                    else{_rad2->Fill(theta, eSum);}
                 //}
             //}
 
@@ -326,26 +335,6 @@ void Prediction::processEvent( LCEvent * evt ) {
 
 
             
-            /*if(theta>0.005){
-                //cout << "****************************EVENT " << _nEvt << "*******************************************" << endl;
-                //cout << "********************************************************************************************" << endl;
-                //for(MCParticle* particle : final_system){ 
-                    //double x, e;
-                    //scipp_ilc::transform_to_lab(particle->getMomentum()[0], particle->getEnergy(), x, e);   
-                    /cout << "Particle with ID: " << particle->getPDG(); 
-                    cout << " with mom " << x << ", " << particle->getMomentum()[1] << ", " << particle->getMomentum()[2]; 
-                    cout << " with energy: " << e << endl;/
-
-                //}
-                cout << endl;
-                cout << endl;
-                cout << "Hadronic Vector: [" << hadronic[0] << ", " << hadronic[1] << ", " << hadronic[2] << ", " << hadronic[3] << "]" << endl; 
-                double h_trans = sqrt(pow(hadronic[0], 2)+pow(hadronic[1], 2));
-                cout << "Electronic Vector: [" << electronic[0] << ", " << electronic[1] << ", " << electronic[2] << "]" << endl;
-                double e_trans = sqrt(pow(electronic[0], 2)+pow(electronic[1], 2));
-                cout << "Prediction Vector: [" << predict[0] << ", " << predict[1] << ", " << predict[2] << "]" << endl;
-                cout << "Angle between vectors: " << theta << endl;           
-           }*/       
         }
          
     }//end collection

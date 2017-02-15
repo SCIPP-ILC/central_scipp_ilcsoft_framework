@@ -89,7 +89,7 @@ void BeamCalRecon_edit::init() {
     _rootfile = new TFile(_root_file_name.c_str(),"RECREATE");
     _radeff = new TProfile("radeff","Radial Efficiency",14*2,0.0,140.0,0.0,1.0);
     _hitmap_bgd = new TProfile2D("hitmap_bgd","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
-    _test_slice = new TProfile2D("hitmap_zeros","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
+    _hitmap_zeros = new TProfile2D("hitmap_zeros","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _test_slice = new TProfile2D("hitmap_slice","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
 
     // TH2F
@@ -149,26 +149,19 @@ void BeamCalRecon_edit::processEvent( LCEvent* signal_event ) {
       _test_num += detected;
       _test_slice->Fill(endx,endy,detected);
     }
-    //    if(detected){
-      //      _hitmap_bgd->Fill(endx,endy);
-      //    }
+
     if(detected){
       _hitmap_bgd->Fill(endx,endy,detected);
+      //      _hitmap_bgd->Fill(endx,endy);
     }else{
-      _hitmap_zeros->Fill(endx,endy,detected);
+      _hitmap_zeros->Fill(endx,endy);
     }
-
-
     cout << _nEvt++ << endl;
 }
 
-
-
-void BeamCalRecon_edit::check( LCEvent * evt ) { 
+void BeamCalRecon_edit::check( LCEvent * evt ){
     // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
-
-
 
 void BeamCalRecon_edit::end(){ 
     cout << "\ndetected: " << _detected_num << endl;
