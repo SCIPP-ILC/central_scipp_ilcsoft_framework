@@ -54,7 +54,9 @@ using namespace std;
 
 static TFile* _rootfile;
 
-static TH1F* _RPlot;
+static TH1F* _R_T;
+static TH1F* _R_DAB;
+static TH1F* _R_DED;
 
 ThrustRazor ThrustRazor;
 
@@ -69,6 +71,9 @@ ThrustRazor::ThrustRazor() : Processor("ThrustRazor") {
     registerProcessorParameter( "typeOfThrustRazorFinder" ,
             "Type of thrust reconstruction algorithm to be used:\n#\t1 : Tasso algorithm\n#\t2 : JetSet algorithm"  ,
             _typeOfThrustRazorFinder , 2 ) ;
+    registerProcessorParameter( "thrustDetectability",
+            "Detectability of the Thrust Axis/Value to be used:\n#\t0 : True \n#t1 : Detectable \n#t2 : Detected" ,
+            _thrustDetectability, 0 );
 }
 
 
@@ -76,8 +81,13 @@ ThrustRazor::ThrustRazor() : Processor("ThrustRazor") {
 void ThrustRazor::init() { 
     streamlog_out(DEBUG)  << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("ThrustRazor_.39133.root","RECREATE");
-    _RPlot = new TH1F("RPlot", "R =MTR/MR",100,0,10);
+    if(_thrustDetectability==0){_rootfile = new TFile("ThrustRazor_.39133_T.root","RECREATE");
+    _R_T = new TH1F("R_T", "R =MTR/MR",100,0,10);}
+    if(_thrustDetectability==1){_rootfile = new TFile("ThrustRazor_.39133_DAB.root","RECREATE");
+    _R_DAB = new TH1F("R_DAB", "R =MTR/MR",100,0,10);}
+    if(_thrustDetectability==0){_rootfile = new TFile("ThrustRazor_.39133_DED.root","RECREATE");
+    _R_DED = new TH1F("R_DED", "R =MTR/MR",100,0,10);}
+
     // irameters() ;
 
     // config ranlux 
@@ -146,10 +156,18 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
             bool isForward = ( cos > 0.9 || cos < - 0.9);
             bool isDetectable = (!isDarkMatter && !isNeutrino);
             bool isDetected = (isDetectable &&  !isForward  );
-
-            if(isDetectable){  
-                const double* partMom = aPart->getMomentum();
-                _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
+            if(_thrustDetectability == 0){
+                _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) );
+            }
+            if(_thrustDetectability == 1){
+                if(isDetectable){
+                    _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) );
+                }
+            }
+            if(_thrustDetectability == 2){
+                if(isDetected){  
+                    _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
+                }
             }
         }
     }
@@ -269,10 +287,7 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
             bool isForward = ( cos > 0.9 || cos < - 0.9);
             int i; // jet #
             if(dot>0){i=0;}
-            if(dot<0){i=1;}
-            if(dot==0){
-                i = rand() % 2;
-                cout << " RANDOM " << i << endl;}
+            if(dot<0){i=1;} 
             vec[i][0][0]+= part4mom[0]; 
             vec[i][0][1]+= part4mom[1];
             vec[i][0][2]+= part4mom[2];
@@ -291,9 +306,8 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
             }
         }           
     }
-
-    double beta = (vec[0][1][0]-vec[1][1][0])/(vec[0][1][3]-vec[1][1][3]); // beta using detectable particles
-    cout << "BETA " << beta << endl;  
+    int d = _thrustDetectability;
+    double beta = (vec[0][d][0]-vec[1][d][0])/(vec[0][d][3]-vec[1][d][3]); // beta using detectable particles 
     double beta2 = pow(beta,2);
     double gamma = 1/(sqrt(1-beta2));
     for (int n=0;n<_inParVec->getNumberOfElements() ;n++){
@@ -327,21 +341,23 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
             }
         }
     }
-    double ETM[2] = {-Rvec[1][1], - Rvec[1][2]};
+    double ETM[2] = {-Rvec[d][1], - Rvec[d][2]};
     double ETMmag = sqrt(ETM[0]*ETM[0]+ETM[1]*ETM[1]);
 
-    double ptj1mag = sqrt(vec[0][1][1]*vec[0][1][1]+vec[0][1][2]*vec[0][1][2]);
-    double ptj2mag = sqrt(vec[1][1][1]*vec[1][1][1]+vec[1][1][2]*vec[1][1][2]);
+    double ptj1mag = sqrt(vec[0][d][1]*vec[0][d][1]+vec[0][d][2]*vec[0][d][2]);
+    double ptj2mag = sqrt(vec[1][d][1]*vec[1][d][1]+vec[1][d][2]*vec[1][d][2]);
     double ptmagsum = ptj1mag + ptj2mag; 
 
-    double ptvecsum[2] = {vec[0][1][1]+vec[1][1][1], vec[0][1][2]+vec[1][1][2]};
+    double ptvecsum[2] = {vec[0][d][1]+vec[1][d][1], vec[0][d][2]+vec[1][d][2]};
     double ETMdotptvecsum = ETM[0]*ptvecsum[0]+ETM[1]*ptvecsum[1];
     double MTR = sqrt((ETMmag*ptmagsum-ETMdotptvecsum)/2);
 
-    double pj1 = sqrt(vec[0][1][1]*vec[0][1][1]+vec[0][1][2]*vec[0][1][2]+vec[0][1][3]*vec[0][1][3]);
+    double pj1 = sqrt(vec[0][d][1]*vec[0][d][1]+vec[0][d][2]*vec[0][d][2]+vec[0][d][3]*vec[0][d][3]);
     double R = MTR/(2*pj1);
     if(beta2<=1){
-        _RPlot->Fill(R);
+        if(d==0){_R_T->Fill(R);}
+        if(d==1){_R_DAB->Fill(R);}
+        if(d==2){_R_DED->Fill(R);}
     }
 
     if (_principleThrustRazorValue >= _max) _max = _principleThrustRazorValue;

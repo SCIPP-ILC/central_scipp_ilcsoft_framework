@@ -54,6 +54,8 @@ using namespace std;
 
 static TFile* _rootfile;
 
+static TH1F* _R_T;
+static TH1F* _R_DAB;
 static TH1F* _R_DED;
 
 TwoPhotonThrustRazor TwoPhotonThrustRazor;
@@ -80,12 +82,13 @@ void TwoPhotonThrustRazor::init() {
     streamlog_out(DEBUG)  << "   init called  " << std::endl ;
 
 
-    if(_ThrustDetectability==0){_rootfile = new TFile("TwoPhotonThrustRazor_.eW.pW.I39212_T.root","RECREATE");}
+    if(_ThrustDetectability==0){_rootfile = new TFile("TwoPhotonThrustRazor_.eW.pW.I39212_T.root","RECREATE");
+    _R_T = new TH1F("R_T", "R=MTR/MR",100,0,10);}
     if(_ThrustDetectability==1){_rootfile = new TFile("TwoPhotonThrustRazor_.eW.pW.I39212._DAB.root","RECREATE");
-    cout << "Detectable is Printing now "<< endl;}
-    if(_ThrustDetectability==2){_rootfile = new TFile("TwoPhotonThrustRazor_.eW.pW.I39212._DED.root","RECREATE");;}
-    
-    _R_DED = new TH1F("R_DED", "R = MTR/MR",100,0,10);
+    _R_DAB = new TH1F("R_DAB", "R=MTR/MR",100,0,10);}
+    if(_ThrustDetectability==2){_rootfile = new TFile("TwoPhotonThrustRazor_.eW.pW.I39212._DED.root","RECREATE");
+    _R_DED = new TH1F("R_DED", "R=MTR/MR",100,0,10);} 
+   
     //irameters() ;
 
     // config ranlux 

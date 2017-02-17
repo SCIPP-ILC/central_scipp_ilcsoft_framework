@@ -77,7 +77,7 @@ class ThrustRazor : public Processor {
       /** Input collection name.
        */
         int _typeOfThrustRazorFinder;
-
+        int _thrustDetectability;
         float _principleThrustRazorValue;
         float _majorThrustRazorValue;
         float _minorThrustRazorValue;
