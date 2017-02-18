@@ -82,7 +82,7 @@ void TwoPhotonThrustRazor::init() {
     streamlog_out(DEBUG)  << "   init called  " << std::endl ;
 
 
-    if(_ThrustDetectability==0){_rootfile = new TFile("TwoPhotonThrustRazor_.eW.pW.I39212_T.root","RECREATE");
+    if(_ThrustDetectability==0){_rootfile = new TFile("TwoPhotonThrustRazor_.eW.pW.I39212._T.root","RECREATE");
     _R_T = new TH1F("R_T", "R=MTR/MR",100,0,10);}
     if(_ThrustDetectability==1){_rootfile = new TFile("TwoPhotonThrustRazor_.eW.pW.I39212._DAB.root","RECREATE");
     _R_DAB = new TH1F("R_DAB", "R=MTR/MR",100,0,10);}
@@ -183,11 +183,12 @@ void TwoPhotonThrustRazor::processEvent( LCEvent * evt ) {
     // Switch to the desired type of thrust finder
     if (_typeOfTwoPhotonThrustRazorFinder == 1)
     { 
-        TassoTwoPhotonThrustRazor();
+        //TassoTwoPhotonThrustRazor();
     }
     else if (_partMom.size()<=1)
-    { 
-        TassoTwoPhotonThrustRazor();
+    {
+        cout << " part Mom size less or equal 1 " << endl; 
+        //TassoTwoPhotonThrustRazor();
     }
     else if (_typeOfTwoPhotonThrustRazorFinder == 2)
     {
@@ -236,10 +237,10 @@ void TwoPhotonThrustRazor::processEvent( LCEvent * evt ) {
     streamlog_out( DEBUG4 ) << "  major: " << _majorTwoPhotonThrustRazorValue << " TV: " << _majorTwoPhotonThrustRazorAxis << endl;
     streamlog_out( DEBUG4 ) << "  minor: " << _minorTwoPhotonThrustRazorValue << " TV: " << _minorTwoPhotonThrustRazorAxis << endl;
     cout << "EVENT: " << _nEvt << endl;
-    //cout << " thrust: " << _principleTwoPhotonThrustRazorValue << " TV: " << _principleTwoPhotonThrustRazorAxis << endl;
-    //cout <<"                       "<< _principleTwoPhotonThrustRazorAxis.x()<<","<< _principleTwoPhotonThrustRazorAxis.y()<< ","<<_principleTwoPhotonThrustRazorAxis.z()<<endl;
-    //cout << "  major: " << _majorTwoPhotonThrustRazorValue << " TV: " << _majorTwoPhotonThrustRazorAxis << endl;
-    //cout << "  minor: " << _minorTwoPhotonThrustRazorValue << " TV: " << _minorTwoPhotonThrustRazorAxis << endl;
+    cout << " thrust: " << _principleTwoPhotonThrustRazorValue << " TV: " << _principleTwoPhotonThrustRazorAxis << endl;
+    cout <<"                       "<< _principleTwoPhotonThrustRazorAxis.x()<<","<< _principleTwoPhotonThrustRazorAxis.y()<< ","<<_principleTwoPhotonThrustRazorAxis.z()<<endl;
+    cout << "  major: " << _majorTwoPhotonThrustRazorValue << " TV: " << _majorTwoPhotonThrustRazorAxis << endl;
+    cout << "  minor: " << _minorTwoPhotonThrustRazorValue << " TV: " << _minorTwoPhotonThrustRazorAxis << endl;
 
     double ptaX = _principleTwoPhotonThrustRazorAxis.x();
     double ptaY = _principleTwoPhotonThrustRazorAxis.y();
@@ -266,8 +267,8 @@ void TwoPhotonThrustRazor::processEvent( LCEvent * evt ) {
             const double* partMom = aPart->getMomentum();
             double part4mom[4] = {aPart->getEnergy(), partMom[0], partMom[1], partMom[2]} ;
 
-            //cout << "id      : " << id << endl;  
-            //cout << "Momentum: " << partMom[0] <<" "<< partMom[1] <<" "<< partMom[2]<< endl;
+            cout << "id      : " << id << endl;  
+            cout << "Momentum: " << partMom[0] <<" "<< partMom[1] <<" "<< partMom[2]<< endl;
 
             double dot = ptaX*partMom[0]+ptaY*partMom[1]+ptaZ*partMom[2]; 
 
@@ -285,7 +286,7 @@ void TwoPhotonThrustRazor::processEvent( LCEvent * evt ) {
             int i; // jet # 
             if(dot>0){i=0;}
             if(dot<0){i=1;}
-            // if dot == 0 do nothing for now 
+            if(dot == 0){i=0;} 
 
             vec[i][0][0]+= part4mom[0]; 
             vec[i][0][1]+= part4mom[1];
@@ -371,7 +372,9 @@ void TwoPhotonThrustRazor::processEvent( LCEvent * evt ) {
     double pj1 = sqrt(vec[0][d][1]*vec[0][d][1]+vec[0][d][2]*vec[0][d][2]+vec[0][d][3]*vec[0][d][3]);
     double R = MTR/(2*pj1);
     if(beta2<=1){
-        _R_DED->Fill(R);
+        if(d==0){_R_T->Fill(R);}
+        if(d==1){_R_DAB->Fill(R);}
+        if(d==2){_R_DED->Fill(R);}
     }
 
     if (_principleTwoPhotonThrustRazorValue >= _max) _max = _principleTwoPhotonThrustRazorValue;

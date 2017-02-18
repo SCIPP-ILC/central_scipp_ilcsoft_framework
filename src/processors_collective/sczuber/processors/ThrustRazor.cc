@@ -73,7 +73,7 @@ ThrustRazor::ThrustRazor() : Processor("ThrustRazor") {
             _typeOfThrustRazorFinder , 2 ) ;
     registerProcessorParameter( "thrustDetectability",
             "Detectability of the Thrust Axis/Value to be used:\n#\t0 : True \n#t1 : Detectable \n#t2 : Detected" ,
-            _thrustDetectability, 0 );
+            _thrustDetectability, 2 );
 }
 
 
@@ -81,11 +81,11 @@ ThrustRazor::ThrustRazor() : Processor("ThrustRazor") {
 void ThrustRazor::init() { 
     streamlog_out(DEBUG)  << "   init called  " << std::endl ;
 
-    if(_thrustDetectability==0){_rootfile = new TFile("ThrustRazor_.39133_T.root","RECREATE");
+    if(_thrustDetectability==0){_rootfile = new TFile("ThrustRazor_.39133._T.root","RECREATE");
     _R_T = new TH1F("R_T", "R =MTR/MR",100,0,10);}
-    if(_thrustDetectability==1){_rootfile = new TFile("ThrustRazor_.39133_DAB.root","RECREATE");
+    if(_thrustDetectability==1){_rootfile = new TFile("ThrustRazor_.39133._DAB.root","RECREATE");
     _R_DAB = new TH1F("R_DAB", "R =MTR/MR",100,0,10);}
-    if(_thrustDetectability==0){_rootfile = new TFile("ThrustRazor_.39133_DED.root","RECREATE");
+    if(_thrustDetectability==2){_rootfile = new TFile("ThrustRazor_.39133._DED.root","RECREATE");
     _R_DED = new TH1F("R_DED", "R =MTR/MR",100,0,10);}
 
     // irameters() ;
@@ -169,8 +169,8 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
                     _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
                 }
             }
-        }
-    }
+        } // stat = 1
+    } // for particle 
     _nEvt ++ ; // different from original-moved out of for loop - summer 
     //reset variables for output   
     _principleThrustRazorValue = -1;
@@ -186,7 +186,8 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
         TassoThrustRazor();
     }
     else if (_partMom.size()<=1)
-    { 
+    {
+        cout << "PART MOM SIZE LESS EQUAL 1" << endl;  
         TassoThrustRazor();
     }
     else if (_typeOfThrustRazorFinder == 2)
@@ -324,7 +325,7 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
         }
         double part4Vec[4] = {aPart->getEnergy(), partMom[0], partMom[1], partMom[2] };
         double R4Vec[4] = {gamma*part4Vec[0]-gamma*beta*part4Vec[3], part4Vec[1], part4Vec[2], 
-            -gamma*beta*part4Vec[0]+gamma*part4Vec[3] }; 
+                           -gamma*beta*part4Vec[0]+gamma*part4Vec[3] }; 
         bool isDarkMatter = (id == 1000022);
 
         bool isNeutrino = (
@@ -332,13 +333,35 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
                 id == 14 || id == -14 ||
                 id == 16 || id == -16 ||
                 id == 18 || id == -18);
+        double cos = partMom[2]/(sqrt(partMom[0]*partMom[0]+partMom[1]*partMom[1]+partMom[2]*partMom[2]));
+        bool isForward = (cos > 0.9 || cos < - 0.9);
+        bool isDetectable = (!isDarkMatter && !isNeutrino);
+        bool isDetected = (isDetectable && !isForward); 
         if(stat ==1){
-            if(!isDarkMatter && !isNeutrino){
-                Rvec[1][0]+=R4Vec[0];
-                Rvec[1][1]+=R4Vec[1];
-                Rvec[1][2]+=R4Vec[2];
-                Rvec[1][3]+=R4Vec[3];
+            if(_thrustDetectability ==0){
+                if(!isDarkMatter){
+                    Rvec[d][0]+=R4Vec[0];
+                    Rvec[d][1]+=R4Vec[1];
+                    Rvec[d][2]+=R4Vec[2];
+                    Rvec[d][3]+=R4Vec[3];
+                }
             }
+            if(_thrustDetectability ==1){
+                if(isDetectable){
+                    Rvec[d][0]+=R4Vec[0];
+                    Rvec[d][1]+=R4Vec[1];
+                    Rvec[d][2]+=R4Vec[2];
+                    Rvec[d][3]+=R4Vec[3];
+                }
+            }
+            if(_thrustDetectability == 2){
+                if(isDetected){
+                    Rvec[d][0]+=R4Vec[0];
+                    Rvec[d][1]+=R4Vec[1];
+                    Rvec[d][2]+=R4Vec[2];
+                    Rvec[d][3]+=R4Vec[3];
+                }
+            }   
         }
     }
     double ETM[2] = {-Rvec[d][1], - Rvec[d][2]};
