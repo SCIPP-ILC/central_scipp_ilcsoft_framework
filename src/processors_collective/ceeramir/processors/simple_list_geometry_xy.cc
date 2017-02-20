@@ -9,32 +9,62 @@
 #include <unordered_map>
 
 #include "polar_coords.h"
-#include "include/simple_list_geometry_edit.h"
+#include "include/simple_list_geometry_xy.h"
 
 using namespace std;
 
 namespace scipp_ilc {
-    namespace beamcal_recon_C {
+    namespace beamcal_recon_xy {
         //static int _LastRing;
         //static float _sector_offset;
         //static float sectorMultiplier;
         //static float* _ring_to_radius_table;
         //static short* SectorCountTable;
 
-        int _LastRing = 56;
-        static float _sector_offset = 0.05;
-        static float _ring_to_radius_table[] = {3.5, 7.0, 10.5, 14.0, 17.5, 
-                                        21.0, 24.5, 28.0, 31.5, 35.0,
-                                        38.5, 42.0, 45.5, 49.0, 52.5,
-                                        56.0, 59.5, 63.0, 66.5, 70.0,
-                                        73.5, 77.0, 80.5, 84.0, 87.5,
-                                        91.0, 94.5, 98.0, 101.5, 105.0,
-                                        108.5, 112.0, 115.5, 119.0, 122.5,
-                                        126.0, 129.5, 133.0, 136.5, 140.0,
-                                        143.5, 147.0, 150.5, 154.0, 157.5,
-                                        161.0, 164.5, 168.0, 171.5, 175.0,
-                                        178.5, 182.0, 185.5, 189.0, 192.5,
-                                        196.0, 199.5};
+      int _LastRing = 56;
+      static float _sector_offset = 0.05;
+      static float _ring_to_radius_table[] = {3.5, 7.0, 10.5, 14.0, 17.5,
+					      21.0, 24.5, 28.0, 31.5, 35.0,
+					      38.5, 42.0, 45.5, 49.0, 52.5,
+					      56.0, 59.5, 63.0, 66.5, 70.0,
+					      73.5, 77.0, 80.5, 84.0, 87.5,
+					      91.0, 94.5, 98.0, 101.5, 105.0,
+					      108.5, 112.0, 115.5, 119.0, 122.5,
+					      126.0, 129.5, 133.0, 136.5, 140.0,
+					      143.5, 147.0, 150.5, 154.0, 157.5,
+					      161.0, 164.5, 168.0, 171.5, 175.0,
+					      178.5, 182.0, 185.5, 189.0, 192.5,
+					      196.0, 199.5};       
+
+        static float _x_table[] = {
+	  -199.5, -196.0, -192.5, -189.0, -185.5,
+	  -182.0, -178.5, -175.0, -171.5, -168.0,
+	  -164.5, -161.0, -157.5, -154.0, -150.5,
+
+	  -147.0, -143.5, -140.0, -136.5, -133.0,
+	  -129.5, -126.0, -122.5, -119.0, -115.5,
+	  -112.0, -108.5, -105.0, -101.5, -98.0,
+
+	  -94.5, -91.0, -87.5, -84.0, -80.5, -77.0,
+	  -73.5, -70.0, -66.5, -63.0, -59.5, -56.0,
+	  -52.5, -49.0, -45.5, -42.0, -38.5, -35.0,
+
+	  -31.5, -28.0, -24.5, -21.0, -17.5, -14.0,
+	  -10.5, -7.0, -3.5, 0.0, 3.5, 7.0, 10.5,
+	  14.0, 17.5, 21.0, 24.5, 28.0, 31.5,
+
+	  35.0, 38.5, 42.0, 45.5, 49.0, 52.5,
+	  56.0, 59.5, 63.0, 66.5, 70.0, 73.5,
+	  77.0, 80.5, 84.0, 87.5, 91.0, 94.5,
+
+	  98.0, 101.5, 105.0, 108.5, 112.0,
+	  115.5, 119.0, 122.5, 126.0, 129.5,
+	  133.0, 136.5, 140.0, 143.5, 147.0,
+
+	  150.5, 154.0, 157.5, 161.0, 164.5,
+	  168.0, 171.5, 175.0, 178.5, 182.0,
+	  185.5, 189.0, 192.5, 196.0, 199.5
+	};
 
         static short SectorCountTable[] = {6, 13, 19, 25, 31, 38, 44, 50, 57,
                                             63, 69, 75, 82, 88, 94, 101, 107,
@@ -123,11 +153,30 @@ namespace scipp_ilc {
          * given cartesian coordinates.
          */
         int getID(double x, double y) {
-            double r,phi;
-            scipp_ilc::cartesian_to_polar(x,y,r,phi);
-            int ID = getIDpolar(r,phi);
-	    count << "ID: " << ID << endl;    
-            return ID;
+	  double r,phi;
+	  scipp_ilc::cartesian_to_polar(x,y,r,phi);
+	  int ID = getIDpolar(r,phi);
+	  int count = 0;
+	  float IDx = 0.0;
+	  float IDy = 0.0;
+	  int IDxy = 0;
+	  bool x_condition = true;
+	  bool y_condition = true;
+	  //	  while (x_condition || y_condition){
+	  while (y_condition ){
+	    //	    if((x <= _x_table[count]) && x_condition){
+	    //	      IDx = _x_table[count] + 200;
+	    //		x_condition = false;
+	    //	    }
+	    	    if((y <= _x_table[count]) && y_condition){
+	    	      IDy = _x_table[count];
+	      		y_condition = false;
+	    	    }	     
+	    count += 4;
+	  }
+	  IDxy = (IDx + IDy) * 1000;
+	  //	  cout << "ID: " << ID << endl;
+	  return IDxy;
         }
 
 

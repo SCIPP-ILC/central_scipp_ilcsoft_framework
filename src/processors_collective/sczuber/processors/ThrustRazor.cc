@@ -82,11 +82,11 @@ void ThrustRazor::init() {
     streamlog_out(DEBUG)  << "   init called  " << std::endl ;
 
     if(_thrustDetectability==0){_rootfile = new TFile("ThrustRazor_.39133._T.root","RECREATE");
-    _R_T = new TH1F("R_T", "R =MTR/MR",100,0,10);}
+        _R_T = new TH1F("R_T", "R =MTR/MR",100,0,10);}
     if(_thrustDetectability==1){_rootfile = new TFile("ThrustRazor_.39133._DAB.root","RECREATE");
-    _R_DAB = new TH1F("R_DAB", "R =MTR/MR",100,0,10);}
+        _R_DAB = new TH1F("R_DAB", "R =MTR/MR",100,0,10);}
     if(_thrustDetectability==2){_rootfile = new TFile("ThrustRazor_.39133._DED.root","RECREATE");
-    _R_DED = new TH1F("R_DED", "R =MTR/MR",100,0,10);}
+        _R_DED = new TH1F("R_DED", "R =MTR/MR",100,0,10);}
 
     // irameters() ;
 
@@ -125,13 +125,14 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
     // usually the working horse ...
 
     _inParVec = evt->getCollection( _colName) ;
-    cout << _inParVec->getNumberOfElements() << endl;
+    cout << "num of elements " << _inParVec->getNumberOfElements() << endl;
     if (!_partMom.empty()) _partMom.clear();
 
-    int id, stat; 
+    int id, stat;
+    cout << "loop #1"<< endl; 
     for (int n=0;n<_inParVec->getNumberOfElements() ;n++)
     {
-
+        
         MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
         try{
             id = aPart->getPDG();
@@ -140,11 +141,14 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
         catch(const std::exception& e){
             cout << "exception caught with message " << e.what() << "\n";
         }
+        
 
         const double* partMom = aPart->getMomentum();
         double partMomMag = sqrt(partMom[0]*partMom[0]+partMom[1]*partMom[1]+partMom[2]*partMom[2]);
 
         if(stat==1){
+            cout << "id: " << id<< endl;
+            cout << "mom: "<< partMom[0]<<" "<< partMom[1]<<" "<<partMom[2]<<endl;
             bool isDarkMatter = (id == 1000022);
             bool isNeutrino = (
                     id == 12 || id == -12 ||
@@ -164,13 +168,17 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
                     _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) );
                 }
             }
+            cout <<"_thrustDetectability : " << _thrustDetectability << endl;
             if(_thrustDetectability == 2){
-                if(isDetected){  
+                cout << " is Detected : "<<isDetected<< endl; 
+                if(isDetected){ 
+                    cout << "adding mom to partMom thing"<< endl; 
                     _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
                 }
             }
         } // stat = 1
     } // for particle 
+    cout << "end loop #1"<<endl;
     _nEvt ++ ; // different from original-moved out of for loop - summer 
     //reset variables for output   
     _principleThrustRazorValue = -1;
@@ -182,8 +190,10 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
 
     // Switch to the desired type of thrust finder
     if (_typeOfThrustRazorFinder == 1)
-    { 
+    {
+        cout << "type of Thrust Razor Finder = 1 : Tasso Thrust Razor " << endl; 
         TassoThrustRazor();
+        cout << "type of Thrust Razor Finder = 1 : Tasso Thrust Razor" << endl;
     }
     else if (_partMom.size()<=1)
     {
@@ -192,6 +202,7 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
     }
     else if (_typeOfThrustRazorFinder == 2)
     {
+        cout << "type of Thrust Razor Finder = 2 : Jetset Thryst Razor" << endl; 
         JetsetThrustRazor();
     }
     // ###write
@@ -325,7 +336,7 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
         }
         double part4Vec[4] = {aPart->getEnergy(), partMom[0], partMom[1], partMom[2] };
         double R4Vec[4] = {gamma*part4Vec[0]-gamma*beta*part4Vec[3], part4Vec[1], part4Vec[2], 
-                           -gamma*beta*part4Vec[0]+gamma*part4Vec[3] }; 
+            -gamma*beta*part4Vec[0]+gamma*part4Vec[3] }; 
         bool isDarkMatter = (id == 1000022);
 
         bool isNeutrino = (
@@ -338,7 +349,7 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
         bool isDetectable = (!isDarkMatter && !isNeutrino);
         bool isDetected = (isDetectable && !isForward); 
         if(stat ==1){
-            if(_thrustDetectability ==0){
+            if(_thrustDetectability == 0){
                 if(!isDarkMatter){
                     Rvec[d][0]+=R4Vec[0];
                     Rvec[d][1]+=R4Vec[1];
