@@ -171,7 +171,7 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
             cout <<"_thrustDetectability : " << _thrustDetectability << endl;
             if(_thrustDetectability == 2){
                 cout << " is Detected : "<<isDetected<< endl; 
-                if(isDetected){ 
+                if(isDetected==1){ 
                     cout << "adding mom to partMom thing"<< endl; 
                     _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
                 }
