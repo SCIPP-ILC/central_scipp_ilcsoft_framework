@@ -34,12 +34,15 @@
 using namespace lcio;
 using namespace marlin;
 using namespace std;
-
+using namespace scipp_ilc;
 
 Tester Tester;
 
 static TFile* _rootfile;
 static TH1F* _tmom;
+static TH1F* _S;
+static TH2F* _SvT;
+//static TH2F* _eVp;
 
 Tester::Tester() : Processor("Tester") {
     // modify processor description
@@ -56,8 +59,11 @@ Tester::Tester() : Processor("Tester") {
 void Tester::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("WB_tester.root","RECREATE");
+    _rootfile = new TFile("WW_S.root","RECREATE");
     _tmom = new TH1F("tmom", "Total Final State Transverse Momentum", 100, 0.0, 20.0);
+    _S = new TH1F("S", "Sum of Transverse Momentum Magnitudes, Hadronic System", 100, 0, 20.0);
+    _SvT = new TH2F("SvT", "Transverse Momentum Mag Sum vs Scattering Angle", 100, 0.0, 20.0, 1000, 0.0, 0.01);
+    
     // usually a good idea to
     //printParameters() ;
     _nEvt = 0 ;
@@ -78,8 +84,12 @@ void Tester::processEvent( LCEvent * evt ) {
     double tot[]={0, 0, 0};
     LCCollection* col = evt->getCollection( _colName ) ;
 
-    int stat, id =0;
+    double theta_comp = 0.0062786;
+    int stat, id = 0;
+    double theta_e, theta_p;
+    double E_e, E_p = 0;
     double tot_mom[]={0, 0};
+    double S = 0;
     // this will only be entered if the collection is available
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
@@ -87,12 +97,17 @@ void Tester::processEvent( LCEvent * evt ) {
     cout << endl;
     cout << "***************************EVENT: " << _nEvt << "****************************" << endl;
 
+    vector<MCParticle*> system;
+
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
         
             id = hit->getPDG();
             stat = hit->getGeneratorStatus();
             if(stat==1){ 
+                system.push_back(hit);
+                if(id==11){E_e = (E_e < hit->getEnergy()) ? hit->getEnergy() : E_e;}
+                if(id==-11){E_p = (E_p < hit->getEnergy()) ? hit->getEnergy() : E_p;}
                 cout << "Particle " << hitIndex << " with ID: " << id;
                 cout << " status: " << stat;
 
@@ -104,9 +119,47 @@ void Tester::processEvent( LCEvent * evt ) {
 
                 cout << " momentum [" << mom[0] << ", " << mom[1] << ", " << mom[2] << "] with energy: " << mom[3] << endl;
 
+            }//end final state
+        }//end for
+        for(MCParticle* particle : system){
+            id = particle->getPDG();
+            if(id==11&&particle->getEnergy()==E_e){
+                    double mom[4];
+                    mom[0] = particle->getMomentum()[0]; 
+                    mom[1] = particle->getMomentum()[1]; 
+                    mom[2] = particle->getMomentum()[2];
+                    mom[3] = particle->getEnergy();
+                    if(abs(mom[0])!=0||abs(mom[1])!=0){
+                        double r = sqrt(pow(mom[0], 2)+pow(mom[1], 2));
+                        double mag = sqrt(pow(mom[0], 2)+pow(mom[1], 2)+pow(mom[2], 2));
+                        theta_e = atan(r/mag);
+                    }//end scatter
+            }//end high energy electron    
+            else if(id==-11&&particle->getEnergy()==E_p){
+                    double mom[4];
+                    mom[0] = particle->getMomentum()[0]; 
+                    mom[1] = particle->getMomentum()[1]; 
+                    mom[2] = particle->getMomentum()[2];
+                    mom[3] = particle->getEnergy();
+                    if(abs(mom[0])!=0||abs(mom[1])!=0){
+                        double r = sqrt(pow(mom[0], 2)+pow(mom[1], 2));
+                        double mag = sqrt(pow(mom[0], 2)+pow(mom[1], 2)+pow(mom[2], 2));
+                        theta_p = atan(r/mag);
+                        cout << "THETA_P" << theta_p << endl;
+                    }//end scatter
+            }//end high energy electron    
+            else{
+                double mom[4];
+                mom[0] = particle->getMomentum()[0]; 
+                mom[1] = particle->getMomentum()[1]; 
+                mom[2] = particle->getMomentum()[2];
+                mom[3] = particle->getEnergy();
+                double mag = sqrt(pow(mom[0], 2)+pow(mom[1], 2));    
+                S+=mag;
             }
         }//end for
-         
+        _S->Fill(S); 
+        (theta_e>theta_p) ? _SvT->Fill(S, theta_e) : _SvT->Fill(S, theta_p);    
     }
 
     _nEvt ++ ;

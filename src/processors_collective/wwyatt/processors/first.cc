@@ -233,14 +233,13 @@ void first::end(){
 //Implementation of the Bundle Class
 void initialize(Bundle* b){  
   if(b->init++)return;
-  /*  //CosineTheta Not doing center to mass frame.
+  /*//CosineTheta Not doing center to mass frame.
   double cosE = cos(b->getTheta(b->getElectron(), true));
   double cosP = cos(b->getTheta(b->getPositron(), true));
   _cosE->Fill(cosE);
   _cosP->Fill(cosP);
   _cos->Fill(cosE);
   _cos->Fill(cosP);*/
-
   init_hitmap_general(b);
 }
 
@@ -264,7 +263,6 @@ void Bundle::graphHitStatus(double*  momentum, int id, Bundle* b){
       b->info += 100;
     }
     b->info += 1;
-    
     break;
   case(2): //outside beamcal
     miss++;
@@ -287,7 +285,6 @@ void Bundle::graphHitStatus(double*  momentum, int id, Bundle* b){
       b->info += 700;
     }
     b->info += 1;
-
     break;
   case(4): //incoming beampipe
     miss++;
