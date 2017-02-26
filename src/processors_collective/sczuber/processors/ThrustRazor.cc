@@ -73,7 +73,7 @@ ThrustRazor::ThrustRazor() : Processor("ThrustRazor") {
             _typeOfThrustRazorFinder , 2 ) ;
     registerProcessorParameter( "thrustDetectability",
             "Detectability of the Thrust Axis/Value to be used:\n#\t0 : True \n#t1 : Detectable \n#t2 : Detected" ,
-            _thrustDetectability, 2 );
+            _thrustDetectability, 1 );
 }
 
 
@@ -204,7 +204,7 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
     }
     else if (_typeOfThrustRazorFinder == 2)
     {
-        cout << "type of Thrust Razor Finder = 2 : Jetset Thryst Razor" << endl; 
+        cout << "type of Thrust Razor Finder = 2 : Jetset Thrust Razor" << endl; 
         JetsetThrustRazor();
     }
     // ###write
