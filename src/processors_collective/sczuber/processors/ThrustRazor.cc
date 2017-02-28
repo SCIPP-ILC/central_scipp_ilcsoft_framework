@@ -73,7 +73,7 @@ ThrustRazor::ThrustRazor() : Processor("ThrustRazor") {
             _typeOfThrustRazorFinder , 2 ) ;
     registerProcessorParameter( "thrustDetectability",
             "Detectability of the Thrust Axis/Value to be used:\n#\t0 : True \n#t1 : Detectable \n#t2 : Detected" ,
-            _thrustDetectability, 1 );
+            _thrustDetectability, 2 );
 }
 
 
@@ -85,7 +85,7 @@ void ThrustRazor::init() {
         _R_T = new TH1F("R_T", "R =MTR/MR",100,0,10);}
     if(_thrustDetectability==1){_rootfile = new TFile("ThrustRazor_.39133._DAB.root","RECREATE");
         _R_DAB = new TH1F("R_DAB", "R =MTR/MR",100,0,10);}
-    if(_thrustDetectability==2){_rootfile = new TFile("ThrustRazor_.39133._DED.root","RECREATE");
+    if(_thrustDetectability==2){_rootfile = new TFile("ThrustRazor_2_DED_133.root","RECREATE");
         _R_DED = new TH1F("R_DED", "R =MTR/MR",100,0,10);}
 
     // irameters() ;
@@ -300,7 +300,7 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
             double cos = partMom[2]/(sqrt(partMom[0]*partMom[0]+partMom[1]*partMom[1]+partMom[2]*partMom[2]));
             bool isForward = ( cos > 0.9 || cos < - 0.9);
             int i; // jet #
-            if(dot>0){i=0;}
+            if(dot>=0){i=0;}
             if(dot<0){i=1;} 
             vec[i][0][0]+= part4mom[0]; 
             vec[i][0][1]+= part4mom[1];

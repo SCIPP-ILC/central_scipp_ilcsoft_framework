@@ -30,7 +30,6 @@
 #include "marlin/VerbosityLevels.h"
 
 
-
 using namespace lcio;
 using namespace marlin;
 using namespace std;
@@ -39,97 +38,15 @@ using namespace std;
 first first;
 
 static TFile* _rootfile;
-static TH2F* _hitmap1;
-static TH2F* _hitmap2;
-static TH2F* _hitmap3;
-static TH2F* _hitmap4;
-
-static TH2F* _e_hitmap;
-static TH2F* _p_hitmap;
-
-static TH1F* _hitmiss;
-
-static int hit = 0;
-static int miss = 0;
-static int hh = 0;
-static int hm = 0;
-static int mh = 0;
-static int mm = 0;
-
-//static TH1F* _energy;
-static TH1F* _phi_hh;
-static TH1F* _phi_mm;
-static TH1F* _phi_hm;
-static TH1F* _phi_mh;
 static TH2F* _hh;
 static TH2F* _mm;
 static TH2F* _hm;
-
-class Bundle{
-public:
-  const static bool VERBOSE = false;
-  //Setting PDG constants to particle names (DID NOT VERIFY)
-  const static int PHOTON = 22;
-  const static int POSITRON = 11;
-  const static int ELECTRON = -11;
-
-  //Setting errors static so I can spell check them easily.
-  const string ERROR_NOT_BAHBAH_PARTICLE = "Not a Bahbah particle User-Error: Trying to add a particle that is not accounted for.";
-  const string ERROR_MAX_PHOTONS = "Max Photon User-Error: Trying to add photon but it is already full.";
-  const string ERROR_ALREADY_PARTICLE = "Particle Already There User-Error: Trying to add a paticle but the space is not NULL.";
-
-  bool init = false;
-
-  int info = 0;
-
-  MCParticle* photonA = NULL;
-  MCParticle* photonB = NULL;
-  MCParticle* positron = NULL;
-  MCParticle* electron = NULL;
-  MCParticle* photons[2] = {NULL, NULL};
-
-  Bundle(){
-    positron = NULL;
-    electron = NULL;
-  }
-
-  void err(string _input);
-
-  //  void graphHitStatus(double x, double y);
-  void graphHitStatus(double*, int id,Bundle* b);
-  //Returns the total number of particles added. MAX is 4 right now.
-  int getCount();
-
-  MCParticle* getElectron();
-  MCParticle* getPositron();
-
-  //-- Physics Section --\\
-  //returns the angle from the x-y axis
-  double getPhi(MCParticle* _input);
-
-  //returns the angle from the z axis
-  double getTheta(MCParticle* _input,bool);
-
-  //Checks to see if particle is already there, then adds it for processing. Once full it runs initialize.
-  void addParticle(MCParticle* _input);
-
-  //Preparing for updating class for n photons. Currently max is 2 photons.
-  void addPhoton(MCParticle* _input);
-
-  //Gets the norm of the vector and finds it's manitude.
-  double getMagnitude(MCParticle* _input);
-
-  double getDotProduct(MCParticle* A, MCParticle* B);
-
-  double* getMomentum(MCParticle* _input);
-};
-
-
-//Prototypes\\
-void graphHitStatus(double x, double y);
-void initialize(Bundle* b);
-void init_hitmap_general(Bundle* b);
-double get_colinearity(Bundle*);
+static TH1F* _cos;
+static TH1F* _cosp;
+static TH1F* _cose;
+static bool inlab = false;
+//th2f hitmap
+//th1f histogram
 
 first::first() : Processor("first") {
     // modify processor description
@@ -137,41 +54,37 @@ first::first() : Processor("first") {
 
     // register steering parameters: name, description, class-variable, default value
     registerInputCollection( LCIO::MCPARTICLE, "CollectionName" , "Name of the MCParticle collection"  , _colName , std::string("MCParticle") );
-
+    
     registerProcessorParameter( "RootOutputName" , "output file"  , _root_file_name , std::string("output.root") );
 }
 
 
 void first::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
-    cout << "Initialized" << endl;
+    
+    cout << "Initialized " << endl;
     _rootfile = new TFile("Phi_Bhabha.root","RECREATE");
-    //    _energy = new TH1F("energy", "Energy", 520.0,  0.0, 260.0);
-    /*    _hitmiss = new TH1F("hm", "Hit Miss Ratio", 5, -1, 2);
-    _hitmap1 = new TH2F("pos1", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
-    _hitmap2 = new TH2F("pos2", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
-    _hitmap3 = new TH2F("pos3", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
-    _hitmap4 = new TH2F("pos4", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
-    //    static TH2F* _e_hitmap;
-
-    //    _hitmap4 = new TH2F("pos4", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
-    //    _theta1 = new TH1F("theta_s", "Angle Difference (Electron - Positron) From 0-2π", 500, 0, 6.28);
-    //    _theta2 = new TH1F("theta_m", "Angle Difference (Electron - Positron) From 1-π", 500, 1, 3.14);
-    //    _theta3 = new TH1F("theta_t", "Angle Difference (Electron - Positron) From 0-1rad", 500, 0, .1);
-    _cosE = new TH1F("electron_corth", "Cosine Theta Distribution For Electrons", 350, 0, 6.28);
-    _cosP = new TH1F("positron_costh", "Cosine Theta Distribution For Positrons", 350, 0, 6.28);
-
-    */
-
+    //These initialization are here as reference until I finish rewriting all the code.
     _hh = new TH2F("hh", "Hit-Hit Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     _mm = new TH2F("mm", "Miss-Miss Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     _hm = new TH2F("hm", "Hit-Miss Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
-    _phi_hh = new TH1F("phi_hh", "Colinearity of Electron-Positron Using Dot Products: HH Theta Distribution", 350, 0, (3.1415));
-    _phi_mm = new TH1F("phi_mm", "Colinearity of Electron-Positron Using Dot Products: MM Theta Distribution", 350, 0, (3.1415));
-    _phi_hm = new TH1F("phi_hm", "Colinearity of Electron-Positron Using Dot Products: HM Theta Distribution", 350, 0, (3.1415));
-    _phi_mh = new TH1F("phi_mh", "Colinearity of Electron-Positron Using Dot Products: MH Theta Distribution", 350, 0, (3.1415));
-    //    hh=hm=mh=mm=0;
-    //printParameters() ;
+    _cos = new TH1F("cosTheta", "Cosine Theta Distribution", 300, -1.0,1.0);
+    _cose = new TH1F("cosETheta", "Cosine Theta Electron Distribution", 300, -1.0,1.0);
+    _cosp = new TH1F("cosPTheta", "Cosine Theta Positron Distribution", 300, -1.0,1.0);
+
+    //    _energy = new TH1F("energy", "Energy", 520.0,  0.0, 260.0);
+    /*    _hitmiss = new TH1F("hm", "Hit Miss Ratio", 5, -1, 2);
+    _hitmap1 = new TH2F("pos1", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
+
+
+
+
+    //    _hitmap4 = new TH2F("pos4", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -    //    _theta1 = new TH1F("theta_s", "Angle Difference (Electron - Positron) From 0-2π", 500, 0, 6.28
+    //    _theta2 = new TH1F("theta_m", "Angle Difference (Electron - Positron) From 1-π", 500, 1, 3.14)
+    //    _theta3 = new TH1F("theta_t", "Angle Difference (Electron - Positron) From 0-1rad", 500, 0, .1);
+    _cosE = new TH1F("electron_corth", "Cosine Theta Distribution For Electrons", 350, 0, 6.28);
+
+    */
     _nEvt = 0 ;
 
     //Setting up Plots\\
@@ -188,8 +101,9 @@ void first::processRunHeader( LCRunHeader* run) {
 void first::processEvent( LCEvent * evt ) { 
     LCCollection* col = evt->getCollection( _colName );
     //    cout << "NEW Event Started." << endl;
-    Bundle* bundle = new Bundle; //Created a bundle to process the data for the bahbah event.
-
+    info = 0;
+    electron=NULL;
+    positron=NULL;
     int stat, id =0;
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
@@ -199,14 +113,21 @@ void first::processEvent( LCEvent * evt ) {
             stat = hit->getGeneratorStatus();
             if(stat==1){
 	      //hit is an end particle:
-	      bundle->addParticle(hit); //I add it to a Bahbah class to do the rest of the work.
-	      if(bundle->getPositron() != NULL && bundle->getElectron() != NULL){
-		initialize(bundle);
+	      addParticle(hit); //The bundle object has the rest of the processing.
+	      if(getPositron() != NULL && getElectron() != NULL){
+		init_hitmap(inlab);
+		double e = getCosTheta(getElectron(), inlab);
+		double p = getCosTheta(getPositron(), inlab);
+		_cose->Fill(e);
+		_cosp->Fill(p);
+		_cos->Fill(e-p);
+		electron=NULL;
+		positron=NULL;
+
 	      }
             }//end final state   
         }//end for
     }
-    delete bundle;
     _nEvt ++ ;
 }
 
@@ -219,20 +140,27 @@ void first::check( LCEvent * evt ) {
 
 
 void first::end(){ 
-  //  cout << "\n Hits: " << hit << endl;
+  //Mostly useless output, just to check that stuff is being processed.
+  print("Hits: " + to_string(electronStore.hit + positronStore.hit));
+  print("Miss: " + to_string(electronStore.miss + positronStore.miss));
+  print("hh: " + to_string(electronStore.hh.size()));
+  print("hm: " + to_string(electronStore.hm.size()));
+  print("mh: " + to_string(electronStore.mh.size()));
+  print("mm: " + to_string(electronStore.mm.size()));
 
-  //  cout << " Miss: " << miss << endl;
-  cout << " HH: " << hh << endl;
-  cout << " MM: " << mm << endl;
-  cout << " HM: " << hm << endl;
-  cout << " MH: " << mh << endl;
+  //Making thoes hit-miss plots on the data. 
+  plotHitMiss(_hh, {electronStore.hh, positronStore.hh});
+  plotHitMiss(_mm, {electronStore.mm, positronStore.mm});
+  plotHitMiss(_hm, {electronStore.hm, positronStore.hm, electronStore.mh, positronStore.mh});
   _rootfile->Write();
 }
 
+//void plotHitMiss(TH2F* p, vector<double*> *m){
+
+//}
 
 //Implementation of the Bundle Class
-void initialize(Bundle* b){  
-  if(b->init++)return;
+void first::initialize(){
   /*//CosineTheta Not doing center to mass frame.
   double cosE = cos(b->getTheta(b->getElectron(), true));
   double cosP = cos(b->getTheta(b->getPositron(), true));
@@ -240,147 +168,135 @@ void initialize(Bundle* b){
   _cosP->Fill(cosP);
   _cos->Fill(cosE);
   _cos->Fill(cosP);*/
-  init_hitmap_general(b);
+
+}
+void first::init_hitmap(bool lab){
+  graphHitStatus(getMomentum(getElectron(), lab), ELECTRON);
+  graphHitStatus(getMomentum(getPositron(), lab), POSITRON);
 }
 
-void init_hitmap_general(Bundle* b){
-  //Put in graph
-  b->graphHitStatus(b->getMomentum(b->getElectron()), b->ELECTRON, b);
-  b->graphHitStatus(b->getMomentum(b->getPositron()), b->POSITRON, b);
-}
-
-void Bundle::graphHitStatus(double*  momentum, int id, Bundle* b){
+void first::graphHitStatus(const double*  momentum, int id, bool lab){
   double x = momentum[0];
   double y = momentum[1];
   switch(scipp_ilc::get_hitStatus(x, y)){
   case(1): //hit beamcal
-    hit++;
-    //    hm->Fill(1);
-    //    hm1->Fill(x, y);
-    if(id == b->ELECTRON){
-      b->info += 10;
-    }else if(id==b->POSITRON){
-      b->info += 100;
+    if(id == this->ELECTRON){
+      info += 10;
+    }else if(id==this->POSITRON){
+      info += 100;
     }
-    b->info += 1;
+    info += 1;
     break;
   case(2): //outside beamcal
-    miss++;
-    //    hm->Fill(0);
-    //    hm2->Fill(x, y);
-    if(id == b->ELECTRON){
-      b->info += 10;
-    }else if(id==b->POSITRON){
-      b->info += 100;
+    if(id == this->ELECTRON){
+      info += 10;
+    }else if(id==this->POSITRON){
+      info += 100;
     }
-    b->info += 1;
+    info += 1;
     break;
   case(3): //outgoing beampipe
-    miss++;
-    //    hm->Fill(0);
-    //    hm3->Fill(x, y);
-    if(id == b->ELECTRON){
-      b->info += 70;
-    }else if(id==b->POSITRON){
-      b->info += 700;
+    if(id == this->ELECTRON){
+      info += 70;
+    }else if(id==this->POSITRON){
+      info += 700;
     }
-    b->info += 1;
+    info += 1;
     break;
   case(4): //incoming beampipe
-    miss++;
-    //    hm->Fill(0);
-    //    hm4->Fill(x, y);
-    if(id == b->ELECTRON){
-      b->info += 70;
-    }else if(id==b->POSITRON){
-      b->info += 700;
+    if(id == this->ELECTRON){
+      info += 70;
+    }else if(id==this->POSITRON){
+      info += 700;
     }
-    b->info += 1;
+    info += 1;
     break;
   }
-  //cout << "# " << b->info << endl;
+  //cout << "# " << info << endl;
   // 1=hit; 7=miss; positron>electron;
-  if(b->info%10==2){
+  if(info%10==2){
     // Electron-Positron
     // Hit-Hit
-    if(b->info%100/10==1 && b->info%1000/100==1){ 
-      ++hh;
-      _hh->Fill(b->getMomentum(b->getPositron())[0], b->getPositron()->getMomentum()[1]);
-      _hh->Fill(b->getMomentum(b->getElectron())[0], b->getElectron()->getMomentum()[1]);
-      _phi_hh->Fill(get_colinearity(b));
+    if(info%100/10==1 && info%1000/100==1){ 
+      electronStore.hit++;
+      positronStore.hit++;
+      electronStore.hh.push_back(getMomentum(getElectron(), lab));
+      positronStore.hh.push_back(getMomentum(getPositron(), lab));
     }
     // Miss-Miss
-    if(b->info%100/10==7 && b->info%1000/100==7){
-      ++mm;
-      _mm->Fill(b->getMomentum(b->getPositron())[0], b->getPositron()->getMomentum()[1]);
-      _mm->Fill(b->getMomentum(b->getElectron())[0], b->getElectron()->getMomentum()[1]);
-      _phi_mm->Fill(get_colinearity(b));      
+    else if(info%100/10==7 && info%1000/100==7){
+      electronStore.miss++;
+      positronStore.miss++;
+      electronStore.mm.push_back(getMomentum(getElectron(), lab));
+      positronStore.mm.push_back(getMomentum(getPositron(), lab));
     }
-    // Either His-Miss or Miss-Hit
-    if((b->info%100/10==7 && b->info%1000/100==1) || (b->info%100/10==1 && b->info%1000/100==7)){
-      _hm->Fill(b->getMomentum(b->getPositron())[0], b->getPositron()->getMomentum()[1]);
-      _hm->Fill(b->getMomentum(b->getElectron())[0], b->getElectron()->getMomentum()[1]);
-      // Hit-Miss
-      if(b->info%100/10==1){
-	++hm;
-	_phi_hm->Fill(get_colinearity(b));      	
-      }
-      // Miss-Hit
-      else{
-	++mh;
-	_phi_mh->Fill(get_colinearity(b));      
-      }
+    // Miss-Hit
+    else if(info%100/10==7 && info%1000/100==1){
+      electronStore.miss++;
+      positronStore.hit++;
+      electronStore.mh.push_back(getMomentum(getElectron(), lab));
+      positronStore.mh.push_back(getMomentum(getPositron(), lab));
+    }
+    // Hit-Miss
+    else if(info%100/10==1 && info%1000/100==7){
+      electronStore.hit++;
+      positronStore.miss++;
+      electronStore.hm.push_back(getMomentum(getElectron(), lab));
+      positronStore.hm.push_back(getMomentum(getPositron(), lab));
     }
   }
 }
 
-//Function used to calculate anglee difference using norms and phi to get theta.
-void init_angleBetweenEP_1(){
-  /*  //  Trial 1: Getting angle between electron and positron.
-      double p_theta = getTheta(positron);
-      double e_theta = getTheta(electron);
-      double del_theta = p_theta-e_theta; 
-
-
-  //  _hitmap->Fill(positron->getMomentum()[0], positron->getMomentum()[1]);
-  //  _hitmap->Fill(electron->getMomentum()[0], electron->getMomentum()[1]);
-  //  _theta1->Fill(del_theta);
-  //  _theta2->Fill(del_theta);
-  //  _theta3->Fill(del_theta);
-  */
+void first::print(string _input){
+  cout << _input << endl;
 }
 
+//Used to plot one momentum vector on a TH2F plot.
+/*void first::plotHitMiss(TH2F* p, vector<double*> momentum){
+    plotHotMiss(p, {momentum});
+    }*/
+
+ //Used to plot multiple vectors on a plot.
+void first::plotHitMiss(TH2F* p, initializer_list<vector<double*>> momentums){
+    for(vector<double*> arr: momentums){
+      for(double* m: arr){
+	p->Fill(m[0], m[1]);
+      }
+    }
+  }
+
+
+//-- Physics Section --\\
+
 //Function used to calculate the angle difference (colinearity) using dot products.
-double get_colinearity(Bundle* b){
+double first::get_colinearity(bool lab){
   //Getting angle between electron and positron using dot products.
-  double dot   = b->getDotProduct(b->getPositron(), b->getElectron());
-  double mag_B = b->getMagnitude( b->getElectron());
-  double mag_A = b->getMagnitude( b->getPositron());
-  double val = -dot/(mag_A*mag_B);
+  double dot   = getDotProduct(getPositron(), getElectron());
+  double mag_B = getMagnitude( getElectron());
+  double mag_A = getMagnitude( getPositron());
+  double val = dot/(mag_A*mag_B);
   double del_theta = acos(val); 
   return del_theta;
 }
 
-void Bundle::err(string _input){
-  cout << _input << endl;
-}
-
-//-- Physics Section --\\
 //returns the angle from the x-y axis
-double Bundle::getPhi(MCParticle* _input){
-  return atan(_input->getMomentum()[0]/_input->getMomentum()[1]);
-}
+ double first::getPhi(MCParticle* _input, bool lab){
+   return atan(getMomentum(_input, lab)[0]/getMomentum(_input, lab)[1]);
+ }
+
 //returns the angle from the z axis
-double Bundle::getTheta(MCParticle* _input, bool lab = false){
+ double first::getCosTheta(MCParticle* _input, bool lab){
+   double* m = getMomentum(_input, lab);
+   return m[2]/getMagnitude(m);
+ }
+
+ double first::getTheta(MCParticle* _input, bool lab){
   //Get the norm in the x,y plane:
-  const double m_x = (_input->getMomentum())[0];
-  const double m_y = (_input->getMomentum())[1];
-  const double m_z = _input->getMomentum()[2];
+  double* m = getMomentum(_input, lab);
+  const double m_x = m[0];
+  const double m_y = m[1];
+  const double m_z = m[2];
   double p_x = m_x;
-  if(lab){
-    double energy = _input->getEnergy();
-    scipp_ilc::transform_to_lab(p_x, energy, p_x, energy);
-  }
   double norm = sqrt(p_x*p_x + m_y*m_y);
   double theta = atan(norm/m_z);
 
@@ -391,66 +307,70 @@ double Bundle::getTheta(MCParticle* _input, bool lab = false){
 
 //-- CompSci Section --\\
 
-MCParticle* Bundle::getElectron(){
+MCParticle* first::getElectron(){
   //  if(electron == NULL)cout << "\nElectron is NUll\n";
   return electron;
 }
 
-MCParticle* Bundle::getPositron(){
+MCParticle* first::getPositron(){
   //  if(electron == NULL)cout << "\nPositron is NUll\n";
   return positron;
 }
 
 
-//Checks to see if particle is already there, then adds it for processing. Once full it runs initialize.
-void Bundle::addParticle(MCParticle* _input){
-  //  if(positron == NULL) cout << "pNULL" << endl;
-  //  if(electron == NULL) cout << "eNULL" << endl;
+//Checks to see if particle is already there, then adds it for processing.
+//This is overkill, I only needed the photon and electron.
+void first::addParticle(MCParticle* _input){
   switch(_input->getPDG()){
-  case(PHOTON):
+  case(first::PHOTON):
     addPhoton(_input);
     break;
-  case(POSITRON):
+  case(first::POSITRON):
     if(positron == NULL){
       positron = _input;
-    }else if(VERBOSE) err(ERROR_ALREADY_PARTICLE);
+    }else if(VERBOSE) print(ERROR_ALREADY_PARTICLE);
     break;
-  case(ELECTRON):
+  case(first::ELECTRON):
     if(electron == NULL){
       electron = _input;
-    }else if(VERBOSE)err(ERROR_ALREADY_PARTICLE);
+    }else if(VERBOSE)print(ERROR_ALREADY_PARTICLE);
     break;
   default:
-    if(VERBOSE)err(ERROR_NOT_BAHBAH_PARTICLE);
+    if(VERBOSE)print(ERROR_NOT_BAHBAH_PARTICLE);
   }
 }
     
 //Preparing for updating class for n photons. Currently max is 2 photons.
-void Bundle::addPhoton(MCParticle* _input){
+void first::addPhoton(MCParticle* _input){
   if(photonA == NULL){
     photonA = _input;
     photons[0] = photonA;
   }else if(photonB ==NULL){
     photonB = _input;
     photons[1] = photonB;
-  }else if(VERBOSE)err(ERROR_MAX_PHOTONS);
+  }else if(VERBOSE)print(ERROR_MAX_PHOTONS);
 }
 
 //Gets the norm of the vector and finds it's manitude.
-double Bundle::getMagnitude(MCParticle* _input){
-  double* m = getMomentum(_input);
+ double first::getMagnitude(MCParticle* _input, bool lab){
+  double* m = getMomentum(_input, lab);
+  return getMagnitude(m);
+}
+
+ double first::getMagnitude(double*m){
   return sqrt(m[0]*m[0] + m[1]*m[1] + m[2]*m[2]);
 }
-double Bundle::getDotProduct(MCParticle* A, MCParticle* B){
-  double* a = getMomentum(A);
-  double* b = getMomentum(B);
-  return (a[0]*b[0] + a[1]*b[1] + a[2]*b[2});
+double first::getDotProduct(MCParticle* A, MCParticle* B, bool lab){
+  double* a = getMomentum(A, lab);
+  double* b = getMomentum(B, lab);
+  return (a[0]*b[0] + a[1]*b[1] + a[2]*b[2]);
 }
-double*  Bundle::getMomentum(MCParticle* _input){
+double*  first::getMomentum(MCParticle* _input, bool lab){
   double x = _input->getMomentum()[0];
   double y = _input->getMomentum()[1];
   double z = _input->getMomentum()[2];
   double e = _input->getEnergy();
-  scipp_ilc::transform_to_lab(e,x,e,x);
+
+  if(lab)scipp_ilc::transform_to_lab(e,x,e,x);
   return new double[3]{x,y,z};
 }

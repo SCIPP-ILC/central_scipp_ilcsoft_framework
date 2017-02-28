@@ -28,7 +28,7 @@
 
 // ----- include for verbosity dependend logging ---------
 #include "marlin/VerbosityLevels.h"
-
+#include "util.h"
 
 
 using namespace lcio;
@@ -67,13 +67,14 @@ static TH2F* _hm;
 
 class Bundle{
 public:
-  const static bool VERBOSE = false;
-  //Setting PDG constants to particle names (DID NOT VERIFY)
-  const static int PHOTON = 22;
-  const static int POSITRON = 11;
-  const static int ELECTRON = -11;
+  //Verbose is mostly unused.
+  const bool VERBOSE = false;
+  //Setting PDG constants to particle names
+  const int PHOTON = 22;
+  const int POSITRON = 11;
+  const int ELECTRON = -11;
 
-  //Setting errors static so I can spell check them easily.
+  //Setting errors static so I can spell check them easily. Mostly unused, I though Bhabhas were going do be a larger project.
   const string ERROR_NOT_BAHBAH_PARTICLE = "Not a Bahbah particle User-Error: Trying to add a particle that is not accounted for.";
   const string ERROR_MAX_PHOTONS = "Max Photon User-Error: Trying to add photon but it is already full.";
   const string ERROR_ALREADY_PARTICLE = "Particle Already There User-Error: Trying to add a paticle but the space is not NULL.";
@@ -88,18 +89,41 @@ public:
   MCParticle* electron = NULL;
   MCParticle* photons[2] = {NULL, NULL};
 
+  static bha::HitMissStore positronStore;
+  static bha::HitMissStore electronStore;
+
+  //Constuctor to make positron and electron NULL. I think this can be removed.
   Bundle(){
     positron = NULL;
     electron = NULL;
   }
 
-  void err(string _input);
+  //Do a check to see if it is ready, then orchestrates other functions.
+  void initialize();
 
-  //  void graphHitStatus(double x, double y);
-  void graphHitStatus(double*, int id,Bundle* b);
+  //Calculate and process hh, hm, mh, mm.
+  void init_hitmap(bool=true);
+
+  //Used to calculate and plot the colinearity
+  double get_colinearity(bool=true);
+
+
+  //Python-like printing function, because I love python.
+  void print(string _input);
+
+  //This function is written to plot hit statuses
+  void graphHitStatus(const double*, int id, bool=true);
+
   //Returns the total number of particles added. MAX is 4 right now.
   int getCount();
 
+  //Checks to see if particle is already there, then adds it for processing. Once full it runs initialize.
+  void addParticle(MCParticle* _input);
+
+  //Preparing for updating class for n photons. Currently max is 2 photons.
+  void addPhoton(MCParticle* _input);
+
+  //Returns associated particle.
   MCParticle* getElectron();
   MCParticle* getPositron();
 
@@ -110,26 +134,16 @@ public:
   //returns the angle from the z axis
   double getTheta(MCParticle* _input,bool);
 
-  //Checks to see if particle is already there, then adds it for processing. Once full it runs initialize.
-  void addParticle(MCParticle* _input);
-
-  //Preparing for updating class for n photons. Currently max is 2 photons.
-  void addPhoton(MCParticle* _input);
-
   //Gets the norm of the vector and finds it's manitude.
   double getMagnitude(MCParticle* _input);
 
+  //Retuns the magnitude of the dot-product.
   double getDotProduct(MCParticle* A, MCParticle* B);
 
-  double* getMomentum(MCParticle* _input);
+  //returns the lab-momentum of the particle as an array => {0: x-axis, 1: y-axis, 2: z-axis}
+  double* getMomentum(MCParticle* _input, bool=true);
 };
 
-
-//Prototypes\\
-void graphHitStatus(double x, double y);
-void initialize(Bundle* b);
-void init_hitmap_general(Bundle* b);
-double get_colinearity(Bundle*);
 
 first::first() : Processor("first") {
     // modify processor description
@@ -146,11 +160,12 @@ void first::init() {
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
     cout << "Initialized" << endl;
     _rootfile = new TFile("Phi_Bhabha.root","RECREATE");
+    //These initialization are here as reference until I finish rewriting all the code.
     //    _energy = new TH1F("energy", "Energy", 520.0,  0.0, 260.0);
     /*    _hitmiss = new TH1F("hm", "Hit Miss Ratio", 5, -1, 2);
     _hitmap1 = new TH2F("pos1", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     _hitmap2 = new TH2F("pos2", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
-    _hitmap3 = new TH2F("pos3", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
+    _hitmap3 = new TH2F("pos3", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);nn
     _hitmap4 = new TH2F("pos4", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     //    static TH2F* _e_hitmap;
 
@@ -199,14 +214,12 @@ void first::processEvent( LCEvent * evt ) {
             stat = hit->getGeneratorStatus();
             if(stat==1){
 	      //hit is an end particle:
-	      bundle->addParticle(hit); //I add it to a Bahbah class to do the rest of the work.
-	      if(bundle->getPositron() != NULL && bundle->getElectron() != NULL){
-		initialize(bundle);
-	      }
+	      bundle->addParticle(hit); //The bundle object has the rest of the processing.
+	      bundle->initialize();
             }//end final state   
         }//end for
     }
-    delete bundle;
+    delete bundle; //Critical while bundle is a pointer. ( Does it matter if it is a pointer? )
     _nEvt ++ ;
 }
 
@@ -220,7 +233,6 @@ void first::check( LCEvent * evt ) {
 
 void first::end(){ 
   //  cout << "\n Hits: " << hit << endl;
-
   //  cout << " Miss: " << miss << endl;
   cout << " HH: " << hh << endl;
   cout << " MM: " << mm << endl;
@@ -231,8 +243,10 @@ void first::end(){
 
 
 //Implementation of the Bundle Class
-void initialize(Bundle* b){  
-  if(b->init++)return;
+void Bundle::initialize(){
+  if(getPositron() == NULL || getElectron() == NULL)return;
+  if(init++)return;
+  init_hitmap();
   /*//CosineTheta Not doing center to mass frame.
   double cosE = cos(b->getTheta(b->getElectron(), true));
   double cosP = cos(b->getTheta(b->getPositron(), true));
@@ -240,96 +254,86 @@ void initialize(Bundle* b){
   _cosP->Fill(cosP);
   _cos->Fill(cosE);
   _cos->Fill(cosP);*/
-  init_hitmap_general(b);
+
+}
+void Bundle::init_hitmap(bool lab){
+  if(lab){
+    graphHitStatus(getMomentum(getElectron()), ELECTRON);
+    graphHitStatus(getMomentum(getPositron()), POSITRON);
+  }else{
+    graphHitStatus(getElectron()->getMomentum(), ELECTRON);
+    graphHitStatus(getPositron()->getMomentum(), POSITRON);
+  }
 }
 
-void init_hitmap_general(Bundle* b){
-  //Put in graph
-  b->graphHitStatus(b->getMomentum(b->getElectron()), b->ELECTRON, b);
-  b->graphHitStatus(b->getMomentum(b->getPositron()), b->POSITRON, b);
-}
-
-void Bundle::graphHitStatus(double*  momentum, int id, Bundle* b){
+void Bundle::graphHitStatus(const double*  momentum, int id, bool lab){
   double x = momentum[0];
   double y = momentum[1];
   switch(scipp_ilc::get_hitStatus(x, y)){
   case(1): //hit beamcal
-    hit++;
-    //    hm->Fill(1);
-    //    hm1->Fill(x, y);
-    if(id == b->ELECTRON){
-      b->info += 10;
-    }else if(id==b->POSITRON){
-      b->info += 100;
+    if(id == ELECTRON){
+      info += 10;
+    }else if(id==POSITRON){
+      info += 100;
     }
-    b->info += 1;
+    info += 1;
     break;
   case(2): //outside beamcal
-    miss++;
-    //    hm->Fill(0);
-    //    hm2->Fill(x, y);
-    if(id == b->ELECTRON){
-      b->info += 10;
-    }else if(id==b->POSITRON){
-      b->info += 100;
+    if(id == ELECTRON){
+      info += 10;
+    }else if(id==POSITRON){
+      info += 100;
     }
-    b->info += 1;
+    info += 1;
     break;
   case(3): //outgoing beampipe
-    miss++;
-    //    hm->Fill(0);
-    //    hm3->Fill(x, y);
-    if(id == b->ELECTRON){
-      b->info += 70;
-    }else if(id==b->POSITRON){
-      b->info += 700;
+    if(id == ELECTRON){
+      info += 70;
+    }else if(id==POSITRON){
+      info += 700;
     }
-    b->info += 1;
+    info += 1;
     break;
   case(4): //incoming beampipe
-    miss++;
-    //    hm->Fill(0);
-    //    hm4->Fill(x, y);
-    if(id == b->ELECTRON){
-      b->info += 70;
-    }else if(id==b->POSITRON){
-      b->info += 700;
+    if(id == ELECTRON){
+      info += 70;
+    }else if(id==POSITRON){
+      info += 700;
     }
-    b->info += 1;
+    info += 1;
     break;
   }
-  //cout << "# " << b->info << endl;
+  //cout << "# " << info << endl;
   // 1=hit; 7=miss; positron>electron;
-  if(b->info%10==2){
+  if(info%10==2){
     // Electron-Positron
     // Hit-Hit
-    if(b->info%100/10==1 && b->info%1000/100==1){ 
-      ++hh;
-      _hh->Fill(b->getMomentum(b->getPositron())[0], b->getPositron()->getMomentum()[1]);
-      _hh->Fill(b->getMomentum(b->getElectron())[0], b->getElectron()->getMomentum()[1]);
-      _phi_hh->Fill(get_colinearity(b));
+    if(info%100/10==1 && info%1000/100==1){ 
+      electronStore.hit++;
+      positronStore.hit++;
+      electronStore.hh.push_back(getMomentum(getElectron(), lab));
+      positronStore.hh.push_back(getMomentum(getPositron(), lab));
     }
     // Miss-Miss
-    if(b->info%100/10==7 && b->info%1000/100==7){
-      ++mm;
-      _mm->Fill(b->getMomentum(b->getPositron())[0], b->getPositron()->getMomentum()[1]);
-      _mm->Fill(b->getMomentum(b->getElectron())[0], b->getElectron()->getMomentum()[1]);
-      _phi_mm->Fill(get_colinearity(b));      
+    else if(info%100/10==7 && info%1000/100==7){
+      electronStore.miss++;
+      positronStore.miss++;
+      electronStore.mm.push_back(getMomentum(getElectron(), lab));
+      positronStore.mm.push_back(getMomentum(getPositron(), lab));
     }
-    // Either His-Miss or Miss-Hit
-    if((b->info%100/10==7 && b->info%1000/100==1) || (b->info%100/10==1 && b->info%1000/100==7)){
-      _hm->Fill(b->getMomentum(b->getPositron())[0], b->getPositron()->getMomentum()[1]);
-      _hm->Fill(b->getMomentum(b->getElectron())[0], b->getElectron()->getMomentum()[1]);
-      // Hit-Miss
-      if(b->info%100/10==1){
-	++hm;
-	_phi_hm->Fill(get_colinearity(b));      	
-      }
-      // Miss-Hit
-      else{
-	++mh;
-	_phi_mh->Fill(get_colinearity(b));      
-      }
+    // Miss-Hit
+    else if(info%100/10==7 && info%1000/100==1){
+      electronStore.miss++;
+      positronStore.hit++;
+      electronStore.mh.push_back(getMomentum(getElectron(), lab));
+      positronStore.mh.push_back(getMomentum(getPositron(), lab));
+    }
+    // Hit-Miss
+    else if(info%100/10==1 && info%1000/100==7){
+      electronStore.hit++;
+      positronStore.miss++;
+      electronStore.hm.push_back(getMomentum(getElectron(), lab));
+      positronStore.hm.push_back(getMomentum(getPositron(), lab));
     }
   }
 }
@@ -351,17 +355,17 @@ void init_angleBetweenEP_1(){
 }
 
 //Function used to calculate the angle difference (colinearity) using dot products.
-double get_colinearity(Bundle* b){
+double Bundle::get_colinearity(bool lab){
   //Getting angle between electron and positron using dot products.
-  double dot   = b->getDotProduct(b->getPositron(), b->getElectron());
-  double mag_B = b->getMagnitude( b->getElectron());
-  double mag_A = b->getMagnitude( b->getPositron());
+  double dot   = getDotProduct(getPositron(), getElectron());
+  double mag_B = getMagnitude( getElectron());
+  double mag_A = getMagnitude( getPositron());
   double val = -dot/(mag_A*mag_B);
   double del_theta = acos(val); 
   return del_theta;
 }
 
-void Bundle::err(string _input){
+void Bundle::print(string _input){
   cout << _input << endl;
 }
 
@@ -413,15 +417,15 @@ void Bundle::addParticle(MCParticle* _input){
   case(POSITRON):
     if(positron == NULL){
       positron = _input;
-    }else if(VERBOSE) err(ERROR_ALREADY_PARTICLE);
+    }else if(VERBOSE) print(ERROR_ALREADY_PARTICLE);
     break;
   case(ELECTRON):
     if(electron == NULL){
       electron = _input;
-    }else if(VERBOSE)err(ERROR_ALREADY_PARTICLE);
+    }else if(VERBOSE)print(ERROR_ALREADY_PARTICLE);
     break;
   default:
-    if(VERBOSE)err(ERROR_NOT_BAHBAH_PARTICLE);
+    if(VERBOSE)print(ERROR_NOT_BAHBAH_PARTICLE);
   }
 }
     
@@ -433,7 +437,7 @@ void Bundle::addPhoton(MCParticle* _input){
   }else if(photonB ==NULL){
     photonB = _input;
     photons[1] = photonB;
-  }else if(VERBOSE)err(ERROR_MAX_PHOTONS);
+  }else if(VERBOSE)print(ERROR_MAX_PHOTONS);
 }
 
 //Gets the norm of the vector and finds it's manitude.
@@ -444,9 +448,9 @@ double Bundle::getMagnitude(MCParticle* _input){
 double Bundle::getDotProduct(MCParticle* A, MCParticle* B){
   double* a = getMomentum(A);
   double* b = getMomentum(B);
-  return (a[0]*b[0] + a[1]*b[1] + a[2]*b[2});
+  return (a[0]*b[0] + a[1]*b[1] + a[2]*b[2]);
 }
-double*  Bundle::getMomentum(MCParticle* _input){
+double*  Bundle::getMomentum(MCParticle* _input, bool lab){
   double x = _input->getMomentum()[0];
   double y = _input->getMomentum()[1];
   double z = _input->getMomentum()[2];
