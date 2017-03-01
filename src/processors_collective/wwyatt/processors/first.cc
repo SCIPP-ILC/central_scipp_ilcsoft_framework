@@ -120,7 +120,7 @@ void first::processEvent( LCEvent * evt ) {
 		double p = getCosTheta(getPositron(), inlab);
 		_cose->Fill(e);
 		_cosp->Fill(p);
-		_cos->Fill(e-p);
+		_cos->Fill(abs(e-p));
 		electron=NULL;
 		positron=NULL;
 

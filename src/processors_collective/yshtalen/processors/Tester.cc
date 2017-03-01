@@ -59,10 +59,10 @@ Tester::Tester() : Processor("Tester") {
 void Tester::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("WW_S.root","RECREATE");
+    _rootfile = new TFile("BW_S.root","RECREATE");
     _tmom = new TH1F("tmom", "Total Final State Transverse Momentum", 100, 0.0, 20.0);
     _S = new TH1F("S", "Sum of Transverse Momentum Magnitudes, Hadronic System", 100, 0, 20.0);
-    _SvT = new TH2F("SvT", "Transverse Momentum Mag Sum vs Scattering Angle", 100, 0.0, 20.0, 1000, 0.0, 0.01);
+    _SvT = new TH2F("SvT", "Scattering Angle vs Transverse Momentum Mag Sum", 100, 0.0, 20.0, 1000, 0.0, 0.01);
     
     // usually a good idea to
     //printParameters() ;
@@ -132,7 +132,7 @@ void Tester::processEvent( LCEvent * evt ) {
                     if(abs(mom[0])!=0||abs(mom[1])!=0){
                         double r = sqrt(pow(mom[0], 2)+pow(mom[1], 2));
                         double mag = sqrt(pow(mom[0], 2)+pow(mom[1], 2)+pow(mom[2], 2));
-                        theta_e = atan(r/mag);
+                        theta_e = asin(r/mag);
                     }//end scatter
             }//end high energy electron    
             else if(id==-11&&particle->getEnergy()==E_p){
@@ -144,7 +144,7 @@ void Tester::processEvent( LCEvent * evt ) {
                     if(abs(mom[0])!=0||abs(mom[1])!=0){
                         double r = sqrt(pow(mom[0], 2)+pow(mom[1], 2));
                         double mag = sqrt(pow(mom[0], 2)+pow(mom[1], 2)+pow(mom[2], 2));
-                        theta_p = atan(r/mag);
+                        theta_p = asin(r/mag);
                         cout << "THETA_P" << theta_p << endl;
                     }//end scatter
             }//end high energy electron    
@@ -159,7 +159,8 @@ void Tester::processEvent( LCEvent * evt ) {
             }
         }//end for
         _S->Fill(S); 
-        (theta_e>theta_p) ? _SvT->Fill(S, theta_e) : _SvT->Fill(S, theta_p);    
+        //(theta_e>theta_p) ? _SvT->Fill(S, theta_e) : _SvT->Fill(S, theta_p);    
+        _SvT->Fill(S, theta_p);
     }
 
     _nEvt ++ ;

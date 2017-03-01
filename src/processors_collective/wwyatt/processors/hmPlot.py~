@@ -1,4 +1,6 @@
 import plot
+import sys
+
 
 hitmiss_files = [
     "hitmiss_cm/aa.root",
@@ -19,4 +21,4 @@ names = [
     ("hh", 3),
     ]
 
-plot.scatterPlots(hitmiss_files, names)
+filenames = plot.scatterPlots(hitmiss_files, names)
