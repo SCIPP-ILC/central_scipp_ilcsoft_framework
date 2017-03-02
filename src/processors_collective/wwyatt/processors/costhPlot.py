@@ -1,18 +1,15 @@
-import plot
-hm_cm = [
-    "hitmiss_cm/aa.root",
-    "hitmiss_cm/a.root",
-    "hitmiss_cm/z.root",
-    ]
-hm_lab = [
-    "hitmiss_lab/z.root",
-    "hitmiss_lab/a.root",
-    "hitmiss_lab/aa.root",
-    ]
+from plot import plot
+c_plt=[
+"cos_cm_2.root",
+]
+lab_plt=[
+"cos_lab_2.root",
+]
 names = [
-    ("cosETheta", 2),
-    ("cosPTheta", 4),
-    ("cosTheta", 3),
+    ("ETheta", 2),
+    ("PTheta", 4),
+    ("Theta", 3),
     ]
-plot.histoPlots(hm_cm, names, "CosTheta Distribution Center of Mass", True)
-plot.histoPlots(hm_lab, names, "CosTheta Distribution Lab Frame", True)
+plot(c_plt, names, "Theta Distribution Center of Mass", True)
+plot(lab_plt, names, "Theta Distribution Lab", True)
+

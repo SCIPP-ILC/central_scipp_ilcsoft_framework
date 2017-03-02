@@ -68,9 +68,9 @@ void first::init() {
     _hh = new TH2F("hh", "Hit-Hit Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     _mm = new TH2F("mm", "Miss-Miss Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     _hm = new TH2F("hm", "Hit-Miss Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
-    _cos = new TH1F("cosTheta", "Cosine Theta Distribution", 300, -1.0,1.0);
-    _cose = new TH1F("cosETheta", "Cosine Theta Electron Distribution", 300, -1.0,1.0);
-    _cosp = new TH1F("cosPTheta", "Cosine Theta Positron Distribution", 300, -1.0,1.0);
+    _cos = new TH1F("Theta", "Theta Distribution", 300, 0, 3.4);
+    _cose = new TH1F("ETheta", "Theta Electron Distribution", 300, 0,3.4);
+    _cosp = new TH1F("PTheta", "Theta Positron Distribution", 300, 0,3.4);
 
     //    _energy = new TH1F("energy", "Energy", 520.0,  0.0, 260.0);
     /*    _hitmiss = new TH1F("hm", "Hit Miss Ratio", 5, -1, 2);
@@ -116,11 +116,11 @@ void first::processEvent( LCEvent * evt ) {
 	      addParticle(hit); //The bundle object has the rest of the processing.
 	      if(getPositron() != NULL && getElectron() != NULL){
 		init_hitmap(inlab);
-		double e = getCosTheta(getElectron(), inlab);
-		double p = getCosTheta(getPositron(), inlab);
+		double e = acos(getCosTheta(getElectron(), inlab));
+		double p = acos(getCosTheta(getPositron(), inlab));
 		_cose->Fill(e);
 		_cosp->Fill(p);
-		_cos->Fill(abs(e-p));
+		_cos->Fill(e+p);
 		electron=NULL;
 		positron=NULL;
 
