@@ -67,6 +67,8 @@ class Pred_Compare : public Processor {
         
         int interest;
 
+        int hh_hh, hh_hm, hh_mm, hm_hh, hm_hm, hm_mm, mm_hh, mm_hm, mm_mm=0;
+
         int _nRun ;
         int _nEvt ;
 };

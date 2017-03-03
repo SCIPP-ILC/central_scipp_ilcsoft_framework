@@ -63,6 +63,7 @@ class SusySVMAnalysis : public Processor {
   /** Input collection name.
    */
   std::string _colName ;
+  LCCollection* _inParVec;
 
   int _nRun ;
   int _nEvt ;

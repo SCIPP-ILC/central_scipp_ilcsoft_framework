@@ -65,7 +65,7 @@ SusySVMAnalysis::SusySVMAnalysis() : Processor("SusySVMAnalysis") {
 void SusySVMAnalysis::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("SusySVMAnalysis.root","RECREATE");
+    _rootfile = new TFile("SusySVMAnalysis_.39133.root","RECREATE");
     _V_n_C = new TH1F("V_n_C","Detected Vector",40,0,20);
     _V_n_A = new TH1F("V_n_A","Detectable Vector",40,0,20);
     _V_N_A = new TH1F("V_N_A","True Vector",40,0,20);
@@ -97,7 +97,8 @@ void SusySVMAnalysis::processEvent( LCEvent * evt ) {
     // this gets called for every event 
     // usually the working horse ...
 
-    LCCollection* col = evt->getCollection( _colName ) ;
+    _inParVec = evt->getCollection( _colName ) ;
+    cout << "# of Elements "<<_inParVec->getNumberOfElements()<<endl;
     cout << endl;
     cout << endl;
     cout << endl;
@@ -111,15 +112,16 @@ void SusySVMAnalysis::processEvent( LCEvent * evt ) {
     int id, stat; 
 
     // this will only be entered if the collection is available
-    if( col != NULL ){
-        int nElements = col->getNumberOfElements()  ;
+    if( _inParVec != NULL ){
+        int nElements = _inParVec->getNumberOfElements()  ;
         
         // For each particle in Event ...
         for(int particleIndex = 0; particleIndex < nElements ; particleIndex++){
-           MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(particleIndex) );
+           MCParticle* particle = dynamic_cast<MCParticle*>( _inParVec->getElementAt(particleIndex) );
             
            try{ 
-            id = particle->getPDG(); 
+            id = particle->getPDG();
+            cout << id << endl;  
             stat = particle->getGeneratorStatus();
            }
            catch(const std::exception& e){
