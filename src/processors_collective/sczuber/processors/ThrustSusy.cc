@@ -15,12 +15,12 @@
  * April 5, 2016
  *
  * author Summer Zuber 
- * January 18, 2017 
+ * March 3, 2017 
  *
  * Using thrust reconstruction code by: _____
  */
 
-#include "ThrustRazor.h"
+#include "ThrustSusy.h"
 #include "scipp_ilc_utilities.h"
 
 #include <EVENT/LCCollection.h>
@@ -54,9 +54,6 @@ using namespace std;
 
 static TFile* _rootfile;
 
-static TH1F* _R_T;
-static TH1F* _R_DAB;
-static TH1F* _R_DED;
 static TH1F* _TV_T;
 static TH1F* _TV_DAB;
 static TH1F* _TV_DED;
@@ -64,9 +61,9 @@ static TH1F* _TA_T;
 static TH1F* _TA_DAB;
 static TH1F* _TA_DED;
 
-ThrustRazor ThrustRazor;
+ThrustSusy ThrustSusy;
 
-ThrustRazor::ThrustRazor() : Processor("ThrustRazor") {
+ThrustSusy::ThrustSusy() : Processor("ThrustSusy") {
     // modify processor description
     _description = "Protype Processor" ;
 
@@ -74,9 +71,9 @@ ThrustRazor::ThrustRazor() : Processor("ThrustRazor") {
     registerInputCollection( LCIO::MCPARTICLE, "CollectionName" , "Name of the MCParticle collection"  , _colName , std::string("MCParticle") );
 
     registerProcessorParameter( "RootOutputName" , "output file"  , _root_file_name , std::string("output.root") );
-    registerProcessorParameter( "typeOfThrustRazorFinder" ,
+    registerProcessorParameter( "typeOfThrustSusyFinder" ,
             "Type of thrust reconstruction algorithm to be used:\n#\t1 : Tasso algorithm\n#\t2 : JetSet algorithm"  ,
-            _typeOfThrustRazorFinder , 2 ) ;
+            _typeOfThrustSusyFinder , 2 ) ;
     registerProcessorParameter( "thrustDetectability",
             "Detectability of the Thrust Axis/Value to be used:\n#\t0 : True \n#t1 : Detectable \n#t2 : Detected" ,
             _thrustDetectability, 2 );
@@ -84,22 +81,22 @@ ThrustRazor::ThrustRazor() : Processor("ThrustRazor") {
 
 
 
-void ThrustRazor::init() { 
+void ThrustSusy::init() { 
     streamlog_out(DEBUG)  << "   init called  " << std::endl ;
 
-    if(_thrustDetectability==0){_rootfile = new TFile("ThrustRazor_.39133._T.root","RECREATE");
-        _R_T = new TH1F("R_T", "R =MTR/MR",100,0,10);
+    if(_thrustDetectability==0){_rootfile = new TFile("ThrustSusy_.39133._T.root","RECREATE");
+     
         _TV_T = new TH1F("TV_T", "Thrust Value", 100, 0,1);
         _TA_T = new TH1F("TA_T", "Cosine of Thrust Angle", 100, 0,1);
     }
-    if(_thrustDetectability==1){_rootfile = new TFile("ThrustRazor_.39133._DAB.root","RECREATE");
-        _R_DAB = new TH1F("R_DAB", "R =MTR/MR",100,0,10);
+    if(_thrustDetectability==1){_rootfile = new TFile("ThrustSusy_.39133._DAB.root","RECREATE");
+      
         _TV_DAB = new TH1F("TV_DAB", "Thrust Value", 100, 0,1);
         _TA_DAB = new TH1F("TA_DAB", "Cosine of Thrust Angle", 100, 0,1);
 
     }
-    if(_thrustDetectability==2){_rootfile = new TFile("ThrustRazor_2_DED_133.root","RECREATE");
-        _R_DED = new TH1F("R_DED", "R =MTR/MR",100,0,10);
+    if(_thrustDetectability==2){_rootfile = new TFile("ThrustSusy_2_DED_133.root","RECREATE");
+       
         _TV_DED = new TH1F("TV_DED", "Thrust Value", 100, 0,1);
         _TA_DED = new TH1F("TA_DED", "Cosine of Thrust Angle", 100, 0,1);
 
@@ -130,14 +127,14 @@ void ThrustRazor::init() {
 
 
 
-void ThrustRazor::processRunHeader( LCRunHeader* run) { 
+void ThrustSusy::processRunHeader( LCRunHeader* run) { 
     //run->parameters().setValue("thrust",12300321);
     //    _nRun++ ;
 } 
 
 
 
-void ThrustRazor::processEvent( LCEvent * evt ) { 
+void ThrustSusy::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
 
@@ -198,66 +195,66 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
     cout << "end loop #1"<<endl;
     _nEvt ++ ; // different from original-moved out of for loop - summer 
     //reset variables for output   
-    _principleThrustRazorValue = -1;
-    _majorThrustRazorValue     = -1;
-    _minorThrustRazorValue     = -1;
-    _principleThrustRazorAxis.set(0,0,0);
-    _majorThrustRazorAxis.set(0,0,0);
-    _minorThrustRazorAxis.set(0,0,0);
+    _principleThrustSusyValue = -1;
+    _majorThrustSusyValue     = -1;
+    _minorThrustSusyValue     = -1;
+    _principleThrustSusyAxis.set(0,0,0);
+    _majorThrustSusyAxis.set(0,0,0);
+    _minorThrustSusyAxis.set(0,0,0);
 
     // Switch to the desired type of thrust finder
-    if (_typeOfThrustRazorFinder == 1)
+    if (_typeOfThrustSusyFinder == 1)
     {
         cout << "type of Thrust Razor Finder = 1 : Tasso Thrust Razor " << endl; 
-        TassoThrustRazor();
+        TassoThrustSusy();
         cout << "type of Thrust Razor Finder = 1 : Tasso Thrust Razor" << endl;
     }
     else if (_partMom.size()<=1)
     {
-        //partMomCheck += " ";
-        //partMomCheck += std::to_string(_nEvt);
-        //partMomCheck += " ";  
-        TassoThrustRazor();
+        partMomCheck += " ";
+        partMomCheck += std::to_string(_nEvt);
+        partMomCheck += " ";  
+        TassoThrustSusy();
     }
-    else if (_typeOfThrustRazorFinder == 2)
+    else if (_typeOfThrustSusyFinder == 2)
     {
         cout << "type of Thrust Razor Finder = 2 : Jetset Thrust Razor" << endl; 
-        JetsetThrustRazor();
+        JetsetThrustSusy();
     }
     // ###write
-    //    evt->parameters().setValue("thrust",_principleThrustRazorValue);
+    //    evt->parameters().setValue("thrust",_principleThrustSusyValue);
 
     FloatVec thrax;
     thrax.clear();
-    thrax.push_back(_principleThrustRazorAxis.x());
-    thrax.push_back(_principleThrustRazorAxis.y());
-    thrax.push_back(_principleThrustRazorAxis.z());
+    thrax.push_back(_principleThrustSusyAxis.x());
+    thrax.push_back(_principleThrustSusyAxis.y());
+    thrax.push_back(_principleThrustSusyAxis.z());
 
-    _inParVec->parameters().setValue("principleThrustRazorValue",_principleThrustRazorValue);
-    _inParVec->parameters().setValues("principleThrustRazorAxis",thrax);
+    _inParVec->parameters().setValue("principleThrustSusyValue",_principleThrustSusyValue);
+    _inParVec->parameters().setValues("principleThrustSusyAxis",thrax);
 
-    if (_typeOfThrustRazorFinder == 2)
+    if (_typeOfThrustSusyFinder == 2)
     {
         thrax.clear();
-        thrax.push_back(_majorThrustRazorAxis.x());
-        thrax.push_back(_majorThrustRazorAxis.y());
-        thrax.push_back(_majorThrustRazorAxis.z());
+        thrax.push_back(_majorThrustSusyAxis.x());
+        thrax.push_back(_majorThrustSusyAxis.y());
+        thrax.push_back(_majorThrustSusyAxis.z());
 
-        _inParVec->parameters().setValue("majorThrustRazorValue",_majorThrustRazorValue);
-        _inParVec->parameters().setValues("majorThrustRazorAxis",thrax);
+        _inParVec->parameters().setValue("majorThrustSusyValue",_majorThrustSusyValue);
+        _inParVec->parameters().setValues("majorThrustSusyAxis",thrax);
 
         thrax.clear();
-        thrax.push_back(_minorThrustRazorAxis.x());
-        thrax.push_back(_minorThrustRazorAxis.y());
-        thrax.push_back(_minorThrustRazorAxis.z());
+        thrax.push_back(_minorThrustSusyAxis.x());
+        thrax.push_back(_minorThrustSusyAxis.y());
+        thrax.push_back(_minorThrustSusyAxis.z());
 
-        _inParVec->parameters().setValue("minorThrustRazorValue",_minorThrustRazorValue);
-        _inParVec->parameters().setValues("minorThrustRazorAxis",thrax);
+        _inParVec->parameters().setValue("minorThrustSusyValue",_minorThrustSusyValue);
+        _inParVec->parameters().setValues("minorThrustSusyAxis",thrax);
 
         float Oblateness;
-        Oblateness = _majorThrustRazorValue - _minorThrustRazorValue;
+        Oblateness = _majorThrustSusyValue - _minorThrustSusyValue;
         _inParVec->parameters().setValue("Oblateness",Oblateness);
-        if ( (_majorThrustRazorValue < 0) || (_minorThrustRazorValue < 0) )
+        if ( (_majorThrustSusyValue < 0) || (_minorThrustSusyValue < 0) )
         {
             _inParVec->parameters().setValue("Oblateness",-1);
         }
@@ -265,194 +262,57 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
 
 
     // these are the final values:
-    streamlog_out( DEBUG4 ) << " thrust: " << _principleThrustRazorValue << " TV: " << _principleThrustRazorAxis << endl;
-    streamlog_out( DEBUG4 ) << "  major: " << _majorThrustRazorValue << " TV: " << _majorThrustRazorAxis << endl;
-    streamlog_out( DEBUG4 ) << "  minor: " << _minorThrustRazorValue << " TV: " << _minorThrustRazorAxis << endl;
+    streamlog_out( DEBUG4 ) << " thrust: " << _principleThrustSusyValue << " TV: " << _principleThrustSusyAxis << endl;
+    streamlog_out( DEBUG4 ) << "  major: " << _majorThrustSusyValue << " TV: " << _majorThrustSusyAxis << endl;
+    streamlog_out( DEBUG4 ) << "  minor: " << _minorThrustSusyValue << " TV: " << _minorThrustSusyAxis << endl;
     cout << "EVENT: " << _nEvt << endl;
-    cout << " thrust: " << _principleThrustRazorValue << " TV: " << _principleThrustRazorAxis << endl;
-    cout <<"                       "<< _principleThrustRazorAxis.x()<<","<< _principleThrustRazorAxis.y()<< ","<<_principleThrustRazorAxis.z()<<endl;
-    cout << "  major: " << _majorThrustRazorValue << " TV: " << _majorThrustRazorAxis << endl;
-    cout << "  minor: " << _minorThrustRazorValue << " TV: " << _minorThrustRazorAxis << endl;
+    cout << " thrust: " << _principleThrustSusyValue << " TV: " << _principleThrustSusyAxis << endl;
+    cout <<"                       "<< _principleThrustSusyAxis.x()<<","<< _principleThrustSusyAxis.y()<< ","<<_principleThrustSusyAxis.z()<<endl;
+    cout << "  major: " << _majorThrustSusyValue << " TV: " << _majorThrustSusyAxis << endl;
+    cout << "  minor: " << _minorThrustSusyValue << " TV: " << _minorThrustSusyAxis << endl;
 
-    double ptaX = _principleThrustRazorAxis.x();
-    double ptaY = _principleThrustRazorAxis.y();
-    double ptaZ = _principleThrustRazorAxis.z();
+    double ptaX = _principleThrustSusyAxis.x();
+    double ptaY = _principleThrustSusyAxis.y();
+    double ptaZ = _principleThrustSusyAxis.z();
 
     double cosTT = ptaZ; // cosine of the theta angle of thrust axis
 
 
     if(_thrustDetectability == 0){
-        _TV_T->Fill(_principleThrustRazorValue);
+        _TV_T->Fill(_principleThrustSusyValue);
         _TA_T->Fill(cosTT);
     }
     if(_thrustDetectability == 1){
 
-        _TV_DAB->Fill(_principleThrustRazorValue);
+        _TV_DAB->Fill(_principleThrustSusyValue);
         _TA_DAB->Fill(cosTT);
     }
     if(_thrustDetectability == 2){
 
-        _TV_DED->Fill(_principleThrustRazorValue);
+        _TV_DED->Fill(_principleThrustSusyValue);
         _TA_DED->Fill(cosTT);
-    }
+    }    
 
-    double vec[2][3][4]; // jet 1, jet 2 : true detectable, detected : energy, momx, momy, momz 
-    double Rvec[3][4]; // true, detectable, detected : energy, px, py, pz 
-
-    //int id, stat; 
-    for (int n=0;n<_inParVec->getNumberOfElements() ;n++){
-
-        MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
-
-        try{
-            id = aPart->getPDG();
-            stat = aPart->getGeneratorStatus();
-        }
-        catch(const std::exception& e){
-            cout << "exception caught with message " << e.what() << "\n";
-        }
-
-        if(stat==1){
-            const double* partMom = aPart->getMomentum();
-            double part4mom[4] = {aPart->getEnergy(), partMom[0], partMom[1], partMom[2]};   
-
-            double pta[3] = {ptaX, ptaY, ptaZ};
-
-            cout << "id      : " << id << endl;  
-            cout << "Momentum: " << partMom[0] <<" "<< partMom[1] <<" "<< partMom[2]<< endl;
-            cout << "Thrust A: " << ptaX << " "<< ptaY << " " << ptaZ << endl;
-            double dot = ptaX*partMom[0]+ptaY*partMom[1]+ptaZ*partMom[2];
-            cout << "dot " << dot << endl;
-
-            // need momentum and energy of entire jet 
-
-            bool isDarkMatter = (id == 1000022);
-            bool isNeutrino = (
-                    id == 12 || id == -12 ||
-                    id == 14 || id == -14 ||
-                    id == 16 || id == -16 ||
-                    id == 18 || id == -18);
-            double cos = partMom[2]/(sqrt(partMom[0]*partMom[0]+partMom[1]*partMom[1]+partMom[2]*partMom[2]));
-            bool isForward = ( cos > 0.9 || cos < - 0.9);
-            int i; // jet #
-            if(dot>=0){i=0;}
-            if(dot<0){i=1;}
-            if (!isDarkMatter){ 
-                vec[i][0][0]+= part4mom[0]; 
-                vec[i][0][1]+= part4mom[1];
-                vec[i][0][2]+= part4mom[2];
-                vec[i][0][3]+= part4mom[3];
-                if (!isNeutrino){
-                    vec[i][1][0]+= part4mom[0];
-                    vec[i][1][1]+= part4mom[1];
-                    vec[i][1][2]+= part4mom[2];
-                    vec[i][1][3]+= part4mom[3];
-                    if(!isForward){
-                        vec[i][2][0]+= part4mom[0];
-                        vec[i][2][1]+= part4mom[1];
-                        vec[i][2][2]+= part4mom[2];
-                        vec[i][2][3]+= part4mom[3];
-                    }
-                }
-            }           
-        }
-    }
-    int d = _thrustDetectability;
-    double beta = (vec[0][d][0]-vec[1][d][0])/(vec[0][d][3]-vec[1][d][3]); // beta using detectable particles 
-    double beta2 = pow(beta,2);
-    double gamma = 1/(sqrt(1-beta2));
-    for (int n=0;n<_inParVec->getNumberOfElements() ;n++){
-
-        MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
-        const double* partMom = aPart->getMomentum();
-
-        try{
-            id = aPart->getPDG();
-            stat = aPart->getGeneratorStatus();
-        }
-        catch(const std::exception& e){
-            cout << "exception caught with message " << e.what() << "\n";
-        }
-        double part4Vec[4] = {aPart->getEnergy(), partMom[0], partMom[1], partMom[2] };
-        double R4Vec[4] = {gamma*part4Vec[0]-gamma*beta*part4Vec[3], part4Vec[1], part4Vec[2], 
-            -gamma*beta*part4Vec[0]+gamma*part4Vec[3] }; 
-        bool isDarkMatter = (id == 1000022);
-
-        bool isNeutrino = (
-                id == 12 || id == -12 ||
-                id == 14 || id == -14 ||
-                id == 16 || id == -16 ||
-                id == 18 || id == -18);
-        double cos = partMom[2]/(sqrt(partMom[0]*partMom[0]+partMom[1]*partMom[1]+partMom[2]*partMom[2]));
-        bool isForward = (cos > 0.9 || cos < - 0.9);
-        bool isDetectable = (!isDarkMatter && !isNeutrino);
-        bool isDetected = (isDetectable && !isForward); 
-        if(stat ==1){
-            if(_thrustDetectability == 0){
-                if(!isDarkMatter){
-                    Rvec[d][0]+=R4Vec[0];
-                    Rvec[d][1]+=R4Vec[1];
-                    Rvec[d][2]+=R4Vec[2];
-                    Rvec[d][3]+=R4Vec[3];
-                }
-            }
-            if(_thrustDetectability ==1){
-                if(isDetectable){
-                    Rvec[d][0]+=R4Vec[0];
-                    Rvec[d][1]+=R4Vec[1];
-                    Rvec[d][2]+=R4Vec[2];
-                    Rvec[d][3]+=R4Vec[3];
-                }
-            }
-            if(_thrustDetectability == 2){
-                if(isDetected){
-                    Rvec[d][0]+=R4Vec[0];
-                    Rvec[d][1]+=R4Vec[1];
-                    Rvec[d][2]+=R4Vec[2];
-                    Rvec[d][3]+=R4Vec[3];
-                }
-            }   
-        }
-    }
-    double ETM[2] = {-Rvec[d][1], - Rvec[d][2]};
-    double ETMmag = sqrt(ETM[0]*ETM[0]+ETM[1]*ETM[1]);
-
-    double ptj1mag = sqrt(vec[0][d][1]*vec[0][d][1]+vec[0][d][2]*vec[0][d][2]);
-    double ptj2mag = sqrt(vec[1][d][1]*vec[1][d][1]+vec[1][d][2]*vec[1][d][2]);
-    double ptmagsum = ptj1mag + ptj2mag; 
-
-    double ptvecsum[2] = {vec[0][d][1]+vec[1][d][1], vec[0][d][2]+vec[1][d][2]};
-    double ETMdotptvecsum = ETM[0]*ptvecsum[0]+ETM[1]*ptvecsum[1];
-    double MTR = sqrt((ETMmag*ptmagsum-ETMdotptvecsum)/2);
-
-    double pj1 = sqrt(vec[0][d][1]*vec[0][d][1]+vec[0][d][2]*vec[0][d][2]+vec[0][d][3]*vec[0][d][3]);
-    double R = MTR/(2*pj1);
-    if(beta2<=1){
-        if(d==0){_R_T->Fill(R);}
-        if(d==1){_R_DAB->Fill(R);}
-        if(d==2){_R_DED->Fill(R);}
-    }
-
-    if (_principleThrustRazorValue >= _max) _max = _principleThrustRazorValue;
-    if (_principleThrustRazorValue <= _min) _min = _principleThrustRazorValue;
+    if (_principleThrustSusyValue >= _max) _max = _principleThrustSusyValue;
+    if (_principleThrustSusyValue <= _min) _min = _principleThrustSusyValue;
     cout << "End EVENT "<< _nEvt<< endl;
 }
 
 
 
 
-void ThrustRazor::check( LCEvent * evt ) { 
+void ThrustSusy::check( LCEvent * evt ) { 
     // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
 
 
 
-void ThrustRazor::end(){ 
+void ThrustSusy::end(){ 
     _rootfile->Write();
     cout << partMomCheck << endl; 
 }
 
-int ThrustRazor::TassoThrustRazor(){
+int ThrustSusy::TassoThrustSusy(){
     int ThrustError = 0;
     Hep3Vector tvec;
 
@@ -460,14 +320,14 @@ int ThrustRazor::TassoThrustRazor(){
     if (_inParVec->getNumberOfElements()<=0)
     {
         ThrustError = -1;
-        _principleThrustRazorValue = 0;
-        _principleThrustRazorAxis.set(0,0,0);
+        _principleThrustSusyValue = 0;
+        _principleThrustSusyAxis.set(0,0,0);
     }
     // only one Particle in Event: Thrust direction = direction of particle
     else if (_inParVec->getNumberOfElements()==1)
     {
-        _principleThrustRazorValue = 1;
-        _principleThrustRazorAxis = _partMom[0];
+        _principleThrustSusyValue = 1;
+        _principleThrustSusyAxis = _partMom[0];
     }
     else
     {
@@ -520,7 +380,7 @@ int ThrustRazor::TassoThrustRazor(){
                 } // for m
             } // for j
         } // for k
-        _principleThrustRazorValue = 2 * sqrt(tmax) / sp;
+        _principleThrustSusyValue = 2 * sqrt(tmax) / sp;
         tvec = ptm;
     } // end else
 
@@ -530,25 +390,25 @@ int ThrustRazor::TassoThrustRazor(){
     if (ax != 0)
     {
         ax = 1/ax;
-        _principleThrustRazorAxis = ax * tvec;
+        _principleThrustSusyAxis = ax * tvec;
     }
     else
     {
         ThrustError = -1;
-        _principleThrustRazorValue = -1;
-        _principleThrustRazorAxis.set(0,0,0);
+        _principleThrustSusyValue = -1;
+        _principleThrustSusyAxis.set(0,0,0);
     }
     return ThrustError;
 }
 
-int ThrustRazor::JetsetThrustRazor(){
+int ThrustSusy::JetsetThrustSusy(){
     const int nwork=11,iFastMax = 4,iGood=2;
     const float dConv=0.0001; // 0.0001
     int sgn;
     double theta=0,phi=0;
     double thp,thps,tds,tmax,dOblateness;
     vector<Hep3Vector> TAxes(3),Fast(iFastMax+1),Workv(nwork);
-    vector<double> Workf(nwork),dThrustRazor(3);
+    vector<double> Workf(nwork),dThrustSusy(3);
     Hep3Vector tdi,tpr,mytest;
 
     tmax = 0;
@@ -630,7 +490,7 @@ int ThrustRazor::JetsetThrustRazor(){
         } // for n 
 
         // Iterate direction of axis until stable maximum.
-        dThrustRazor[pass] = 0;
+        dThrustSusy[pass] = 0;
         int nagree = 0;
         for ( int iw = 0; iw < min(nc,10) && nagree < iGood; iw++ )
         {
@@ -652,15 +512,15 @@ int ThrustRazor::JetsetThrustRazor(){
             } // while 
             // Save good axis. Try new initial axis until enough
             // tries agree.
-            if ( thp < dThrustRazor[pass] - dConv ) continue;
-            if ( thp > dThrustRazor[pass] + dConv )
+            if ( thp < dThrustSusy[pass] - dConv ) continue;
+            if ( thp > dThrustSusy[pass] + dConv )
             {
                 nagree = 0;
                 //          if (myrnd.flat() > 0.49999)
                 //        {sgn = 1;} else {sgn=-1;}
                 sgn = 1;
                 TAxes[pass] = sgn*tpr/(tmax*thp);
-                dThrustRazor[pass] = thp;
+                dThrustSusy[pass] = thp;
             } // if thp
             nagree++;
         } // for iw (2)
@@ -674,7 +534,7 @@ int ThrustRazor::JetsetThrustRazor(){
     {
         thp += fabs(TAxes[2].dot(_partMom[i]) );
     } // for i 
-    dThrustRazor[2] = thp/tmax;
+    dThrustSusy[2] = thp/tmax;
 
     // Rotate back to original coordinate system.
     for ( unsigned int i = 0;i < TAxes.size(); i++)
@@ -682,14 +542,14 @@ int ThrustRazor::JetsetThrustRazor(){
         TAxes[i].rotateY(theta);
         TAxes[i].rotateZ(phi);
     }
-    dOblateness = dThrustRazor[1] - dThrustRazor[2];
+    dOblateness = dThrustSusy[1] - dThrustSusy[2];
 
-    _principleThrustRazorValue = dThrustRazor[0];
-    _majorThrustRazorValue     = dThrustRazor[1];
-    _minorThrustRazorValue     = dThrustRazor[2];
-    _principleThrustRazorAxis  =   TAxes[0];
-    _majorThrustRazorAxis      =   TAxes[1];
-    _minorThrustRazorAxis      =   TAxes[2];
+    _principleThrustSusyValue = dThrustSusy[0];
+    _majorThrustSusyValue     = dThrustSusy[1];
+    _minorThrustSusyValue     = dThrustSusy[2];
+    _principleThrustSusyAxis  =   TAxes[0];
+    _majorThrustSusyAxis      =   TAxes[1];
+    _minorThrustSusyAxis      =   TAxes[2];
 
 
     return  0;
@@ -697,13 +557,13 @@ int ThrustRazor::JetsetThrustRazor(){
 
 //______________________________________________________________
 // helper function to get sign of b
-double ThrustRazor::sign(double a, double b)
+double ThrustSusy::sign(double a, double b)
 {
     if ( b < 0 )
     { return -fabs(a); } else { return fabs(a); }
 }
 //______________________________________________________________
-double ThrustRazor::min(double a, double b)
+double ThrustSusy::min(double a, double b)
 {
     if ( a < b )
     { return a; } else { return b; }

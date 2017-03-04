@@ -65,9 +65,9 @@ class Pred_Compare : public Processor {
         std::string _colName ;
         std::string _root_file_name;
         
-        int interest;
-
-        int hh_hh, hh_hm, hh_mm, hm_hh, hm_hm, hm_mm, mm_hh, mm_hm, mm_mm=0;
+        std::string interest;
+        int total;
+        int hh_hh, hh_hm, hh_mm, hm_hh, hm_hm, hm_mm, mm_hh, mm_hm, mm_mm;
 
         int _nRun ;
         int _nEvt ;

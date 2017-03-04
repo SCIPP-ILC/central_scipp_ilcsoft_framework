@@ -115,12 +115,7 @@ void first::processEvent( LCEvent * evt ) {
 	      //hit is an end particle:
 	      addParticle(hit); //The bundle object has the rest of the processing.
 	      if(getPositron() != NULL && getElectron() != NULL){
-		init_hitmap(inlab);
-		double costh = acos(get_colinearity(inlab);
-		_cos->Fill();
-		electron=NULL;
-		positron=NULL;
-
+		
 	      }
             }//end final state   
         }//end for

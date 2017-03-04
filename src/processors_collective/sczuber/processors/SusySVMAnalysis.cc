@@ -183,13 +183,23 @@ void SusySVMAnalysis::processEvent( LCEvent * evt ) {
         double total_detectable_mass_squared = energy[2]*energy[2]-
             (vec[2][0]*vec[2][0]+vec[2][1]*vec[2][1]+
             vec[2][2]*vec[2][2]);
+        double total_detectable_mass = sqrt(total_detectable_mass_squared);
             
         double total_true_vector = sqrt(vec[0][0]*vec[0][0]+vec[0][1]*vec[0][1]+vec[0][2]*vec[0][2]); 
         double total_detected_vector = sqrt(vec[1][0]*vec[1][0]+vec[1][1]*vec[1][1]+vec[1][2]*vec[1][2]); 
-        double total_detectable_vector = sqrt(vec[2][0]*vec[2][0]+vec[2][1]*vec[2][1]+vec[2][2]*vec[2][2]); 
+        double total_detectable_vector = sqrt(vec[2][0]*vec[2][0]+vec[2][1]*vec[2][1]+vec[2][2]*vec[2][2]);
+         
         _V_n_C->Fill(total_detected_vector);
         _V_n_A->Fill(total_detectable_vector);
         _V_N_A->Fill(total_true_vector);
+        
+        _S_n_C->Fill(total_detected_scalar);
+        _S_n_A->Fill(total_detectable_scalar);
+        _S_N_A->Fill(total_true_scalar);
+
+        _M_n_C->Fill(total_detected_mass);
+        _M_n_A->Fill(total_detectable_mass);
+        _M_N_A->Fill(total_true_mass);
     }
     _nEvt ++ ;
 }
