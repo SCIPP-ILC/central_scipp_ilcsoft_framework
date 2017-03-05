@@ -42,15 +42,15 @@ SusySVMAnalysis SusySVMAnalysis;
 
 static TFile* _rootfile;
 
-static TH1F* _V_n_C;
-static TH1F* _V_n_A;
-static TH1F* _V_N_A;
-static TH1F* _S_n_C;
-static TH1F* _S_n_A;
-static TH1F* _S_N_A;
-static TH1F* _M_n_C;
-static TH1F* _M_n_A;
-static TH1F* _M_N_A;
+static TH1F* _V_DED;
+static TH1F* _V_DAB;
+static TH1F* _V_TRU;
+static TH1F* _S_DED;
+static TH1F* _S_DAB;
+static TH1F* _S_TRU;
+static TH1F* _M_DED;
+static TH1F* _M_DAB;
+static TH1F* _M_TRU;
 
 SusySVMAnalysis::SusySVMAnalysis() : Processor("SusySVMAnalysis") {
     // modify processor description
@@ -66,18 +66,18 @@ void SusySVMAnalysis::init() {
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
     _rootfile = new TFile("SusySVMAnalysis_.39133.root","RECREATE");
-    _V_n_C = new TH1F("V_n_C","Detected Vector",40,0,20);
-    _V_n_A = new TH1F("V_n_A","Detectable Vector",40,0,20);
-    _V_N_A = new TH1F("V_N_A","True Vector",40,0,20);
+    _V_DED = new TH1F("V_DED","Detected Vector",40,0,20);
+    _V_DAB = new TH1F("V_DAB","Detectable Vector",40,0,20);
+    _V_TRU = new TH1F("V_TRU","True Vector",40,0,20);
 
-    _S_n_C = new TH1F("S_n_C","Detected Scalar",40,0,20);
-    _S_n_A = new TH1F("S_n_A","Detectable Scalar",40,0,20);
-    _S_N_A = new TH1F("S_N_A","True Scalar",40,0,20);
+    _S_DED = new TH1F("S_DED","Detected Scalar",40,0,20);
+    _S_DAB = new TH1F("S_DAB","Detectable Scalar",40,0,20);
+    _S_TRU = new TH1F("S_TRU","True Scalar",40,0,20);
  
   
-    _M_n_C = new TH1F("M_n_C","Detected Mass",40,0,20);
-    _M_n_A = new TH1F("M_n_A","Detectable Mass",40,0,20);
-    _M_N_A = new TH1F("M_N_A","True Mass",40,0,20);
+    _M_DED = new TH1F("M_DED","Detected Mass",40,0,20);
+    _M_DAB = new TH1F("M_DAB","Detectable Mass",40,0,20);
+    _M_TRU = new TH1F("M_TRU","True Mass",40,0,20);
     // usually a good idea to
     //printParameters() ;
 
@@ -189,17 +189,17 @@ void SusySVMAnalysis::processEvent( LCEvent * evt ) {
         double total_detected_vector = sqrt(vec[1][0]*vec[1][0]+vec[1][1]*vec[1][1]+vec[1][2]*vec[1][2]); 
         double total_detectable_vector = sqrt(vec[2][0]*vec[2][0]+vec[2][1]*vec[2][1]+vec[2][2]*vec[2][2]);
          
-        _V_n_C->Fill(total_detected_vector);
-        _V_n_A->Fill(total_detectable_vector);
-        _V_N_A->Fill(total_true_vector);
+        _V_DED->Fill(total_detected_vector);
+        _V_DAB->Fill(total_detectable_vector);
+        _V_TRU->Fill(total_true_vector);
         
-        _S_n_C->Fill(total_detected_scalar);
-        _S_n_A->Fill(total_detectable_scalar);
-        _S_N_A->Fill(total_true_scalar);
+        _S_DED->Fill(total_detected_scalar);
+        _S_DAB->Fill(total_detectable_scalar);
+        _S_TRU->Fill(total_true_scalar);
 
-        _M_n_C->Fill(total_detected_mass);
-        _M_n_A->Fill(total_detectable_mass);
-        _M_N_A->Fill(total_true_mass);
+        _M_DED->Fill(total_detected_mass);
+        _M_DAB->Fill(total_detectable_mass);
+        _M_TRU->Fill(total_true_mass);
     }
     _nEvt ++ ;
 }
