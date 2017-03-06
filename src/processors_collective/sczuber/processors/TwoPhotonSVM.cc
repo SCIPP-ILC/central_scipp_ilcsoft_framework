@@ -131,7 +131,31 @@ void TwoPhotonSVM::processEvent( LCEvent * evt ) {
     int id, stat;
     
     double SVM[3][5]; // TRU, DAB, DED : E, px, py, pz, scalar
-    
+    int electronI = -1;
+    int positronI = -1;
+    double electronEnergy = 0;
+    double positronEnergy = 0;
+   
+    for (int n=0;n<_inParVec->getNumberOfElements(); n++){
+        MCParticle* aPart = dynamic_cast<MCParticle*>(_inParVec->getElementAt(n) ); 
+        try {
+            id = aPart->getPDG();
+            stat = aPart->getGeneratorStatus();
+        }
+        catch(const std::exception& e){
+            cout << "exception caught with message "<< e.what() <<"\n";
+        }
+        if (stat==1) continue;
+        double energy = aPart->getEnergy();
+        if(id == 11 && energy > electronEnergy){
+            electronI = n;
+            electronEnergy = energy;
+        }
+        if(id== -11 && energy > positronEnergy){
+            positronI = n;
+            positronEnergy = energy;
+        }
+    }
     for (int n=0;n<_inParVec->getNumberOfElements() ;n++)
     {
 
@@ -144,6 +168,8 @@ void TwoPhotonSVM::processEvent( LCEvent * evt ) {
             cout << "exception caught with message " << e.what() << "\n";
         }
         if(stat==1){
+            if(n==electronI) continue ;
+            if(n==positronI) continue ; 
             cout << "id: "<< id<< endl;
             const double* P = aPart->getMomentum();
             double PMag = sqrt(P[0]*P[0]+P[1]*P[1]+P[2]*P[2]);

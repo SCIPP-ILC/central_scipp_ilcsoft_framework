@@ -66,18 +66,18 @@ void SusySVMAnalysis::init() {
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
     _rootfile = new TFile("SusySVMAnalysis_.39133.root","RECREATE");
-    _V_DED = new TH1F("V_DED","Detected Vector",40,0,20);
-    _V_DAB = new TH1F("V_DAB","Detectable Vector",40,0,20);
-    _V_TRU = new TH1F("V_TRU","True Vector",40,0,20);
+    _V_DED = new TH1F("V_DED","Detected Vector",80,0,20);
+    _V_DAB = new TH1F("V_DAB","Detectable Vector",80,0,20);
+    _V_TRU = new TH1F("V_TRU","True Vector",80,0,20);
 
-    _S_DED = new TH1F("S_DED","Detected Scalar",40,0,20);
-    _S_DAB = new TH1F("S_DAB","Detectable Scalar",40,0,20);
-    _S_TRU = new TH1F("S_TRU","True Scalar",40,0,20);
+    _S_DED = new TH1F("S_DED","Detected Scalar",80,0,20);
+    _S_DAB = new TH1F("S_DAB","Detectable Scalar",80,0,20);
+    _S_TRU = new TH1F("S_TRU","True Scalar",80,0,20);
  
   
-    _M_DED = new TH1F("M_DED","Detected Mass",40,0,20);
-    _M_DAB = new TH1F("M_DAB","Detectable Mass",40,0,20);
-    _M_TRU = new TH1F("M_TRU","True Mass",40,0,20);
+    _M_DED = new TH1F("M_DED","Detected Mass",80,0,20);
+    _M_DAB = new TH1F("M_DAB","Detectable Mass",80,0,20);
+    _M_TRU = new TH1F("M_TRU","True Mass",80,0,20);
     // usually a good idea to
     //printParameters() ;
 
