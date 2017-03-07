@@ -57,12 +57,12 @@ static TFile* _rootfile;
 static TH1F* _R_T;
 static TH1F* _R_DAB;
 static TH1F* _R_DED;
-static TH1F* _TV_T;
-static TH1F* _TV_DAB;
-static TH1F* _TV_DED;
-static TH1F* _TA_T;
-static TH1F* _TA_DAB;
-static TH1F* _TA_DED;
+//static TH1F* _TV_T;
+//static TH1F* _TV_DAB;
+//static TH1F* _TV_DED;
+//static TH1F* _TA_T;
+//static TH1F* _TA_DAB;
+//static TH1F* _TA_DED;
 
 ThrustRazor ThrustRazor;
 
@@ -89,19 +89,19 @@ void ThrustRazor::init() {
 
     if(_thrustDetectability==0){_rootfile = new TFile("ThrustRazor_.39133._T.root","RECREATE");
         _R_T = new TH1F("R_T", "R =MTR/MR",100,0,10);
-        _TV_T = new TH1F("TV_T", "Thrust Value", 100, 0,1);
-        _TA_T = new TH1F("TA_T", "Cosine of Thrust Angle", 100, 0,1);
+        //_TV_T = new TH1F("TV_T", "Thrust Value", 100, 0,1);
+        //_TA_T = new TH1F("TA_T", "Cosine of Thrust Angle", 100, 0,1);
     }
     if(_thrustDetectability==1){_rootfile = new TFile("ThrustRazor_.39133._DAB.root","RECREATE");
         _R_DAB = new TH1F("R_DAB", "R =MTR/MR",100,0,10);
-        _TV_DAB = new TH1F("TV_DAB", "Thrust Value", 100, 0,1);
-        _TA_DAB = new TH1F("TA_DAB", "Cosine of Thrust Angle", 100, 0,1);
+        //_TV_DAB = new TH1F("TV_DAB", "Thrust Value", 100, 0,1);
+        //_TA_DAB = new TH1F("TA_DAB", "Cosine of Thrust Angle", 100, 0,1);
 
     }
-    if(_thrustDetectability==2){_rootfile = new TFile("ThrustRazor_2_DED_133.root","RECREATE");
+    if(_thrustDetectability==2){_rootfile = new TFile("ThrustRazor_.39000._DED.root","RECREATE");
         _R_DED = new TH1F("R_DED", "R =MTR/MR",100,0,10);
-        _TV_DED = new TH1F("TV_DED", "Thrust Value", 100, 0,1);
-        _TA_DED = new TH1F("TA_DED", "Cosine of Thrust Angle", 100, 0,1);
+        //_TV_DED = new TH1F("TV_DED", "Thrust Value", 100, 0,1);
+        //_TA_DED = new TH1F("TA_DED", "Cosine of Thrust Angle", 100, 0,1);
 
     }
 
@@ -140,7 +140,7 @@ void ThrustRazor::processRunHeader( LCRunHeader* run) {
 void ThrustRazor::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
-
+    cout << "EVENT: " << _nEvt << endl; 
     _inParVec = evt->getCollection( _colName) ;
     cout << "num of elements " << _inParVec->getNumberOfElements() << endl;
     if (!_partMom.empty()) _partMom.clear();
@@ -178,7 +178,9 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
             bool isDetectable = (!isDarkMatter && !isNeutrino);
             bool isDetected = (isDetectable &&  !isForward  );
             if(_thrustDetectability == 0){
-                _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) );
+                if(!isDarkMatter){
+                    _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) );
+                }
             }
             if(_thrustDetectability == 1){
                 if(isDetectable){
@@ -188,7 +190,7 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
             cout <<"_thrustDetectability : " << _thrustDetectability << endl;
             if(_thrustDetectability == 2){
                 cout << " is Detected : "<<isDetected<< endl; 
-                if(isDetected==1){ 
+                if(isDetected){ 
                     cout << "adding mom to partMom thing"<< endl; 
                     _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
                 }
@@ -214,9 +216,9 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
     }
     else if (_partMom.size()<=1)
     {
-        //partMomCheck += " ";
-        //partMomCheck += std::to_string(_nEvt);
-        //partMomCheck += " ";  
+        partMomCheck += " ";
+        partMomCheck += std::to_string(_nEvt);
+        partMomCheck += " ";  
         TassoThrustRazor();
     }
     else if (_typeOfThrustRazorFinder == 2)
@@ -280,23 +282,24 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
 
     double cosTT = ptaZ; // cosine of the theta angle of thrust axis
 
+    /*
+       if(_thrustDetectability == 0){
+       _TV_T->Fill(_principleThrustRazorValue);
+       _TA_T->Fill(cosTT);
+       }
+       if(_thrustDetectability == 1){
 
-    if(_thrustDetectability == 0){
-        _TV_T->Fill(_principleThrustRazorValue);
-        _TA_T->Fill(cosTT);
-    }
-    if(_thrustDetectability == 1){
+       _TV_DAB->Fill(_principleThrustRazorValue);
+       _TA_DAB->Fill(cosTT);
+       }
+       if(_thrustDetectability == 2){
 
-        _TV_DAB->Fill(_principleThrustRazorValue);
-        _TA_DAB->Fill(cosTT);
-    }
-    if(_thrustDetectability == 2){
+       _TV_DED->Fill(_principleThrustRazorValue);
+       _TA_DED->Fill(cosTT);
+       }
+       */
+    double vec[2][3][4]; // jet 1, jet 2 : true detectable, detected : energy, momx, momy, momz
 
-        _TV_DED->Fill(_principleThrustRazorValue);
-        _TA_DED->Fill(cosTT);
-    }
-
-    double vec[2][3][4]; // jet 1, jet 2 : true detectable, detected : energy, momx, momy, momz 
     double Rvec[3][4]; // true, detectable, detected : energy, px, py, pz 
 
     //int id, stat; 
@@ -314,8 +317,12 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
 
         if(stat==1){
             const double* partMom = aPart->getMomentum();
-            double part4mom[4] = {aPart->getEnergy(), partMom[0], partMom[1], partMom[2]};   
+            double part4mom[4];
 
+            part4mom[0] =  aPart->getEnergy(); 
+            part4mom[1] = partMom[0];
+            part4mom[2] =partMom[1]; 
+            part4mom[3] =partMom[2];   
             double pta[3] = {ptaX, ptaY, ptaZ};
 
             cout << "id      : " << id << endl;  
@@ -335,9 +342,11 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
             double cos = partMom[2]/(sqrt(partMom[0]*partMom[0]+partMom[1]*partMom[1]+partMom[2]*partMom[2]));
             bool isForward = ( cos > 0.9 || cos < - 0.9);
             int i; // jet #
+            cout << "dot: " <<dot << endl; 
             if(dot>=0){i=0;}
             if(dot<0){i=1;}
-            if (!isDarkMatter){ 
+            if (!isDarkMatter){
+                cout << "i: "<< i << endl;  
                 vec[i][0][0]+= part4mom[0]; 
                 vec[i][0][1]+= part4mom[1];
                 vec[i][0][2]+= part4mom[2];
@@ -354,7 +363,8 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
                         vec[i][2][3]+= part4mom[3];
                     }
                 }
-            }           
+            } 
+            cout << "finished filling "<< endl;           
         }
     }
     int d = _thrustDetectability;

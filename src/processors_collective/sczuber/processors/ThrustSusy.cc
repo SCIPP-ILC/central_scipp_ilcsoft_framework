@@ -76,7 +76,7 @@ ThrustSusy::ThrustSusy() : Processor("ThrustSusy") {
             _typeOfThrustSusyFinder , 2 ) ;
     registerProcessorParameter( "thrustDetectability",
             "Detectability of the Thrust Axis/Value to be used:\n#\t0 : True \n#t1 : Detectable \n#t2 : Detected" ,
-            _thrustDetectability, 2 );
+            _thrustDetectability, 1 );
 }
 
 
@@ -84,18 +84,23 @@ ThrustSusy::ThrustSusy() : Processor("ThrustSusy") {
 void ThrustSusy::init() { 
     streamlog_out(DEBUG)  << "   init called  " << std::endl ;
 
-    if(_thrustDetectability==0){_rootfile = new TFile("ThrustSusy_.39133._T.root","RECREATE");
+    if(_thrustDetectability==0){
+        
+        _rootfile = new TFile("ThrustSusy_.39133._T.root","RECREATE");
      
         _TV_T = new TH1F("TV_T", "Thrust Value", 100, 0,1);
         _TA_T = new TH1F("TA_T", "Cosine of Thrust Angle", 100, 0,1);
     }
-    if(_thrustDetectability==1){_rootfile = new TFile("ThrustSusy_.39133._DAB.root","RECREATE");
+    if(_thrustDetectability==1){
+        
+        _rootfile = new TFile("ThrustSusy_.39133._DAB.root","RECREATE");
       
         _TV_DAB = new TH1F("TV_DAB", "Thrust Value", 100, 0,1);
         _TA_DAB = new TH1F("TA_DAB", "Cosine of Thrust Angle", 100, 0,1);
 
     }
-    if(_thrustDetectability==2){_rootfile = new TFile("ThrustSusy_2_DED_133.root","RECREATE");
+    if(_thrustDetectability==2){
+        _rootfile = new TFile("ThrustSusy_.39133._DED.root","RECREATE");
        
         _TV_DED = new TH1F("TV_DED", "Thrust Value", 100, 0,1);
         _TA_DED = new TH1F("TA_DED", "Cosine of Thrust Angle", 100, 0,1);
@@ -175,18 +180,20 @@ void ThrustSusy::processEvent( LCEvent * evt ) {
             bool isDetectable = (!isDarkMatter && !isNeutrino);
             bool isDetected = (isDetectable &&  !isForward  );
             if(_thrustDetectability == 0){
-                _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) );
+                if(!isDarkMatter){
+                    _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) );
+                }
             }
             if(_thrustDetectability == 1){
                 if(isDetectable){
                     _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) );
                 }
             }
-            cout <<"_thrustDetectability : " << _thrustDetectability << endl;
+            
             if(_thrustDetectability == 2){
-                cout << " is Detected : "<<isDetected<< endl; 
-                if(isDetected==1){ 
-                    cout << "adding mom to partMom thing"<< endl; 
+                
+                if(isDetected){ 
+                    
                     _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
                 }
             }
