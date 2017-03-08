@@ -19,6 +19,12 @@ class first : public Processor {
 
  public:
 
+  struct AngleStore{
+    vector<double> hh_colinearity;
+    vector<double> mh_colinearity;
+    vector<double> hm_colinearity;
+    vector<double> mm_colinearity;
+  }
   struct HitMissStore{
     int hit = 0;
     int miss = 0;
@@ -26,6 +32,10 @@ class first : public Processor {
     vector<double*> hm;
     vector<double*> mh;
     vector<double*> mm;
+    vector<double> hh_theta;
+    vector<double> hm_theta;
+    vector<double> mh_theta;
+    vector<double> mm_theta;
   };
   //Verbose is mostly unused.
   const bool VERBOSE = false;
@@ -51,7 +61,7 @@ class first : public Processor {
 
   HitMissStore positronStore;
   HitMissStore electronStore;
-
+  AngleStore colinearityStore;
   //Do a check to see if it is ready, then orchestrates other functions.
   void initialize();
 
@@ -59,7 +69,10 @@ class first : public Processor {
   void init_hitmap(bool=true);
 
   //Used to calculate and plot the colinearity
-  double get_colinearity(bool=true);
+  double getColinearity(bool=true);
+
+  //Same thing as getColinearity but intead of using the particles from the parent bundle class it takes in two double arrays representing momentums.
+  double getOpenAngle(double*, double*);
 
   //Python-like printing function, because I love python.
   void print(string _input);
@@ -84,11 +97,13 @@ class first : public Processor {
   //  void plotHitMiss(TH2F*, vector<double*>);
   void plotHitMiss(TH2F*, initializer_list<vector<double*>>);
 
+  void plotHistogram(TH1F*, initializer_list<vector<double>>);
+
   //returns the angle from the x-y axis
   double getPhi(MCParticle* _input, bool=true);
 
   //returns the angle from the z axis
-  double getTheta(MCParticle* _input,bool=true);
+  double getTheta(MCParticle*, bool=true);
 
   //returns the cosTheta between the two vectors.
   double getCosTheta(MCParticle*, bool=true);
@@ -98,7 +113,8 @@ class first : public Processor {
   double getMagnitude(double*);
 
   //Retuns the magnitude of the dot-product.
-  double getDotProduct(MCParticle* A, MCParticle* B, bool=true);
+  double getDotProduct(double*, double*);
+  double getDotProduct(MCParticle*, MCParticle*, bool=true);
 
   //returns the lab-momentum of the particle as an array => {0: x-axis, 1: y-axis, 2: z-axis}
   double* getMomentum(MCParticle* _input, bool=true);

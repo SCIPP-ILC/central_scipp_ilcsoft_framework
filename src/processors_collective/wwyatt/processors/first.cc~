@@ -68,9 +68,9 @@ void first::init() {
     _hh = new TH2F("hh", "Hit-Hit Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     _mm = new TH2F("mm", "Miss-Miss Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     _hm = new TH2F("hm", "Hit-Miss Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
-    _cos = new TH1F("Theta", "Theta Distribution", 300, 0, 3.4);
-    _cose = new TH1F("ETheta", "Theta Electron Distribution", 300, 0,3.4);
-    _cosp = new TH1F("PTheta", "Theta Positron Distribution", 300, 0,3.4);
+    _cos = new TH1F("Theta", "Theta Distribution", 300, -1,1);
+    _cose = new TH1F("ETheta", "Theta Electron Distribution", 300, -1,1);
+    _cosp = new TH1F("PTheta", "Theta Positron Distribution", 300, -1,1);
 
     //    _energy = new TH1F("energy", "Energy", 520.0,  0.0, 260.0);
     /*    _hitmiss = new TH1F("hm", "Hit Miss Ratio", 5, -1, 2);
@@ -275,14 +275,18 @@ double first::get_colinearity(bool lab){
   double mag_B = getMagnitude( getElectron());
   double mag_A = getMagnitude( getPositron());
   double val = dot/(mag_A*mag_B);
-  double del_theta = acos(val); 
-  return del_theta;
+  return val;
 }
 
 //returns the angle from the x-y axis
  double first::getPhi(MCParticle* _input, bool lab){
    return atan(getMomentum(_input, lab)[0]/getMomentum(_input, lab)[1]);
  }
+
+//returns the open angle -> colinearity
+//double first::getOpeningAngle(MCParticle* A, MCParticle*B, bool lab){
+//  return get_colinearit
+//}
 
 //returns the angle from the z axis
  double first::getCosTheta(MCParticle* _input, bool lab){

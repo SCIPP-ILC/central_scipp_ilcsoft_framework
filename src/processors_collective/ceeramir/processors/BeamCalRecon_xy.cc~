@@ -18,6 +18,9 @@
 //#include <ctime>    //************************************************************
 #include <iostream>
 #include <chrono>
+#include <string>
+#include <sstream>
+
 typedef std::chrono::high_resolution_clock Clock;
 
 #include "BeamCalRecon_xy.h"
@@ -43,7 +46,7 @@ typedef std::chrono::high_resolution_clock Clock;
 #include <TProfile.h>
 #include <TProfile2D.h>
 #include <TH2D.h>
-
+#include <TCanvas.h>
 
 using namespace lcio;
 using namespace marlin;
@@ -61,8 +64,11 @@ static int _test_num = 0;
 static TProfile2D* _hitmap_bgd;
 static TProfile2D* _hitmap_zeros;
 static TProfile2D* _test_slice;
+static TH2F* _hlego;
+static TH2F* _hlego_zeros;
+static TCanvas* _c2;
 
-vector<pair<float,float>> bgd_plot_xy;
+//vector<pair<float,float>> bgd_plot_xy;
 
 
 //auto _t1 = Clock::now();
@@ -91,6 +97,21 @@ void BeamCalRecon_xy::init() {
     _hitmap_bgd = new TProfile2D("hitmap_bgd","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _hitmap_zeros = new TProfile2D("hitmap_zeros","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _test_slice = new TProfile2D("hitmap_slice","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
+
+    _c2 = new TCanvas("c2","c2",300,300);
+
+    int LEGObins = 60;
+    std::stringstream s1;
+
+
+    s1 << "LEGO 1s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin" << endl;
+    const char* LEGOtitle = s1.str().c_str();
+    _hlego = new TH2F("hlego", LEGOtitle ,LEGObins ,-150,150,LEGObins,-150,150);
+
+    s1.str("");
+    s1 << "LEGO 0s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
+    const char* LEGOtitlez = s1.str().c_str();
+    _hlego_zeros = new TH2F("hlego_0s", LEGOtitlez ,LEGObins,-150,150,LEGObins,-150,150);
 
     // TH2F
     // TProfile2D
@@ -138,25 +159,29 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     signal_cluster = scipp_ilc::beamcal_recon_xy::reconstruct_beamcal_event(signal_event);
     bool detected = signal_cluster->exceeds_sigma_cut;
 
-    if(!detected){
+    /*
+      if(!detected){                              //Print out xy-coords of not detected
       cout << "detected:  " << detected<< "        x-y: "<< endx << "\t" <<endy << endl;
-    }
+      }
+    */
     //Plot our results with respect to the radius of the signal electron.
-    _radeff->Fill(radius,detected); //bools and ints are basically interchangeable...
+    _radeff->Fill(radius,detected);             //bools and ints are basically interchangeable...
     _detected_num += detected;
 
-    if(detected && endx > 0 && endy < 0){
+    if(detected && endx > 0 && endy < 0){       //Graph of slice of beamcal
       _test_num += detected;
       _test_slice->Fill(endx,endy,detected);
     }
-
-    if(detected){
-      _hitmap_bgd->Fill(endx,endy,detected);
-      //      _hitmap_bgd->Fill(endx,endy);
-    }else{
+    if(detected){                               //Graph of detected
+      _hitmap_bgd->Fill(endx,endy,detected);    //      _hitmap_bgd->Fill(endx,endy);
+      _hlego->Fill(endx,endy,detected);
+    }else{                                      //Graph of not detected
       _hitmap_zeros->Fill(endx,endy,true);
+      _hlego_zeros->Fill(endx,endy,true);
     }
-    cout << _nEvt++ << endl;
+    //    cout << _nEvt++ << endl;
+
+    _hlego->SetFillColor(kYellow);
 }
 
 void BeamCalRecon_xy::check( LCEvent * evt ){
@@ -164,6 +189,8 @@ void BeamCalRecon_xy::check( LCEvent * evt ){
 }
 
 void BeamCalRecon_xy::end(){ 
+
+
     cout << "\ndetected: " << _detected_num << endl;
     cout << "\n in \'slice\' of beamcal: " << _test_num << endl;
 

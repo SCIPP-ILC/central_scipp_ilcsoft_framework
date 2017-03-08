@@ -115,15 +115,11 @@ void first::processEvent( LCEvent * evt ) {
 	      //hit is an end particle:
 	      addParticle(hit); //The bundle object has the rest of the processing.
 	      if(getPositron() != NULL && getElectron() != NULL){
+		//Start analysis
 		init_hitmap(inlab);
-		double e = acos(getCosTheta(getElectron(), inlab));
-		double p = acos(getCosTheta(getPositron(), inlab));
-		_cose->Fill(e);
-		_cosp->Fill(p);
-		_cos->Fill(e+p);
+		//Ent analysis
 		electron=NULL;
 		positron=NULL;
-
 	      }
             }//end final state   
         }//end for
@@ -152,6 +148,7 @@ void first::end(){
   plotHitMiss(_hh, {electronStore.hh, positronStore.hh});
   plotHitMiss(_mm, {electronStore.mm, positronStore.mm});
   plotHitMiss(_hm, {electronStore.hm, positronStore.hm, electronStore.mh, positronStore.mh});
+  //  plotHistogram
   _rootfile->Write();
 }
 
@@ -212,8 +209,12 @@ void first::graphHitStatus(const double*  momentum, int id, bool lab){
     info += 1;
     break;
   }
-  //cout << "# " << info << endl;
+  // info holds an number between 0-772.
+  // First digit (ones) represent number of particles that have been checked. example 002 - two paritles analysied to far. 
+  // Secont digit (tens) represents the electron. exmaple 010 - hit positron
+  // Third digit (hundreds) represents the positron. example: 700 - miss electron
   // 1=hit; 7=miss; positron>electron;
+
   if(info%10==2){
     // Electron-Positron
     // Hit-Hit
@@ -222,6 +223,9 @@ void first::graphHitStatus(const double*  momentum, int id, bool lab){
       positronStore.hit++;
       electronStore.hh.push_back(getMomentum(getElectron(), lab));
       positronStore.hh.push_back(getMomentum(getPositron(), lab));
+      electronStore.hh.push_back(getTheta(getElectron(), lab));
+      positronStore.hh.push_back(getTheta(getPositron(), lab));
+      colinearityStore.hh_colinearity.push_back(getColinearity(lab));
     }
     // Miss-Miss
     else if(info%100/10==7 && info%1000/100==7){
@@ -229,6 +233,9 @@ void first::graphHitStatus(const double*  momentum, int id, bool lab){
       positronStore.miss++;
       electronStore.mm.push_back(getMomentum(getElectron(), lab));
       positronStore.mm.push_back(getMomentum(getPositron(), lab));
+      electronStore.mm.push_back(getTheta(getElectron(), lab));
+      positronStore.mm.push_back(getTheta(getPositron(), lab));
+      colinearityStore.mm_colinearity.push_back(getColinearity(lab));
     }
     // Miss-Hit
     else if(info%100/10==7 && info%1000/100==1){
@@ -236,6 +243,9 @@ void first::graphHitStatus(const double*  momentum, int id, bool lab){
       positronStore.hit++;
       electronStore.mh.push_back(getMomentum(getElectron(), lab));
       positronStore.mh.push_back(getMomentum(getPositron(), lab));
+      electronStore.mh.push_back(getTheta(getElectron(), lab));
+      positronStore.mh.push_back(getTheta(getPositron(), lab));
+      colinearityStore.mh_colinearity.push_back(getColinearity(lab));
     }
     // Hit-Miss
     else if(info%100/10==1 && info%1000/100==7){
@@ -243,6 +253,9 @@ void first::graphHitStatus(const double*  momentum, int id, bool lab){
       positronStore.miss++;
       electronStore.hm.push_back(getMomentum(getElectron(), lab));
       positronStore.hm.push_back(getMomentum(getPositron(), lab));
+      electronStore.hm.push_back(getTheta(getElectron(), lab));
+      positronStore.hm.push_back(getTheta(getPositron(), lab));
+      colinearityStore.hm_colinearity.push_back(getColinearity(lab));
     }
   }
 }
@@ -256,11 +269,19 @@ void first::print(string _input){
     plotHotMiss(p, {momentum});
     }*/
 
- //Used to plot multiple vectors on a plot.
+//Used to plot multiple vectors on a plot.
 void first::plotHitMiss(TH2F* p, initializer_list<vector<double*>> momentums){
     for(vector<double*> arr: momentums){
       for(double* m: arr){
 	p->Fill(m[0], m[1]);
+      }
+    }
+  }
+//Used to plot multiple vectors on a plot.
+void first::plotHistogram(TH1F* p, initializer_list<vector<double>> vals){
+    for(vector<double> arr: vals){
+      for(double val: arr){
+	p->Fill(val);
       }
     }
   }
@@ -269,11 +290,18 @@ void first::plotHitMiss(TH2F* p, initializer_list<vector<double*>> momentums){
 //-- Physics Section --\\
 
 //Function used to calculate the angle difference (colinearity) using dot products.
-double first::get_colinearity(bool lab){
+double first::getColinearity(bool lab){
   //Getting angle between electron and positron using dot products.
   double dot   = getDotProduct(getPositron(), getElectron());
   double mag_B = getMagnitude( getElectron());
   double mag_A = getMagnitude( getPositron());
+  double val = dot/(mag_A*mag_B);
+  return val;
+}
+double first::getOpenAngle(double* A, double* B){
+  double dot   = getDotProduct(A,B);
+  double mag_B = getMagnitude( B);
+  double mag_A = getMagnitude( A);
   double val = dot/(mag_A*mag_B);
   return val;
 }
@@ -364,10 +392,13 @@ void first::addPhoton(MCParticle* _input){
  double first::getMagnitude(double*m){
   return sqrt(m[0]*m[0] + m[1]*m[1] + m[2]*m[2]);
 }
+double first::getDotProduct(double* a, double* b){
+ return (a[0]*b[0] + a[1]*b[1] + a[2]*b[2]);
+}
 double first::getDotProduct(MCParticle* A, MCParticle* B, bool lab){
   double* a = getMomentum(A, lab);
   double* b = getMomentum(B, lab);
-  return (a[0]*b[0] + a[1]*b[1] + a[2]*b[2]);
+  return getDotProduct(a,b);
 }
 double*  first::getMomentum(MCParticle* _input, bool lab){
   double x = _input->getMomentum()[0];

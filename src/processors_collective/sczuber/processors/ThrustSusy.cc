@@ -76,12 +76,13 @@ ThrustSusy::ThrustSusy() : Processor("ThrustSusy") {
             _typeOfThrustSusyFinder , 2 ) ;
     registerProcessorParameter( "thrustDetectability",
             "Detectability of the Thrust Axis/Value to be used:\n#\t0 : True \n#t1 : Detectable \n#t2 : Detected" ,
-            _thrustDetectability, 1 );
+            _thrustDetectability, 2 );
 }
 
 
 
-void ThrustSusy::init() { 
+void ThrustSusy::init() {
+    cout << "entered init" << endl;  
     streamlog_out(DEBUG)  << "   init called  " << std::endl ;
 
     if(_thrustDetectability==0){
@@ -135,6 +136,7 @@ void ThrustSusy::init() {
 void ThrustSusy::processRunHeader( LCRunHeader* run) { 
     //run->parameters().setValue("thrust",12300321);
     //    _nRun++ ;
+    cout << "Entered processRunHeader" << endl; 
 } 
 
 
@@ -142,7 +144,7 @@ void ThrustSusy::processRunHeader( LCRunHeader* run) {
 void ThrustSusy::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
-
+    cout << "EVENT: "<< _nEvt << endl; 
     _inParVec = evt->getCollection( _colName) ;
     cout << "num of elements " << _inParVec->getNumberOfElements() << endl;
     if (!_partMom.empty()) _partMom.clear();
@@ -282,8 +284,9 @@ void ThrustSusy::processEvent( LCEvent * evt ) {
     double ptaY = _principleThrustSusyAxis.y();
     double ptaZ = _principleThrustSusyAxis.z();
 
-    double cosTT = ptaZ; // cosine of the theta angle of thrust axis
-
+    double cosTT = abs(ptaZ); // cosine of the theta angle of thrust axis
+    cout << "cos   "<< ptaZ<< endl;
+    cout << "|cos| "<<abs(ptaZ) << endl; 
 
     if(_thrustDetectability == 0){
         _TV_T->Fill(_principleThrustSusyValue);
