@@ -17,6 +17,15 @@
  * author Summer Zuber 
  * March 4, 2017 
  *
+ * In order to analyze the kinematic event oversables 
+ * 'S', 'V', and 'M' of two-photon events 
+ * S = sum of the magnitudes of the transerve momentum
+ * of each particle 
+ * V = magnitude of the vector sum of teh transverse mometum 
+ * of each particle 
+ * M = sqrt((sum(energies))^(2)-((sum(px))^(2)+(sum(py))^(2)+(sum(pz))^(2)) )
+ * (mass of event) 
+ *
  */
 
 #include "TwoPhotonSVM.h"
@@ -80,17 +89,17 @@ void TwoPhotonSVM::init() {
     
     _rootfile = new TFile("TwoPhotonSVM_eW.pW.I39212.root", "RECREATE");
 
-    _S_TRU = new TH1F("S_TRU", "True Scalar",100,0,20);
-    _S_DAB = new TH1F("S_DAB", "Detectable Scalar",100,0,20); 
-    _S_DED = new TH1F("S_DED", "Detected Scalar",100,0,20); 
+    _S_TRU = new TH1F("S_TRU", "True Scalar",80,0,20);
+    _S_DAB = new TH1F("S_DAB", "Detectable Scalar",80,0,20); 
+    _S_DED = new TH1F("S_DED", "Detected Scalar",80,0,20); 
    
-    _V_TRU = new TH1F("V_TRU", "True Vector",100,0,20);
-    _V_DAB = new TH1F("V_DAB", "Detectable Vector",100,0,20); 
-    _V_DED = new TH1F("V_DED", "Detected Vector",100,0,20); 
+    _V_TRU = new TH1F("V_TRU", "True Vector",80,0,20);
+    _V_DAB = new TH1F("V_DAB", "Detectable Vector",80,0,20); 
+    _V_DED = new TH1F("V_DED", "Detected Vector",80,0,20); 
     
-    _M_TRU = new TH1F("M_TRU", "True Mass",100,0,20);
-    _M_DAB = new TH1F("M_DAB", "Detectable Mass",100,0,20); 
-    _M_DED = new TH1F("M_DED", "Detected Mass",100,0,20); 
+    _M_TRU = new TH1F("M_TRU", "True Mass",80,0,20);
+    _M_DAB = new TH1F("M_DAB", "Detectable Mass",80,0,20); 
+    _M_DED = new TH1F("M_DED", "Detected Mass",80,0,20); 
     
     //irameters() ;
     // config ranlux 
@@ -145,7 +154,7 @@ void TwoPhotonSVM::processEvent( LCEvent * evt ) {
         catch(const std::exception& e){
             cout << "exception caught with message "<< e.what() <<"\n";
         }
-        if (stat==1) continue;
+        if (stat != 1) continue;
         double energy = aPart->getEnergy();
         if(id == 11 && energy > electronEnergy){
             electronI = n;
@@ -168,8 +177,8 @@ void TwoPhotonSVM::processEvent( LCEvent * evt ) {
             cout << "exception caught with message " << e.what() << "\n";
         }
         if(stat==1){
-            if(n==electronI) continue ;
-            if(n==positronI) continue ; 
+            if(n==electronI) continue ; // not including the 
+            if(n==positronI) continue ; // initial electron and positron 
             cout << "id: "<< id<< endl;
             const double* P = aPart->getMomentum();
             double PMag = sqrt(P[0]*P[0]+P[1]*P[1]+P[2]*P[2]);
