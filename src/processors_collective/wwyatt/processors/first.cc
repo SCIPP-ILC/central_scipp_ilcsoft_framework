@@ -44,6 +44,9 @@ static TH2F* _hm;
 static TH1F* _cos;
 static TH1F* _cosp;
 static TH1F* _cose;
+static TH1F* _mmcos;
+static TH1F* _mmcosp;
+static TH1F* _mmcose;
 static bool inlab = false;
 //th2f hitmap
 //th1f histogram
@@ -71,7 +74,9 @@ void first::init() {
     _cos = new TH1F("Theta", "Theta Distribution", 300, -1,1);
     _cose = new TH1F("ETheta", "Theta Electron Distribution", 300, -1,1);
     _cosp = new TH1F("PTheta", "Theta Positron Distribution", 300, -1,1);
-
+    _mmcos = new TH1F("mmTheta", "miss miss Colinearity Distribution", 300, -1.1,1.1);
+    _mmcosp = new TH1F("mmThetaP", "miss miss Theta Positron Distribution", 300, -3.2,3.2);
+    _mmcose = new TH1F("mmThetaE", "miss miss Theta Electron Dstribution", 300, -3.2,3.2);
     //    _energy = new TH1F("energy", "Energy", 520.0,  0.0, 260.0);
     /*    _hitmiss = new TH1F("hm", "Hit Miss Ratio", 5, -1, 2);
     _hitmap1 = new TH2F("pos1", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
@@ -117,7 +122,7 @@ void first::processEvent( LCEvent * evt ) {
 	      if(getPositron() != NULL && getElectron() != NULL){
 		//Start analysis
 		init_hitmap(inlab);
-		//Ent analysis
+		//End analysis
 		electron=NULL;
 		positron=NULL;
 	      }
@@ -145,10 +150,13 @@ void first::end(){
   print("mm: " + to_string(electronStore.mm.size()));
 
   //Making thoes hit-miss plots on the data. 
-  plotHitMiss(_hh, {electronStore.hh, positronStore.hh});
+  //  plotHitMiss(_hh, {electronStore.hh, positronStore.hh});
   plotHitMiss(_mm, {electronStore.mm, positronStore.mm});
-  plotHitMiss(_hm, {electronStore.hm, positronStore.hm, electronStore.mh, positronStore.mh});
+  //  plotHitMiss(_hm, {electronStore.hm, positronStore.hm, electronStore.mh, positronStore.mh});
   //  plotHistogram
+  plotHistogram(_mmcos, {colinearityStore.mm_colinearity});
+  plotHistogram(_mmcosp, {electronStore.mm_theta});
+  plotHistogram(_mmcose, {positronStore.mm_theta});
   _rootfile->Write();
 }
 
@@ -223,8 +231,8 @@ void first::graphHitStatus(const double*  momentum, int id, bool lab){
       positronStore.hit++;
       electronStore.hh.push_back(getMomentum(getElectron(), lab));
       positronStore.hh.push_back(getMomentum(getPositron(), lab));
-      electronStore.hh.push_back(getTheta(getElectron(), lab));
-      positronStore.hh.push_back(getTheta(getPositron(), lab));
+      electronStore.hh_theta.push_back(getTheta(getElectron(), lab));
+      positronStore.hh_theta.push_back(getTheta(getPositron(), lab));
       colinearityStore.hh_colinearity.push_back(getColinearity(lab));
     }
     // Miss-Miss
@@ -233,8 +241,8 @@ void first::graphHitStatus(const double*  momentum, int id, bool lab){
       positronStore.miss++;
       electronStore.mm.push_back(getMomentum(getElectron(), lab));
       positronStore.mm.push_back(getMomentum(getPositron(), lab));
-      electronStore.mm.push_back(getTheta(getElectron(), lab));
-      positronStore.mm.push_back(getTheta(getPositron(), lab));
+      electronStore.mm_theta.push_back(getTheta(getElectron(), lab));
+      positronStore.mm_theta.push_back(getTheta(getPositron(), lab));
       colinearityStore.mm_colinearity.push_back(getColinearity(lab));
     }
     // Miss-Hit
@@ -243,8 +251,8 @@ void first::graphHitStatus(const double*  momentum, int id, bool lab){
       positronStore.hit++;
       electronStore.mh.push_back(getMomentum(getElectron(), lab));
       positronStore.mh.push_back(getMomentum(getPositron(), lab));
-      electronStore.mh.push_back(getTheta(getElectron(), lab));
-      positronStore.mh.push_back(getTheta(getPositron(), lab));
+      electronStore.mh_theta.push_back(getTheta(getElectron(), lab));
+      positronStore.mh_theta.push_back(getTheta(getPositron(), lab));
       colinearityStore.mh_colinearity.push_back(getColinearity(lab));
     }
     // Hit-Miss
@@ -253,8 +261,8 @@ void first::graphHitStatus(const double*  momentum, int id, bool lab){
       positronStore.miss++;
       electronStore.hm.push_back(getMomentum(getElectron(), lab));
       positronStore.hm.push_back(getMomentum(getPositron(), lab));
-      electronStore.hm.push_back(getTheta(getElectron(), lab));
-      positronStore.hm.push_back(getTheta(getPositron(), lab));
+      electronStore.hm_theta.push_back(getTheta(getElectron(), lab));
+      positronStore.hm_theta.push_back(getTheta(getPositron(), lab));
       colinearityStore.hm_colinearity.push_back(getColinearity(lab));
     }
   }

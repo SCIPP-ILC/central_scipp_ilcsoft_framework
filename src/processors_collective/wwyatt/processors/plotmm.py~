@@ -1,0 +1,8 @@
+from plot import plot
+hist=[
+"mm_data.root",
+]
+hm=[
+'mm_data.root',
+]
+plot(hist, names, "cos", True)
