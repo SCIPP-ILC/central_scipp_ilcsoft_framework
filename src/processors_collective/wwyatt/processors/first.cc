@@ -50,7 +50,10 @@ static TH1F* _mmcose;
 static bool inlab = false;
 //th2f hitmap
 //th1f histogram
-
+static double delta = 0;
+static int delta_count = 0;
+static double d=0;
+static int d_count = 0;
 first::first() : Processor("first") {
     // modify processor description
     _description = "Protype Processor" ;
@@ -102,6 +105,9 @@ void first::processRunHeader( LCRunHeader* run) {
 //    _nRun++ ;
 } 
 
+void printMomentum(double * m, string prompt){
+  cout << prompt << " (" << m[0]<< ", "<<m[1] << ", " <<m[2]<< ")" << endl;
+}
 
 void first::processEvent( LCEvent * evt ) { 
     LCCollection* col = evt->getCollection( _colName );
@@ -133,7 +139,6 @@ void first::processEvent( LCEvent * evt ) {
 }
 
 
-
 void first::check( LCEvent * evt ) { 
     // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
@@ -148,7 +153,8 @@ void first::end(){
   print("hm: " + to_string(electronStore.hm.size()));
   print("mh: " + to_string(electronStore.mh.size()));
   print("mm: " + to_string(electronStore.mm.size()));
-
+  cout << "delta: " << delta/delta_count << endl;
+  cout << "d: " << d/d_count << endl;
   //Making thoes hit-miss plots on the data. 
   //  plotHitMiss(_hh, {electronStore.hh, positronStore.hh});
   plotHitMiss(_mm, {electronStore.mm, positronStore.mm});
@@ -244,6 +250,17 @@ void first::graphHitStatus(const double*  momentum, int id, bool lab){
       electronStore.mm_theta.push_back(getTheta(getElectron(), lab));
       positronStore.mm_theta.push_back(getTheta(getPositron(), lab));
       colinearityStore.mm_colinearity.push_back(getColinearity(lab));
+		if(getColinearity(inlab)>-.5){
+		  //printMomentum(getMomentum(getPositron(), inlab), "positron");
+		  //		  printMomentum(getMomentum(getElectron(), inlab), "electron");
+		  //		  cout << "delta: " << getMomentum(getPositron(), inlab)[2]-getMomentum(getElectron(), inlab)[2] << endl;
+		  delta += getMomentum(getPositron(), inlab)[2]-getMomentum(getElectron(), inlab)[2];
+		  delta_count += 1;
+		}else{
+		  d += getMomentum(getPositron(), inlab)[2]-getMomentum(getElectron(), inlab)[2];
+		  d_count += 1;
+		}
+
     }
     // Miss-Hit
     else if(info%100/10==7 && info%1000/100==1){
