@@ -48,6 +48,14 @@ static TH1F* _mmcos;
 static TH1F* _mmcosp;
 static TH1F* _mmcose;
 static bool inlab = false;
+static TH1F* _outliers;
+static TH1F* _inliers;
+static TH1F* _outliersP;
+static TH1F* _outliersE;
+static TH1F* _inliersE;
+static TH1F* _inliersP;
+
+
 //th2f hitmap
 //th1f histogram
 static double delta = 0;
@@ -80,6 +88,12 @@ void first::init() {
     _mmcos = new TH1F("mmTheta", "miss miss Colinearity Distribution", 300, -1.1,1.1);
     _mmcosp = new TH1F("mmThetaP", "miss miss Theta Positron Distribution", 300, -3.2,3.2);
     _mmcose = new TH1F("mmThetaE", "miss miss Theta Electron Dstribution", 300, -3.2,3.2);
+    _outliers = new TH1F("out", "The Outliers Z", 300, -550,550);
+    _outliersP = new TH1F("outP", "The OutliersP Z", 300, -550,550);
+    _outliersE = new TH1F("outE", "The OutliersE Z", 300, -550,550);
+    _inliers = new TH1F("in", "The Inliers Z", 300, -550, 550);
+    _inliersP = new TH1F("inP", "The InliersP Z", 300, -550, 550);
+    _inliersE = new TH1F("inE", "The InliersE Z", 300, -550, 550);
     //    _energy = new TH1F("energy", "Energy", 520.0,  0.0, 260.0);
     /*    _hitmiss = new TH1F("hm", "Hit Miss Ratio", 5, -1, 2);
     _hitmap1 = new TH2F("pos1", "Position Distribution On Beamcal", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
@@ -108,6 +122,8 @@ void first::processRunHeader( LCRunHeader* run) {
 void printMomentum(double * m, string prompt){
   cout << prompt << " (" << m[0]<< ", "<<m[1] << ", " <<m[2]<< ")" << endl;
 }
+
+
 
 void first::processEvent( LCEvent * evt ) { 
     LCCollection* col = evt->getCollection( _colName );
@@ -163,6 +179,7 @@ void first::end(){
   plotHistogram(_mmcos, {colinearityStore.mm_colinearity});
   plotHistogram(_mmcosp, {electronStore.mm_theta});
   plotHistogram(_mmcose, {positronStore.mm_theta});
+  
   _rootfile->Write();
 }
 
@@ -250,14 +267,23 @@ void first::graphHitStatus(const double*  momentum, int id, bool lab){
       electronStore.mm_theta.push_back(getTheta(getElectron(), lab));
       positronStore.mm_theta.push_back(getTheta(getPositron(), lab));
       colinearityStore.mm_colinearity.push_back(getColinearity(lab));
+      double eZ = getMomentum(getElectron(), inlab)[2];
+      double pZ = getMomentum(getPositron(), inlab)[2];
+      double diff = eZ-pZ;
 		if(getColinearity(inlab)>-.5){
 		  //printMomentum(getMomentum(getPositron(), inlab), "positron");
 		  //		  printMomentum(getMomentum(getElectron(), inlab), "electron");
 		  //		  cout << "delta: " << getMomentum(getPositron(), inlab)[2]-getMomentum(getElectron(), inlab)[2] << endl;
-		  delta += getMomentum(getPositron(), inlab)[2]-getMomentum(getElectron(), inlab)[2];
+		  _outliers->Fill(diff);
+		  _outliersP->Fill(pZ);
+		  _outliersE->Fill(eZ);
+		  delta += diff;
 		  delta_count += 1;
 		}else{
-		  d += getMomentum(getPositron(), inlab)[2]-getMomentum(getElectron(), inlab)[2];
+		  _inliers->Fill(diff);
+		  _inliersP->Fill(pZ);
+		  _inliersE->Fill(eZ);
+		  d += diff;
 		  d_count += 1;
 		}
 

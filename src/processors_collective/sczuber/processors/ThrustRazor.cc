@@ -140,7 +140,8 @@ void ThrustRazor::processRunHeader( LCRunHeader* run) {
 void ThrustRazor::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
-    cout << "EVENT: " << _nEvt << endl; 
+    cout << "EVENT: " << _nEvt << endl;
+    cout << "colName "<<_colName << endl; 
     _inParVec = evt->getCollection( _colName) ;
     cout << "num of elements " << _inParVec->getNumberOfElements() << endl;
     if (!_partMom.empty()) _partMom.clear();
@@ -187,7 +188,7 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
                     _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) );
                 }
             }
-            cout <<"_thrustDetectability : " << _thrustDetectability << endl;
+            
             if(_thrustDetectability == 2){
                 cout << " is Detected : "<<isDetected<< endl; 
                 if(isDetected){ 
@@ -270,7 +271,7 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
     streamlog_out( DEBUG4 ) << " thrust: " << _principleThrustRazorValue << " TV: " << _principleThrustRazorAxis << endl;
     streamlog_out( DEBUG4 ) << "  major: " << _majorThrustRazorValue << " TV: " << _majorThrustRazorAxis << endl;
     streamlog_out( DEBUG4 ) << "  minor: " << _minorThrustRazorValue << " TV: " << _minorThrustRazorAxis << endl;
-    cout << "EVENT: " << _nEvt << endl;
+    //cout << "EVENT: " << _nEvt << endl;
     cout << " thrust: " << _principleThrustRazorValue << " TV: " << _principleThrustRazorAxis << endl;
     cout <<"                       "<< _principleThrustRazorAxis.x()<<","<< _principleThrustRazorAxis.y()<< ","<<_principleThrustRazorAxis.z()<<endl;
     cout << "  major: " << _majorThrustRazorValue << " TV: " << _majorThrustRazorAxis << endl;
@@ -280,26 +281,7 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
     double ptaY = _principleThrustRazorAxis.y();
     double ptaZ = _principleThrustRazorAxis.z();
 
-    double cosTT = ptaZ; // cosine of the theta angle of thrust axis
-
-    /*
-       if(_thrustDetectability == 0){
-       _TV_T->Fill(_principleThrustRazorValue);
-       _TA_T->Fill(cosTT);
-       }
-       if(_thrustDetectability == 1){
-
-       _TV_DAB->Fill(_principleThrustRazorValue);
-       _TA_DAB->Fill(cosTT);
-       }
-       if(_thrustDetectability == 2){
-
-       _TV_DED->Fill(_principleThrustRazorValue);
-       _TA_DED->Fill(cosTT);
-       }
-       */
     double vec[2][3][4]; // jet 1, jet 2 : true detectable, detected : energy, momx, momy, momz
-
     double Rvec[3][4]; // true, detectable, detected : energy, px, py, pz 
 
     //int id, stat; 
@@ -319,10 +301,10 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
             const double* partMom = aPart->getMomentum();
             double part4mom[4];
 
-            part4mom[0] =  aPart->getEnergy(); 
+            part4mom[0] = aPart->getEnergy(); 
             part4mom[1] = partMom[0];
-            part4mom[2] =partMom[1]; 
-            part4mom[3] =partMom[2];   
+            part4mom[2] = partMom[1]; 
+            part4mom[3] = partMom[2];   
             double pta[3] = {ptaX, ptaY, ptaZ};
 
             cout << "id      : " << id << endl;  
@@ -463,6 +445,21 @@ void ThrustRazor::end(){
 }
 
 int ThrustRazor::TassoThrustRazor(){
+    int ThrustError = 0; 
+    if(_partMom.size()<=0)
+    {
+        ThrustError = -1;
+    }
+    if(_partMom.size()==1)
+    {
+        cout << "partMom.size"<< _partMom.size() << endl; 
+        _principleThrustRazorValue = 1;
+        _principleThrustRazorAxis = _partMom[0];
+    }
+    return ThrustError; 
+}
+/*
+int ThrustRazor::TassoThrustRazor(){
     int ThrustError = 0;
     Hep3Vector tvec;
 
@@ -550,7 +547,7 @@ int ThrustRazor::TassoThrustRazor(){
     }
     return ThrustError;
 }
-
+*/
 int ThrustRazor::JetsetThrustRazor(){
     const int nwork=11,iFastMax = 4,iGood=2;
     const float dConv=0.0001; // 0.0001
