@@ -57,12 +57,6 @@ static TFile* _rootfile;
 static TH1F* _R_T;
 static TH1F* _R_DAB;
 static TH1F* _R_DED;
-//static TH1F* _TV_T;
-//static TH1F* _TV_DAB;
-//static TH1F* _TV_DED;
-//static TH1F* _TA_T;
-//static TH1F* _TA_DAB;
-//static TH1F* _TA_DED;
 
 ThrustRazor ThrustRazor;
 
@@ -79,7 +73,7 @@ ThrustRazor::ThrustRazor() : Processor("ThrustRazor") {
             _typeOfThrustRazorFinder , 2 ) ;
     registerProcessorParameter( "thrustDetectability",
             "Detectability of the Thrust Axis/Value to be used:\n#\t0 : True \n#t1 : Detectable \n#t2 : Detected" ,
-            _thrustDetectability, 2 );
+            _thrustDetectability, 1 );
 }
 
 
@@ -89,20 +83,12 @@ void ThrustRazor::init() {
 
     if(_thrustDetectability==0){_rootfile = new TFile("ThrustRazor_.39133._T.root","RECREATE");
         _R_T = new TH1F("R_T", "R =MTR/MR",100,0,10);
-        //_TV_T = new TH1F("TV_T", "Thrust Value", 100, 0,1);
-        //_TA_T = new TH1F("TA_T", "Cosine of Thrust Angle", 100, 0,1);
     }
     if(_thrustDetectability==1){_rootfile = new TFile("ThrustRazor_.39133._DAB.root","RECREATE");
         _R_DAB = new TH1F("R_DAB", "R =MTR/MR",100,0,10);
-        //_TV_DAB = new TH1F("TV_DAB", "Thrust Value", 100, 0,1);
-        //_TA_DAB = new TH1F("TA_DAB", "Cosine of Thrust Angle", 100, 0,1);
-
     }
-    if(_thrustDetectability==2){_rootfile = new TFile("ThrustRazor_.39000._DED.root","RECREATE");
+    if(_thrustDetectability==2){_rootfile = new TFile("ThrustRazor_.39133._DED.root","RECREATE");
         _R_DED = new TH1F("R_DED", "R =MTR/MR",100,0,10);
-        //_TV_DED = new TH1F("TV_DED", "Thrust Value", 100, 0,1);
-        //_TA_DED = new TH1F("TA_DED", "Cosine of Thrust Angle", 100, 0,1);
-
     }
 
     // irameters() ;
@@ -115,13 +101,13 @@ void ThrustRazor::init() {
     {
         long int ss=1234;
         myrnd.setSeeds(&ss,4);
-        myrnd.showStatus();
+        //myrnd.showStatus();
     }
     else
     {
         rndcfgfile.close();
-        myrnd.restoreStatus(filename.c_str());
-        myrnd.showStatus();
+        //myrnd.restoreStatus(filename.c_str());
+      //  myrnd.showStatus();
     } // if file not existusually a good idea to
     //printParameters() ;
     _nEvt = 0 ;
@@ -140,8 +126,7 @@ void ThrustRazor::processRunHeader( LCRunHeader* run) {
 void ThrustRazor::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
-    cout << "EVENT: " << _nEvt << endl;
-    cout << "colName "<<_colName << endl; 
+    cout << "EVENT: " << _nEvt << endl; 
     _inParVec = evt->getCollection( _colName) ;
     cout << "num of elements " << _inParVec->getNumberOfElements() << endl;
     if (!_partMom.empty()) _partMom.clear();
