@@ -173,7 +173,7 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
         pair<float,float> pos;
         pos.first = endx;
         pos.second = endy;
-	int ID = scipp_ilc::beamcal_recon_xy::getID(end_x,end_y);
+	//	int ID = scipp_ilc::beamcal_recon_xy::getID(end_x,end_y);
 	int ID = scipp_ilc::simple_list_geometry_xy::getID(end_x,end_y);
 
     //    if(!detected){                              //Print out xy-coords of not detected

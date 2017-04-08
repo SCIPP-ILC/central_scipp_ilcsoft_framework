@@ -73,14 +73,14 @@ ThrustRazor::ThrustRazor() : Processor("ThrustRazor") {
             _typeOfThrustRazorFinder , 2 ) ;
     registerProcessorParameter( "thrustDetectability",
             "Detectability of the Thrust Axis/Value to be used:\n#\t0 : True \n#t1 : Detectable \n#t2 : Detected" ,
-            _thrustDetectability, 2 );
+            _thrustDetectability, 1 );
 }
 
 
 
 void ThrustRazor::init() { 
     streamlog_out(DEBUG)  << "   init called  " << std::endl ;
-    cout << "initialized" << endl;
+
     if(_thrustDetectability==0){_rootfile = new TFile("ThrustRazor_.39133._T.root","RECREATE");
         _R_T = new TH1F("R_T", "R =MTR/MR",100,0,10);
     }
@@ -101,17 +101,17 @@ void ThrustRazor::init() {
     {
         long int ss=1234;
         myrnd.setSeeds(&ss,4);
-        myrnd.showStatus();
+        //myrnd.showStatus();
     }
     else
     {
         rndcfgfile.close();
-        myrnd.restoreStatus(filename.c_str());
-        myrnd.showStatus();
+        //myrnd.restoreStatus(filename.c_str());
+      //  myrnd.showStatus();
     } // if file not existusually a good idea to
     //printParameters() ;
     _nEvt = 0 ;
-    cout << "initialized2" << endl;
+
 }
 
 
@@ -126,7 +126,6 @@ void ThrustRazor::processRunHeader( LCRunHeader* run) {
 void ThrustRazor::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
-    cout << "initialized3" << endl;
     cout << "EVENT: " << _nEvt << endl; 
     _inParVec = evt->getCollection( _colName) ;
     cout << "num of elements " << _inParVec->getNumberOfElements() << endl;

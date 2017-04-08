@@ -66,8 +66,11 @@ static TProfile2D* _hitmap_zeros;
 static TProfile2D* _test_slice;
 static TH2F* _hlego;
 static TH2F* _hlego_zeros;
+static TH2F* _hlego_inefficiency;
 static TCanvas* _c2;
 
+static unordered_map<pair<float,float>,double>* _all_map;
+static unordered_map<pair<float,float>,double>* _zeros_map;
 //vector<pair<float,float>> bgd_plot_xy;
 
 
@@ -104,7 +107,7 @@ void BeamCalRecon_xy::init() {
     std::stringstream s1;
 
 
-    s1 << "LEGO 1s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin" << endl;
+    s1 << "LEGO 1s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
     const char* LEGOtitle = s1.str().c_str();
     _hlego = new TH2F("hlego", LEGOtitle ,LEGObins ,-150,150,LEGObins,-150,150);
 
@@ -112,6 +115,10 @@ void BeamCalRecon_xy::init() {
     s1 << "LEGO 0s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
     const char* LEGOtitlez = s1.str().c_str();
     _hlego_zeros = new TH2F("hlego_0s", LEGOtitlez ,LEGObins,-150,150,LEGObins,-150,150);
+
+    s1.str("");
+    s1 << "LEGO , inefficiency"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
+    _hlego_inefficiency = new TH2F("hlego_inefficiency", LEGOtitlez ,LEGObins,-150,150,LEGObins,-150,150);
 
     // TH2F
     // TProfile2D
@@ -159,11 +166,20 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     signal_cluster = scipp_ilc::beamcal_recon_xy::reconstruct_beamcal_event(signal_event);
     bool detected = signal_cluster->exceeds_sigma_cut;
 
-    /*
-      if(!detected){                              //Print out xy-coords of not detected
-      cout << "detected:  " << detected<< "        x-y: "<< endx << "\t" <<endy << endl;
-      }
-    */
+    //      cout << "******************************************************************" << endl;
+    //      cout << "detected:  " << detected<< "        x-y: "<< endx << "\t" <<endy << endl;
+    //      cout << "******************************************************************" << endl;
+    
+        pair<float,float> pos;
+        pos.first = endx;
+        pos.second = endy;
+	int ID = scipp_ilc::beamcal_recon_xy::getID(end_x,end_y);
+
+    //    if(!detected){                              //Print out xy-coords of not detected
+      //      cout << "detected:  " << detected<< "        x-y: "<< endx << "\t" <<endy << endl;
+  //    }
+
+
     //Plot our results with respect to the radius of the signal electron.
     _radeff->Fill(radius,detected);             //bools and ints are basically interchangeable...
     _detected_num += detected;
@@ -178,9 +194,11 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     }else{                                      //Graph of not detected
       _hitmap_zeros->Fill(endx,endy,true);
       _hlego_zeros->Fill(endx,endy,true);
+
+      //      (*_zeros_map)[ID]+= !detected;
     }
     //    cout << _nEvt++ << endl;
-
+    //    (*_all_map)[ID]+= (detected || !detected);
     _hlego->SetFillColor(kYellow);
 }
 
@@ -190,6 +208,12 @@ void BeamCalRecon_xy::check( LCEvent * evt ){
 
 void BeamCalRecon_xy::end(){ 
 
+  //  for(auto bit:*_zeros_map){
+  //    pair<float,float> ID = bit.first;
+  //    double bit_hit = bit.second;
+  //    double all_hit = *_all_map[ID];
+  //    _hlego_inefficiency->Fill(ID.first,ID.second,bit_hit/all_hit)
+  //  }
 
     cout << "\ndetected: " << _detected_num << endl;
     cout << "\n in \'slice\' of beamcal: " << _test_num << endl;
