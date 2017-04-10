@@ -171,14 +171,19 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     //      cout << "******************************************************************" << endl;
     
         pair<float,float> pos;
-        pos.first = endx;
-        pos.second = endy;
-	int ID = scipp_ilc::beamcal_recon_xy::getID(end_x,end_y);
-	int ID = scipp_ilc::simple_list_geometry_xy::getID(end_x,end_y);
+        pos.first = (float) endx;
+        pos.second = (float) endy;
+	
+	string endx_s = std::to_string(pos.first);
+	string endy_s = std::to_string(pos.second);
+	cout << "endx string"<< endx_s << endl;
 
-    //    if(!detected){                              //Print out xy-coords of not detected
-      //      cout << "detected:  " << detected<< "        x-y: "<< endx << "\t" <<endy << endl;
-  //    }
+	string ID = endx_s + "," + endy_s;
+	cout << "ID string"<< ID << endl;
+
+
+	//	int ID = scipp_ilc::beamcal_recon_xy::getID(end_x,end_y);
+	//	int ID = scipp_ilc::simple_list_geometry_xy::getID(end_x,end_y);
 
 
     //Plot our results with respect to the radius of the signal electron.
@@ -195,20 +200,29 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     }else{                                      //Graph of not detected
       _hitmap_zeros->Fill(endx,endy,true);
       _hlego_zeros->Fill(endx,endy,true);
-
-      //      (*_zeros_map)[ID]+= !detected;
+      if((_zeros_map)[pos]>=1.0){
+	(_zeros_map)[pos]+= 1.0;
+      }else{
+	(_zeros_map)[pos] = 1.0;
+     }
     }
+    //    if(!detected){                              //Print out xy-coords of not detected
+    //      cout << "detected:  " << detected<< "        x-y: "<< endx << "\t" <<endy << endl;
+    //    }
+
+
     //    cout << _nEvt++ << endl;
     //    (*_all_map)[ID]+= (detected || !detected);
     _hlego->SetFillColor(kYellow);
 }
 
+
 void BeamCalRecon_xy::check( LCEvent * evt ){
     // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
 
-void BeamCalRecon_xy::end(){ 
 
+void BeamCalRecon_xy::end(){ 
   //  for(auto bit:*_zeros_map){
   //    pair<float,float> ID = bit.first;
   //    double bit_hit = bit.second;
