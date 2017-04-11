@@ -1,10 +1,12 @@
 #ifndef overlay
 #define overlay
 
-#include <OVERLAY/Overlay.h>
+#include <Overlay/Overlay.h>
 #include "lcio.h"
 #include <string>
 #include <EVENT/MCParticle.h>
+
+
 
 using namespace lcio;
 using namespace marlin;

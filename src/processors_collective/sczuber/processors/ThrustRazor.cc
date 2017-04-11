@@ -57,6 +57,9 @@ static TFile* _rootfile;
 static TH1F* _R_T;
 static TH1F* _R_DAB;
 static TH1F* _R_DED;
+static TH1F* _MR_T;
+static TH1F* _MR_DAB;
+static TH1F* _MR_DED; 
 
 ThrustRazor ThrustRazor;
 
@@ -83,11 +86,14 @@ void ThrustRazor::init() {
     cout << "initialized" << endl;
     if(_thrustDetectability==0){_rootfile = new TFile("ThrustRazor_.39133._T.root","RECREATE");
         _R_T = new TH1F("R_T", "R =MTR/MR",100,0,10);
+        _MR_T = new TH1F("MR_T","MR", 100, 0 ,10); 
     }
     if(_thrustDetectability==1){_rootfile = new TFile("ThrustRazor_.39133._DAB.root","RECREATE");
+        _MR_DAB = new TH1F("MR_DAB","MR", 100, 0 ,10); 
         _R_DAB = new TH1F("R_DAB", "R =MTR/MR",100,0,10);
     }
     if(_thrustDetectability==2){_rootfile = new TFile("ThrustRazor_.39133._DED.root","RECREATE");
+        _MR_DED = new TH1F("MR_DED","MR", 100, 0 ,10); 
         _R_DED = new TH1F("R_DED", "R =MTR/MR",100,0,10);
     }
 
@@ -111,22 +117,16 @@ void ThrustRazor::init() {
     } // if file not existusually a good idea to
     //printParameters() ;
     _nEvt = 0 ;
-    cout << "initialized2" << endl;
 }
-
-
 
 void ThrustRazor::processRunHeader( LCRunHeader* run) { 
     //run->parameters().setValue("thrust",12300321);
     //    _nRun++ ;
 } 
 
-
-
 void ThrustRazor::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
-    cout << "initialized3" << endl;
     cout << "EVENT: " << _nEvt << endl; 
     _inParVec = evt->getCollection( _colName) ;
     cout << "num of elements " << _inParVec->getNumberOfElements() << endl;
@@ -145,7 +145,6 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
         catch(const std::exception& e){
             cout << "exception caught with message " << e.what() << "\n";
         }
-
 
         const double* partMom = aPart->getMomentum();
         double partMomMag = sqrt(partMom[0]*partMom[0]+partMom[1]*partMom[1]+partMom[2]*partMom[2]);
@@ -175,17 +174,15 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
                 }
             }
             
-            if(_thrustDetectability == 2){
-                cout << " is Detected : "<<isDetected<< endl; 
+            if(_thrustDetectability == 2){ 
                 if(isDetected){ 
-                    cout << "adding mom to partMom thing"<< endl; 
                     _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
                 }
             }
         } // stat = 1
     } // for particle 
     cout << "end loop #1"<<endl;
-    _nEvt ++ ; // different from original-moved out of for loop - summer 
+   
     //reset variables for output   
     _principleThrustRazorValue = -1;
     _majorThrustRazorValue     = -1;
@@ -270,7 +267,8 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
     double vec[2][3][4]; // jet 1, jet 2 : true detectable, detected : energy, momx, momy, momz
     double Rvec[3][4]; // true, detectable, detected : energy, px, py, pz 
 
-    //int id, stat; 
+    //int id, stat;
+    cout << "start loop 2" << endl;  
     for (int n=0;n<_inParVec->getNumberOfElements() ;n++){
 
         MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
@@ -335,6 +333,7 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
             cout << "finished filling "<< endl;           
         }
     }
+    cout << "end loop 3 "<< endl; 
     int d = _thrustDetectability;
     double beta = (vec[0][d][0]-vec[1][d][0])/(vec[0][d][3]-vec[1][d][3]); // beta using detectable particles 
     double beta2 = pow(beta,2);
@@ -414,6 +413,8 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
     if (_principleThrustRazorValue >= _max) _max = _principleThrustRazorValue;
     if (_principleThrustRazorValue <= _min) _min = _principleThrustRazorValue;
     cout << "End EVENT "<< _nEvt<< endl;
+    
+    _nEvt ++ ; // different from original-moved out of for loop - summer 
 }
 
 

@@ -87,7 +87,7 @@ void TwoPhotonThrustRazor::init() {
     if(_ThrustDetectability==1){_rootfile = new TFile("TwoPhotonThrustRazor_.eW.pW.I39212._DAB.root","RECREATE");
     _R_DAB = new TH1F("R_DAB", "R=MTR/MR",100,0,10);}
     if(_ThrustDetectability==2){_rootfile = new TFile("TwoPhotonThrustRazor_.eW.pW.I39212._DED.root","RECREATE");
-    _R_DED = new TH1F("R_DED", "R=MTR/MR",100,0,10);} 
+    _R_DED = new TH1F("R_DED", "R=MTR/MR",150,0,15);} 
    
     //irameters() ;
 
