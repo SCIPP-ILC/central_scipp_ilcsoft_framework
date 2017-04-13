@@ -18,13 +18,20 @@
  * March 4, 2017 
  *
  * In order to analyze the kinematic event oversables 
- * 'S', 'V', and 'M' of two-photon events 
+ * 'S', 'V', and 'M' of the hadronic system of two-photon events 
+ * (The hadronic system being all final state particles less the initial 
+ * scattered electron and positron)
  * S = sum of the magnitudes of the transerve momentum
  * of each particle 
  * V = magnitude of the vector sum of teh transverse mometum 
  * of each particle 
  * M = sqrt((sum(energies))^(2)-((sum(px))^(2)+(sum(py))^(2)+(sum(pz))^(2)) )
  * (mass of event) 
+ *
+ * We analyze these at three different levels of "detectability"
+ * True: entire hadronic system
+ * Detectable: True less neutrinos 
+ * Detected: Detectable less forward particle with |cos(theta)| > 0.9 
  *
  */
 

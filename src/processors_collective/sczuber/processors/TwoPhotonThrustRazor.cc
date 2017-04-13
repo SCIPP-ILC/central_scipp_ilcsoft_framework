@@ -17,7 +17,9 @@
  * author Summer Zuber 
  * January 18, 2017 
  *
- * Using thrust reconstruction algorithm by: _____
+ * Using thrust reconstruction algorithm by: ____
+ * Used to develope razor variables which here are applied to 
+ * the hadronic system of two-photon events. 
  */
 
 #include "TwoPhotonThrustRazor.h"
@@ -83,12 +85,12 @@ void TwoPhotonThrustRazor::init() {
 
 
     if(_ThrustDetectability==0){_rootfile = new TFile("TwoPhotonThrustRazor_.eW.pW.I39212._T.root","RECREATE");
-    _R_T = new TH1F("R_T", "R=MTR/MR",100,0,10);}
+        _R_T = new TH1F("R_T", "R=MTR/MR",100,0,10);}
     if(_ThrustDetectability==1){_rootfile = new TFile("TwoPhotonThrustRazor_.eW.pW.I39212._DAB.root","RECREATE");
-    _R_DAB = new TH1F("R_DAB", "R=MTR/MR",100,0,10);}
+        _R_DAB = new TH1F("R_DAB", "R=MTR/MR",100,0,10);}
     if(_ThrustDetectability==2){_rootfile = new TFile("TwoPhotonThrustRazor_.eW.pW.I39212._DED.root","RECREATE");
-    _R_DED = new TH1F("R_DED", "R=MTR/MR",150,0,15);} 
-   
+        _R_DED = new TH1F("R_DED", "R=MTR/MR",100,0,10);} 
+
     //irameters() ;
 
     // config ranlux 
@@ -130,7 +132,48 @@ void TwoPhotonThrustRazor::processEvent( LCEvent * evt ) {
     //cout << _inParVec->getNumberOfElements() << endl;
     if (!_partMom.empty()) _partMom.clear();
 
+    MCParticle* high_e;
+    MCParticle* high_p; 
+
     int id, stat; 
+
+    // setting high_e and high_p to a final state electron and positron
+    cout << "Loop #1: set high_e and high_p " << endl; 
+    for(int n=0; n<_inParVec->getNumberOfElements(); n++)
+    {
+        MCParticle* hit = dynamic_cast<MCParticle*>(_inParVec->getElementAt(n));
+        id = hit->getPDG();
+        stat = hit->getGeneratorStatus();
+        if(stat==1){
+            if(id==11){
+                high_e = hit;
+            }
+            if(id==-11){
+                high_p = hit;
+            }
+        }// end final state 
+    } // end for loop
+    cout<< "Loop #2: set high_e and high_p to highest energy ones" << endl; 
+    for (int n = 0; n<_inParVec->getNumberOfElements(); n++)
+    {
+        MCParticle* hit = dynamic_cast<MCParticle*>(_inParVec->getElementAt(n));
+        id = hit->getPDG();
+        stat = hit->getGeneratorStatus();
+        if(stat==1){
+            if(id==11){
+                if(hit->getEnergy()>high_e->getEnergy()){
+                    high_e = hit;
+                }
+            }
+            if(id == -11){
+                if(hit->getEnergy()>high_p->getEnergy()){
+                    high_p = hit;
+                }
+            }
+        }// end final state 
+
+    }//end for loop 
+    cout << " Start Loop #3" << endl; 
     for (int n=0;n<_inParVec->getNumberOfElements() ;n++)
     {
 
@@ -154,21 +197,23 @@ void TwoPhotonThrustRazor::processEvent( LCEvent * evt ) {
                     id == 16 || id == -16 ||
                     id == 18 || id == -18);
             bool isDetectable = (!isDarkMatter && !isNeutrino);
-            bool isDetected = (isDetectable && !isForward); 
+            bool isDetected = (isDetectable && !isForward);
+            if(aPart != high_e && aPart != high_p){ 
 
-            if(_ThrustDetectability == 0){ 
-                _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
-            }
-            if(_ThrustDetectability == 1){
-                if(isDetectable){
-                    _partMom.push_back(Hep3Vector(partMom[0], partMom[1], partMom[2]));
+                if(_ThrustDetectability == 0){ 
+                    _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
                 }
-            }
-            if(_ThrustDetectability == 2){
-                if(isDetected){
-                    _partMom.push_back(Hep3Vector(partMom[0], partMom[1], partMom[2]));
+                if(_ThrustDetectability == 1){
+                    if(isDetectable){
+                        _partMom.push_back(Hep3Vector(partMom[0], partMom[1], partMom[2]));
+                    }
                 }
-            }
+                if(_ThrustDetectability == 2){
+                    if(isDetected){
+                        _partMom.push_back(Hep3Vector(partMom[0], partMom[1], partMom[2]));
+                    }
+                }
+            } // end particle not original e+e-
         } //stat==1
     } // for particle 
     _nEvt ++ ; // different from original-moved out of for loop - summer 
@@ -264,46 +309,48 @@ void TwoPhotonThrustRazor::processEvent( LCEvent * evt ) {
         }
 
         if(stat==1){
-            const double* partMom = aPart->getMomentum();
-            double part4mom[4] = {aPart->getEnergy(), partMom[0], partMom[1], partMom[2]} ;
+            if(aPart != high_e && aPart != high_p){
+                const double* partMom = aPart->getMomentum();
+                double part4mom[4] = {aPart->getEnergy(), partMom[0], partMom[1], partMom[2]} ;
 
-            cout << "id      : " << id << endl;  
-            cout << "Momentum: " << partMom[0] <<" "<< partMom[1] <<" "<< partMom[2]<< endl;
+                cout << "id      : " << id << endl;  
+                cout << "Momentum: " << partMom[0] <<" "<< partMom[1] <<" "<< partMom[2]<< endl;
 
-            double dot = ptaX*partMom[0]+ptaY*partMom[1]+ptaZ*partMom[2]; 
+                double dot = ptaX*partMom[0]+ptaY*partMom[1]+ptaZ*partMom[2]; 
 
-            // need momentum and energy of entire jet 
+                // need momentum and energy of entire jet 
 
-            bool isDarkMatter = (id == 1000022);
-            bool isNeutrino = (
-                    id == 12 || id == -12 ||
-                    id == 14 || id == -14 ||
-                    id == 16 || id == -16 ||
-                    id == 18 || id == -18);
-            double cos = partMom[2]/(sqrt(partMom[0]*partMom[0]+partMom[1]*partMom[1]+partMom[2]*partMom[2]));
-            bool isForward = ( cos > 0.9 || cos < - 0.9);
+                bool isDarkMatter = (id == 1000022);
+                bool isNeutrino = (
+                        id == 12 || id == -12 ||
+                        id == 14 || id == -14 ||
+                        id == 16 || id == -16 ||
+                        id == 18 || id == -18);
+                double cos = partMom[2]/(sqrt(partMom[0]*partMom[0]+partMom[1]*partMom[1]+partMom[2]*partMom[2]));
+                bool isForward = ( cos > 0.9 || cos < - 0.9);
 
-            int i; // jet # 
-            if(dot>0){i=0;}
-            if(dot<0){i=1;}
-            if(dot == 0){i=0;} 
+                int i; // jet # 
+                if(dot>0){i=0;}
+                if(dot<0){i=1;}
+                if(dot == 0){i=0;} 
 
-            vec[i][0][0]+= part4mom[0]; 
-            vec[i][0][1]+= part4mom[1];
-            vec[i][0][2]+= part4mom[2];
-            vec[i][0][3]+= part4mom[3];
-            if (!isDarkMatter && !isNeutrino){
-                vec[i][1][0]+= part4mom[0];
-                vec[i][1][1]+= part4mom[1];
-                vec[i][1][2]+= part4mom[2];
-                vec[i][1][3]+= part4mom[3];
-                if(!isForward){
-                    vec[i][2][0]+= part4mom[0];
-                    vec[i][2][1]+= part4mom[1];
-                    vec[i][2][2]+= part4mom[2];
-                    vec[i][2][3]+= part4mom[3];
+                vec[i][0][0]+= part4mom[0]; 
+                vec[i][0][1]+= part4mom[1];
+                vec[i][0][2]+= part4mom[2];
+                vec[i][0][3]+= part4mom[3];
+                if (!isDarkMatter && !isNeutrino){
+                    vec[i][1][0]+= part4mom[0];
+                    vec[i][1][1]+= part4mom[1];
+                    vec[i][1][2]+= part4mom[2];
+                    vec[i][1][3]+= part4mom[3];
+                    if(!isForward){
+                        vec[i][2][0]+= part4mom[0];
+                        vec[i][2][1]+= part4mom[1];
+                        vec[i][2][2]+= part4mom[2];
+                        vec[i][2][3]+= part4mom[3];
+                    }
                 }
-            }
+            }// end particle not original 
         } //stat == 1 
     } // for particle
     int d = _ThrustDetectability;
@@ -337,21 +384,23 @@ void TwoPhotonThrustRazor::processEvent( LCEvent * evt ) {
         double cos = part4Vec[3]/sqrt(part4Vec[1]*part4Vec[1]+part4Vec[2]*part4Vec[2]+part4Vec[3]*part4Vec[3]);
         bool isForward = (cos > 0.9 || cos < -0.9);
         if(stat ==1){
-            Rvec[0][0]+=R4Vec[0];
-            Rvec[0][1]+=R4Vec[1];
-            Rvec[0][2]+=R4Vec[2];
-            Rvec[0][3]+=R4Vec[3];
-            if(!isDarkMatter && !isNeutrino){
-                Rvec[1][0]+=R4Vec[0];
-                Rvec[1][1]+=R4Vec[1];
-                Rvec[1][2]+=R4Vec[2];
-                Rvec[1][3]+=R4Vec[3];
-                if(!isForward){
-                    Rvec[2][0]+=R4Vec[0];
-                    Rvec[2][1]+=R4Vec[1];
-                    Rvec[2][2]+=R4Vec[2];
-                    Rvec[2][3]+=R4Vec[3];
-                
+            if(aPart != high_e && aPart != high_p){
+                Rvec[0][0]+=R4Vec[0];
+                Rvec[0][1]+=R4Vec[1];
+                Rvec[0][2]+=R4Vec[2];
+                Rvec[0][3]+=R4Vec[3];
+                if(!isDarkMatter && !isNeutrino){
+                    Rvec[1][0]+=R4Vec[0];
+                    Rvec[1][1]+=R4Vec[1];
+                    Rvec[1][2]+=R4Vec[2];
+                    Rvec[1][3]+=R4Vec[3];
+                    if(!isForward){
+                        Rvec[2][0]+=R4Vec[0];
+                        Rvec[2][1]+=R4Vec[1];
+                        Rvec[2][2]+=R4Vec[2];
+                        Rvec[2][3]+=R4Vec[3];
+
+                    }
                 }
             }
         }
