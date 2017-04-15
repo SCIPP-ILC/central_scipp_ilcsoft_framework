@@ -8,7 +8,7 @@
 #include "scipp_ilc_utilities.h"
 #include <TFile.h>
 #include <TH2D.h>
-
+#include <Overlay>
 
 using namespace std;
 using namespace lcio ;

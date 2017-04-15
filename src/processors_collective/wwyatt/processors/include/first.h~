@@ -24,7 +24,7 @@ class first : public Processor {
     vector<double> mh_colinearity;
     vector<double> hm_colinearity;
     vector<double> mm_colinearity;
-  }
+  };
   struct HitMissStore{
     int hit = 0;
     int miss = 0;

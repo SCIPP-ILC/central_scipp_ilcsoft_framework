@@ -5,7 +5,7 @@
 
 #ifdef MARLIN_USE_AIDA
 #include <marlin/AIDAProcessor.h>
-#include "cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/Marlin/v01-08/source/include/marlin/Global.h"
+#include "marlin/Global.h"
 #include "marlin/ProcessorEventSeeder.h"
 
 #include <AIDA/IHistogramFactory.h>

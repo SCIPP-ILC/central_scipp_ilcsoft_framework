@@ -1,7 +1,7 @@
 #ifndef overlay
 #define overlay
 
-#include "Overlay/Overlay.h"
+#include <Overlay/Overlay.h>
 #include "lcio.h"
 #include <string>
 #include <EVENT/MCParticle.h>
