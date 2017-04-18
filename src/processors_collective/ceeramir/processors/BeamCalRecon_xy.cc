@@ -94,6 +94,7 @@ BeamCalRecon_xy::BeamCalRecon_xy() : Processor("BeamCalRecon_xy") {
 
 void BeamCalRecon_xy::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
+    gStyle->SetStatX(0.1);
 
     _rootfile = new TFile(_root_file_name.c_str(),"RECREATE");
     _radeff = new TProfile("radeff","Radial Efficiency",14*2,0.0,140.0,0.0,1.0);
@@ -110,6 +111,18 @@ void BeamCalRecon_xy::init() {
     s1 << "LEGO 1s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
     const char* LEGOtitle = s1.str().c_str();
     _hlego = new TH2F("hlego", LEGOtitle ,LEGObins ,-150,150,LEGObins,-150,150);
+    _hlego->GetXaxis()->SetTitle("X axis (mm)");
+    _hlego->GetYaxis()->SetTitle("Y axis (mm)");
+    _hlego->GetZaxis()->SetTitle("Efficiency");
+
+    _hlego->GetXaxis()->CenterTitle();
+    _hlego->GetYaxis()->CenterTitle();
+    _hlego->GetZaxis()->CenterTitle();
+    //    _hlego->GetXaxis()->SetTitleOffset(1.4);
+    //    _hlego->GetYaxis()->SetTitleOffset(1.6);
+
+    gStyle->SetOptStat(0);
+
 
     s1.str("");
     s1 << "LEGO 0s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
@@ -200,11 +213,11 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     }else{                                      //Graph of not detected
       _hitmap_zeros->Fill(endx,endy,true);
       _hlego_zeros->Fill(endx,endy,true);
-      if((_zeros_map)[pos]>=1.0){
-	(_zeros_map)[pos]+= 1.0;
+      /*      if((_zeros_map)[pos]>=1.0){
+		(_zeros_map)[pos]+= 1.0;
       }else{
-	(_zeros_map)[pos] = 1.0;
-     }
+		(_zeros_map)[pos] = 1.0;
+	}*/
     }
     //    if(!detected){                              //Print out xy-coords of not detected
     //      cout << "detected:  " << detected<< "        x-y: "<< endx << "\t" <<endy << endl;
