@@ -63,7 +63,7 @@ class EventAnalysis_L : public Processor {
   /** Input collection name.
    */
   std::string _colName ;
-
+  
   int _nRun ;
   int _nEvt ;
 } ;

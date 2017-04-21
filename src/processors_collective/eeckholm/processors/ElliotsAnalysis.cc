@@ -57,7 +57,7 @@ ElliotsAnalysis::ElliotsAnalysis() : Processor("ElliotsAnalysis") {
 void ElliotsAnalysis::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile(_root_file_name.c_str(),"RECREATE");
+    _rootfile = new TFile("Elliothitmap.root","RECREATE");
     _hitmap = new TH2F("Elliothitmap","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
 
     // usually a good idea to

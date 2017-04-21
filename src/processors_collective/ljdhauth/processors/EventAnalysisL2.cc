@@ -15,7 +15,7 @@
  * April 5, 2016
  */
 
-#include "ElliotsAnalysis.h"
+#include "EventAnalysisL2.h"
 #include "scipp_ilc_utilities.h"
 #include <iostream>
 
@@ -36,13 +36,13 @@ using namespace marlin;
 using namespace std;
 
 
-ElliotsAnalysis ElliotsAnalysis;
+EventAnalysisL2 EventAnalysisL2;
 
 static TFile* _rootfile;
 static TH2F* _hitmap;
 
 
-ElliotsAnalysis::ElliotsAnalysis() : Processor("ElliotsAnalysis") {
+EventAnalysisL2::EventAnalysisL2() : Processor("EventAnalysisL2") {
     // modify processor description
     _description = "Protype Processor" ;
 
@@ -54,11 +54,11 @@ ElliotsAnalysis::ElliotsAnalysis() : Processor("ElliotsAnalysis") {
 
 
 
-void ElliotsAnalysis::init() { 
+void EventAnalysisL2::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
     _rootfile = new TFile(_root_file_name.c_str(),"RECREATE");
-    _hitmap = new TH2F("Elliothitmap","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
+    _hitmap = new TH2F("hitmap","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
 
     // usually a good idea to
     //printParameters() ;
@@ -70,13 +70,13 @@ void ElliotsAnalysis::init() {
 
 
 
-void ElliotsAnalysis::processRunHeader( LCRunHeader* run) { 
+void EventAnalysisL2::processRunHeader( LCRunHeader* run) { 
 //    _nRun++ ;
 } 
 
 
 
-void ElliotsAnalysis::processEvent( LCEvent * evt ) { 
+/void EventAnalysisL2::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
 
@@ -95,16 +95,17 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
     }
 
     _nEvt ++ ;
+    std::cout << _nEvt;
 }
 
 
 
-void ElliotsAnalysis::check( LCEvent * evt ) { 
+void EventAnalysisL2::check( LCEvent * evt ) { 
     // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
 
 
 
-void ElliotsAnalysis::end(){ 
+void EventAnalysisL2::end(){ 
     _rootfile->Write();
 }
