@@ -77,6 +77,11 @@ class ThrustRazor : public Processor {
       /** Input collection name.
        */
         std::string partMomCheck;
+        std::string betaCheck;
+
+        bool partMom1;
+        bool partMom0; 
+
         int _typeOfThrustRazorFinder;
         int _thrustDetectability;
         float _principleThrustRazorValue;

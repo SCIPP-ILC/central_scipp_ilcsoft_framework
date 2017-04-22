@@ -35,6 +35,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <cstdio> // trying to creat log file 
 
 // #include <CLHEP/Vector/ThreeVector.h>
 // #include <CLHEP/Random/RanluxEngine.h>
@@ -85,18 +86,18 @@ void ThrustRazor::init() {
     streamlog_out(DEBUG)  << "   init called  " << std::endl ;
     cout << "initialized" << endl;
     if(_thrustDetectability==0){_rootfile = new TFile("ThrustRazor_.39133._T.root","RECREATE");
-        _R_T = new TH1F("R_T", "R =MTR/MR",100,0,10);
+        _R_T = new TH1F("R_T", "R =MTR/MR",130,-3,10);
         _MR_T = new TH1F("MR_T","MR", 100, 0 ,10); 
     }
     if(_thrustDetectability==1){_rootfile = new TFile("ThrustRazor_.39133._DAB.root","RECREATE");
         _MR_DAB = new TH1F("MR_DAB","MR", 100, 0 ,10); 
-        _R_DAB = new TH1F("R_DAB", "R =MTR/MR",100,0,10);
+        _R_DAB = new TH1F("R_DAB", "R =MTR/MR",130,-3,10);
     }
     if(_thrustDetectability==2){_rootfile = new TFile("ThrustRazor_.39133._DED.root","RECREATE");
         _MR_DED = new TH1F("MR_DED","MR", 100, 0 ,10); 
-        _R_DED = new TH1F("R_DED", "R =MTR/MR",100,0,10);
+        _R_DED = new TH1F("R_DED", "R =MTR/MR",130,-3,10);
     }
-
+    freopen( "ThrustRazor.log", "w", stdout );
     // irameters() ;
 
     // config ranlux 
@@ -126,6 +127,8 @@ void ThrustRazor::processRunHeader( LCRunHeader* run) {
 
 void ThrustRazor::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
+    partMom1 = false;
+    partMom0 = false;  
     // usually the working horse ...
     cout << "EVENT: " << _nEvt << endl; 
     _inParVec = evt->getCollection( _colName) ;
@@ -173,7 +176,7 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
                     _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) );
                 }
             }
-            
+
             if(_thrustDetectability == 2){ 
                 if(isDetected){ 
                     _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
@@ -182,7 +185,7 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
         } // stat = 1
     } // for particle 
     cout << "end loop #1"<<endl;
-   
+
     //reset variables for output   
     _principleThrustRazorValue = -1;
     _majorThrustRazorValue     = -1;
@@ -266,154 +269,190 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
 
     double vec[2][3][4]; // jet 1, jet 2 : true detectable, detected : energy, momx, momy, momz
     double Rvec[3][4]; // true, detectable, detected : energy, px, py, pz 
+    int d = _thrustDetectability;
+    double R;
+    double beta2;
+    if(_principleThrustRazorValue==-1){
+        R = -1; 
+    }
+    else{
+        //int id, stat;
+        cout << "start loop 2" << endl;  
+        for (int n=0;n<_inParVec->getNumberOfElements() ;n++){
 
-    //int id, stat;
-    cout << "start loop 2" << endl;  
-    for (int n=0;n<_inParVec->getNumberOfElements() ;n++){
+            MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
 
-        MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
+            try{
+                id = aPart->getPDG();
+                stat = aPart->getGeneratorStatus();
+            }
+            catch(const std::exception& e){
+                cout << "exception caught with message " << e.what() << "\n";
+            }
 
-        try{
-            id = aPart->getPDG();
-            stat = aPart->getGeneratorStatus();
+            if(stat==1){
+                const double* partMom = aPart->getMomentum();
+                double part4mom[4];
+
+                part4mom[0] = aPart->getEnergy(); 
+                part4mom[1] = partMom[0];
+                part4mom[2] = partMom[1]; 
+                part4mom[3] = partMom[2];   
+                double pta[3] = {ptaX, ptaY, ptaZ};
+
+                cout << "id      : " << id << endl;  
+                cout << "Momentum: " << partMom[0] <<" "<< partMom[1] <<" "<< partMom[2]<< endl;
+                cout << "Thrust A: " << ptaX << " "<< ptaY << " " << ptaZ << endl;
+                double dot = ptaX*partMom[0]+ptaY*partMom[1]+ptaZ*partMom[2];
+                cout << "dot " << dot << endl;
+
+                // need momentum and energy of entire jet 
+
+                bool isDarkMatter = (id == 1000022);
+                bool isNeutrino = (
+                        id == 12 || id == -12 ||
+                        id == 14 || id == -14 ||
+                        id == 16 || id == -16 ||
+                        id == 18 || id == -18);
+                double cos = partMom[2]/(sqrt(partMom[0]*partMom[0]+partMom[1]*partMom[1]+partMom[2]*partMom[2]));
+                bool isForward = ( cos > 0.9 || cos < - 0.9);
+                int i; // jet #
+                cout << "dot: " <<dot << endl; 
+                if(dot>=0){i=0;}
+                if(dot<0){i=1;}
+                if (!isDarkMatter){
+                    cout << "i: "<< i << endl;  
+                    vec[i][0][0]+= part4mom[0]; 
+                    vec[i][0][1]+= part4mom[1];
+                    vec[i][0][2]+= part4mom[2];
+                    vec[i][0][3]+= part4mom[3];
+                    if (!isNeutrino){
+                        vec[i][1][0]+= part4mom[0];
+                        vec[i][1][1]+= part4mom[1];
+                        vec[i][1][2]+= part4mom[2];
+                        vec[i][1][3]+= part4mom[3];
+                        if(!isForward){
+                            vec[i][2][0]+= part4mom[0];
+                            vec[i][2][1]+= part4mom[1];
+                            vec[i][2][2]+= part4mom[2];
+                            vec[i][2][3]+= part4mom[3];
+                        }
+                    }
+                } 
+                cout << "finished filling "<< endl;           
+            }
         }
-        catch(const std::exception& e){
-            cout << "exception caught with message " << e.what() << "\n";
-        }
+        cout << "end loop 3 "<< endl; 
+        //int d = _thrustDetectability;
+        double beta = (vec[0][d][0]-vec[1][d][0])/(vec[0][d][3]-vec[1][d][3]); // beta using right particles 
+        //double beta2 = pow(beta,2);
+        beta2 = pow(beta,2);
+        double gamma = 1/(sqrt(1-beta2));
+        for (int n=0;n<_inParVec->getNumberOfElements() ;n++){
 
-        if(stat==1){
+            MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
             const double* partMom = aPart->getMomentum();
-            double part4mom[4];
 
-            part4mom[0] = aPart->getEnergy(); 
-            part4mom[1] = partMom[0];
-            part4mom[2] = partMom[1]; 
-            part4mom[3] = partMom[2];   
-            double pta[3] = {ptaX, ptaY, ptaZ};
-
-            cout << "id      : " << id << endl;  
-            cout << "Momentum: " << partMom[0] <<" "<< partMom[1] <<" "<< partMom[2]<< endl;
-            cout << "Thrust A: " << ptaX << " "<< ptaY << " " << ptaZ << endl;
-            double dot = ptaX*partMom[0]+ptaY*partMom[1]+ptaZ*partMom[2];
-            cout << "dot " << dot << endl;
-
-            // need momentum and energy of entire jet 
-
+            try{
+                id = aPart->getPDG();
+                stat = aPart->getGeneratorStatus();
+            }
+            catch(const std::exception& e){
+                cout << "exception caught with message " << e.what() << "\n";
+            }
+            double part4Vec[4] = {aPart->getEnergy(), partMom[0], partMom[1], partMom[2] };
+            double R4Vec[4] = {gamma*part4Vec[0]-gamma*beta*part4Vec[3], part4Vec[1], part4Vec[2], 
+                -gamma*beta*part4Vec[0]+gamma*part4Vec[3] }; 
             bool isDarkMatter = (id == 1000022);
+
             bool isNeutrino = (
                     id == 12 || id == -12 ||
                     id == 14 || id == -14 ||
                     id == 16 || id == -16 ||
                     id == 18 || id == -18);
             double cos = partMom[2]/(sqrt(partMom[0]*partMom[0]+partMom[1]*partMom[1]+partMom[2]*partMom[2]));
-            bool isForward = ( cos > 0.9 || cos < - 0.9);
-            int i; // jet #
-            cout << "dot: " <<dot << endl; 
-            if(dot>=0){i=0;}
-            if(dot<0){i=1;}
-            if (!isDarkMatter){
-                cout << "i: "<< i << endl;  
-                vec[i][0][0]+= part4mom[0]; 
-                vec[i][0][1]+= part4mom[1];
-                vec[i][0][2]+= part4mom[2];
-                vec[i][0][3]+= part4mom[3];
-                if (!isNeutrino){
-                    vec[i][1][0]+= part4mom[0];
-                    vec[i][1][1]+= part4mom[1];
-                    vec[i][1][2]+= part4mom[2];
-                    vec[i][1][3]+= part4mom[3];
-                    if(!isForward){
-                        vec[i][2][0]+= part4mom[0];
-                        vec[i][2][1]+= part4mom[1];
-                        vec[i][2][2]+= part4mom[2];
-                        vec[i][2][3]+= part4mom[3];
+            bool isForward = (cos > 0.9 || cos < - 0.9);
+            bool isDetectable = (!isDarkMatter && !isNeutrino);
+            bool isDetected = (isDetectable && !isForward); 
+            if(stat ==1){
+                if(_thrustDetectability == 0){
+                    if(!isDarkMatter){
+                        Rvec[d][0]+=R4Vec[0];
+                        Rvec[d][1]+=R4Vec[1];
+                        Rvec[d][2]+=R4Vec[2];
+                        Rvec[d][3]+=R4Vec[3];
                     }
                 }
-            } 
-            cout << "finished filling "<< endl;           
-        }
-    }
-    cout << "end loop 3 "<< endl; 
-    int d = _thrustDetectability;
-    double beta = (vec[0][d][0]-vec[1][d][0])/(vec[0][d][3]-vec[1][d][3]); // beta using detectable particles 
-    double beta2 = pow(beta,2);
-    double gamma = 1/(sqrt(1-beta2));
-    for (int n=0;n<_inParVec->getNumberOfElements() ;n++){
-
-        MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
-        const double* partMom = aPart->getMomentum();
-
-        try{
-            id = aPart->getPDG();
-            stat = aPart->getGeneratorStatus();
-        }
-        catch(const std::exception& e){
-            cout << "exception caught with message " << e.what() << "\n";
-        }
-        double part4Vec[4] = {aPart->getEnergy(), partMom[0], partMom[1], partMom[2] };
-        double R4Vec[4] = {gamma*part4Vec[0]-gamma*beta*part4Vec[3], part4Vec[1], part4Vec[2], 
-            -gamma*beta*part4Vec[0]+gamma*part4Vec[3] }; 
-        bool isDarkMatter = (id == 1000022);
-
-        bool isNeutrino = (
-                id == 12 || id == -12 ||
-                id == 14 || id == -14 ||
-                id == 16 || id == -16 ||
-                id == 18 || id == -18);
-        double cos = partMom[2]/(sqrt(partMom[0]*partMom[0]+partMom[1]*partMom[1]+partMom[2]*partMom[2]));
-        bool isForward = (cos > 0.9 || cos < - 0.9);
-        bool isDetectable = (!isDarkMatter && !isNeutrino);
-        bool isDetected = (isDetectable && !isForward); 
-        if(stat ==1){
-            if(_thrustDetectability == 0){
-                if(!isDarkMatter){
-                    Rvec[d][0]+=R4Vec[0];
-                    Rvec[d][1]+=R4Vec[1];
-                    Rvec[d][2]+=R4Vec[2];
-                    Rvec[d][3]+=R4Vec[3];
+                if(_thrustDetectability ==1){
+                    if(isDetectable){
+                        Rvec[d][0]+=R4Vec[0];
+                        Rvec[d][1]+=R4Vec[1];
+                        Rvec[d][2]+=R4Vec[2];
+                        Rvec[d][3]+=R4Vec[3];
+                    }
                 }
+                if(_thrustDetectability == 2){
+                    if(isDetected){
+                        Rvec[d][0]+=R4Vec[0];
+                        Rvec[d][1]+=R4Vec[1];
+                        Rvec[d][2]+=R4Vec[2];
+                        Rvec[d][3]+=R4Vec[3];
+                    }
+                }   
             }
-            if(_thrustDetectability ==1){
-                if(isDetectable){
-                    Rvec[d][0]+=R4Vec[0];
-                    Rvec[d][1]+=R4Vec[1];
-                    Rvec[d][2]+=R4Vec[2];
-                    Rvec[d][3]+=R4Vec[3];
-                }
-            }
-            if(_thrustDetectability == 2){
-                if(isDetected){
-                    Rvec[d][0]+=R4Vec[0];
-                    Rvec[d][1]+=R4Vec[1];
-                    Rvec[d][2]+=R4Vec[2];
-                    Rvec[d][3]+=R4Vec[3];
-                }
-            }   
         }
+        double ETM[2] = {-Rvec[d][1], - Rvec[d][2]};
+        double ETMmag = sqrt(ETM[0]*ETM[0]+ETM[1]*ETM[1]);
+
+        double ptj1mag = sqrt(vec[0][d][1]*vec[0][d][1]+vec[0][d][2]*vec[0][d][2]);
+        double ptj2mag = sqrt(vec[1][d][1]*vec[1][d][1]+vec[1][d][2]*vec[1][d][2]);
+        double ptmagsum = ptj1mag + ptj2mag; 
+
+        double ptvecsum[2] = {vec[0][d][1]+vec[1][d][1], vec[0][d][2]+vec[1][d][2]};
+        double ETMdotptvecsum = ETM[0]*ptvecsum[0]+ETM[1]*ptvecsum[1];
+        double MTR = sqrt((ETMmag*ptmagsum-ETMdotptvecsum)/2);
+
+        double pj1 = sqrt(vec[0][d][1]*vec[0][d][1]+vec[0][d][2]*vec[0][d][2]+vec[0][d][3]*vec[0][d][3]);
+        R = MTR/(2*pj1);
     }
-    double ETM[2] = {-Rvec[d][1], - Rvec[d][2]};
-    double ETMmag = sqrt(ETM[0]*ETM[0]+ETM[1]*ETM[1]);
-
-    double ptj1mag = sqrt(vec[0][d][1]*vec[0][d][1]+vec[0][d][2]*vec[0][d][2]);
-    double ptj2mag = sqrt(vec[1][d][1]*vec[1][d][1]+vec[1][d][2]*vec[1][d][2]);
-    double ptmagsum = ptj1mag + ptj2mag; 
-
-    double ptvecsum[2] = {vec[0][d][1]+vec[1][d][1], vec[0][d][2]+vec[1][d][2]};
-    double ETMdotptvecsum = ETM[0]*ptvecsum[0]+ETM[1]*ptvecsum[1];
-    double MTR = sqrt((ETMmag*ptmagsum-ETMdotptvecsum)/2);
-
-    double pj1 = sqrt(vec[0][d][1]*vec[0][d][1]+vec[0][d][2]*vec[0][d][2]+vec[0][d][3]*vec[0][d][3]);
-    double R = MTR/(2*pj1);
     if(beta2<=1){
         if(d==0){_R_T->Fill(R);}
         if(d==1){_R_DAB->Fill(R);}
         if(d==2){_R_DED->Fill(R);}
+        if(partMom1){
+            cout << "there are valid beta events that have only 1 particle" << endl; 
+        }
+        if(!partMom1){
+            cout << "there are valid beta events that have not only 1 particle" <<endl; 
+        }
     }
+    else{
+        if(d==0){_R_T->Fill(-2);}
+        if(d==1){_R_DAB->Fill(-2);}
+        if(d==2){_R_DED->Fill(-2);}
+        
+        if(partMom1){
+            cout << "there are inval beta events that have only 1 particle"<< endl;
+        }
+        if(!partMom1){
+            cout << "there are inval beta events that have not only 1 particle"<< endl;
+            if(partMom0){
+                cout <<" zero particles" << endl;
+            }
+            if(!partMom0){
+                cout << "not zero particles"<< endl;
+            }
+        }
+        
+        betaCheck += " ";
+        betaCheck += std::to_string(_nEvt);
+        betaCheck += " ";  
+    } 
 
     if (_principleThrustRazorValue >= _max) _max = _principleThrustRazorValue;
     if (_principleThrustRazorValue <= _min) _min = _principleThrustRazorValue;
     cout << "End EVENT "<< _nEvt<< endl;
-    
+
     _nEvt ++ ; // different from original-moved out of for loop - summer 
 }
 
@@ -428,111 +467,117 @@ void ThrustRazor::check( LCEvent * evt ) {
 
 void ThrustRazor::end(){ 
     _rootfile->Write();
-    cout << partMomCheck << endl; 
+    cout << partMomCheck << endl;
+    cout << betaCheck << endl; 
 }
 
 int ThrustRazor::TassoThrustRazor(){
     int ThrustError = 0; 
     if(_partMom.size()<=0)
     {
+        partMom0 = true; 
         ThrustError = -1;
+        cout<< "NO PARTICLES IN EVENT AAAAAH" << endl;
+        _principleThrustRazorValue = -1;
+        _principleThrustRazorAxis.set(0,0,0); 
     }
     if(_partMom.size()==1)
     {
-        cout << "partMom.size"<< _partMom.size() << endl; 
+        cout << "partMom.size"<< _partMom.size() << endl;
+        partMom1 = true;  
         _principleThrustRazorValue = 1;
         _principleThrustRazorAxis = _partMom[0];
     }
     return ThrustError; 
 }
 /*
-int ThrustRazor::TassoThrustRazor(){
-    int ThrustError = 0;
-    Hep3Vector tvec;
+   int ThrustRazor::TassoThrustRazor(){
+   int ThrustError = 0;
+   Hep3Vector tvec;
 
-    // No particle in Event: Error
-    if (_inParVec->getNumberOfElements()<=0)
-    {
-        ThrustError = -1;
-        _principleThrustRazorValue = 0;
-        _principleThrustRazorAxis.set(0,0,0);
-    }
-    // only one Particle in Event: Thrust direction = direction of particle
-    else if (_inParVec->getNumberOfElements()==1)
-    {
-        _principleThrustRazorValue = 1;
-        _principleThrustRazorAxis = _partMom[0];
-    }
-    else
-    {
-        Hep3Vector ptm, ptot, pt;
-        std::vector<Hep3Vector> pc;
-        float sp,u, pp, tmax, t;
+// No particle in Event: Error
+if (_inParVec->getNumberOfElements()<=0)
+{
+ThrustError = -1;
+_principleThrustRazorValue = 0;
+_principleThrustRazorAxis.set(0,0,0);
+}
+// only one Particle in Event: Thrust direction = direction of particle
+else if (_inParVec->getNumberOfElements()==1)
+{
+_principleThrustRazorValue = 1;
+_principleThrustRazorAxis = _partMom[0];
+}
+else
+{
+Hep3Vector ptm, ptot, pt;
+std::vector<Hep3Vector> pc;
+float sp,u, pp, tmax, t;
 
-        sp = 0;
-        for (int i=0;i < _inParVec->getNumberOfElements();i++)
-        {
-            pp = _partMom[i].mag();
-            sp += pp;
-            ptot += _partMom[i];
-        } // for i
-        // ###
-        for (int m = 0; m <= 2; m++ )
-            ptot[m] *= 0.5;
-        tmax = 0;
-        for (int k = 1; k < _inParVec->getNumberOfElements(); k++)
-        {
-            for (int j = 0; j <= k-1;j++)
-            {
-                // cross product
-                tvec = _partMom[j].cross(_partMom[k]);
-                pt = -1 * ptot;
-                for (int l = 0; l < _inParVec->getNumberOfElements(); l++)
-                {
-                    if (l==k) continue;
-                    if (l==j) continue;
-                    u = _partMom[l] * tvec;
-                    if (u<0) continue;
-                    pt += _partMom[l];
-                } // for l
+sp = 0;
+for (int i=0;i < _inParVec->getNumberOfElements();i++)
+{
+pp = _partMom[i].mag();
+sp += pp;
+ptot += _partMom[i];
+} // for i
+// ###
+for (int m = 0; m <= 2; m++ )
+ptot[m] *= 0.5;
+tmax = 0;
+for (int k = 1; k < _inParVec->getNumberOfElements(); k++)
+{
+for (int j = 0; j <= k-1;j++)
+{
+// cross product
+tvec = _partMom[j].cross(_partMom[k]);
+pt = -1 * ptot;
+for (int l = 0; l < _inParVec->getNumberOfElements(); l++)
+{
+if (l==k) continue;
+if (l==j) continue;
+u = _partMom[l] * tvec;
+if (u<0) continue;
+pt += _partMom[l];
+} // for l
 
-                while(!pc.empty())
-                {
-                    pc.pop_back();
-                }
-                // note: the order is important!!!
-                pc.push_back(pt);
-                pc.push_back(pt + _partMom[k]);
-                pc.push_back(pt + _partMom[j]);
-                pc.push_back(pc[2] + _partMom[k]);
-                for (int m = 0; m <= 3; m++ )
-                {
-                    t = pc[m].mag2();
-                    if (t <= tmax) continue;
-                    tmax = t;
-                    ptm = pc[m];
-                } // for m
-            } // for j
-        } // for k
-        _principleThrustRazorValue = 2 * sqrt(tmax) / sp;
-        tvec = ptm;
-    } // end else
+while(!pc.empty())
+{
+pc.pop_back();
+}
+// note: the order is important!!!
+pc.push_back(pt);
+pc.push_back(pt + _partMom[k]);
+pc.push_back(pt + _partMom[j]);
+pc.push_back(pc[2] + _partMom[k]);
+for (int m = 0; m <= 3; m++ )
+{
+t = pc[m].mag2();
+if (t <= tmax) continue;
+tmax = t;
+ptm = pc[m];
+} // for m
+} // for j
+} // for k
+_principleThrustRazorValue = 2 * sqrt(tmax) / sp;
+tvec = ptm;
+} // end else
 
-    // Normalization of thrust vector
-    double ax = 0;
-    ax = tvec.mag();
-    if (ax != 0)
-    {
-        ax = 1/ax;
-        _principleThrustRazorAxis = ax * tvec;
-    }
-    else
-    {
-        ThrustError = -1;
-        _principleThrustRazorValue = -1;
-        _principleThrustRazorAxis.set(0,0,0);
-    }
-    return ThrustError;
+// Normalization of thrust vector
+double ax = 0;
+ax = tvec.mag();
+if (ax != 0)
+{
+    ax = 1/ax;
+    _principleThrustRazorAxis = ax * tvec;
+}
+else
+{
+    ThrustError = -1;
+    _principleThrustRazorValue = -1;
+    _principleThrustRazorAxis.set(0,0,0);
+}
+return ThrustError;
 }
 */
 int ThrustRazor::JetsetThrustRazor(){

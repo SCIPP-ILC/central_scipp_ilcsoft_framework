@@ -74,26 +74,116 @@ void ElliotsAnalysis::processRunHeader( LCRunHeader* run) {
 //    _nRun++ ;
 } 
 
+void ElliotsAnalysis::printParticleProperties(SimCalorimeterHit* hit){
 
+  int highestParticleEnergy = 0;
+  int type = 0;
+  double energy = 0;
+  float charge = 0;
+  float px = 0, py = 0, pz = 0;
+
+  MCParticle* particle; 
+
+    for (int i = 0; i < hit->getNMCContributions(); i++){
+
+      particle = hit->getParticleCont(i);
+      type = particle->getPDG();
+     
+      px = particle ->getMomentum()[0];
+      py = particle->getMomentum()[1];
+      pz = particle->getMomentum()[2];
+      charge = particle->getCharge();
+
+      if (particle->getEnergy() > highestParticleEnergy){
+	highestParticleEnergy = particle->getEnergy();
+      }
+    }
+
+    printf("");
+
+}
 
 void ElliotsAnalysis::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
 
     LCCollection* col = evt->getCollection( _colName ) ;
+    double highestEnergy = 0;
+    double lowestEnergy = 10000;
+    double hParticleEnergy = 0;
+    double lParticleEnergy = 0;
 
+    float hPosX = 0, hPosY = 0, hPosZ = 0;
+    float lPosX = 0, lPosY= 0, lPosZ = 0;
+
+    SimCalorimeterHit* maxHit = dynamic_cast<SimCalorimeterHit*>( col->getElementAt(0));
+    SimCalorimeterHit* minHit = dynamic_cast<SimCalorimeterHit*>( col->getElementAt(0));
+
+   
     // this will only be entered if the collection is available
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
-
+	
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            SimCalorimeterHit* hit = dynamic_cast<SimCalorimeterHit*>( col->getElementAt(hitIndex) );
+	   
+	   
+	   //find hit with highest energy
+	   if (hit->getEnergy() > highestEnergy){
+	     highestEnergy = hit->getEnergy();
+	     maxHit = hit;
+	     hPosX = hit->getPosition()[0];
+	     hPosY = hit->getPosition()[1];
+	     hPosZ = hit->getPosition()[2];
+	   }
+
+	   //find hit with lowest energy
+	   if (hit->getEnergy() < lowestEnergy){
+             lowestEnergy = hit->getEnergy();
+	     minHit = hit;
+             lPosX = hit->getPosition()[0];
+             lPosY = hit->getPosition()[1];
+             lPosZ = hit->getPosition()[2];
+           }
+
+	   
 
            const float* pos = hit->getPosition();
            _hitmap->Fill(pos[0],pos[1]);
         } 
     }
+    for (int i = 0; i < maxHit->getNMCContributions(); i++){
+      hParticleEnergy += maxHit->getEnergyCont(i);
 
+    }
+
+    // printMaxParticle(SimCalorimetHit* hit)
+    for (int i = 0; i < minHit->getNMCContributions(); i++){
+      //  lParticleEnergy += minHit->getEnergyCont(i);
+      MCParticle*  lParticle = minHit->getParticleCont(i);
+      printf("Particle Energy: %0.25f\n", lParticle->getEnergy());
+    }
+    
+    double highestParticleEnergy =0;
+    for (int i = 0; i < maxHit->getNMCContributions(); i++){
+                                                                                                              
+      MCParticle*  hParticle = maxHit->getParticleCont(i);
+      if (hParticle->getEnergy() > highestParticleEnergy){
+	highestParticleEnergy =hParticle->getEnergy();
+	
+      }
+      
+    }
+
+    printf("Highest Energy: %0.15f\n", highestEnergy);
+    printf("Highest Energy Position:( %f,%f,%f) \n", hPosX, hPosY, hPosZ);
+    printf("Sum of %d Particle Energies: %f\n",maxHit->getNMCContributions(), hParticleEnergy);
+    printf("Highest Particle Energy: %0.25f\n", highestParticleEnergy);
+
+    printf("Lowest Energy: %0.25f\n", lowestEnergy);
+    printf("Lowest Energy Position:( %f,%f,%f) \n", lPosX, lPosY, lPosZ);
+
+    
     _nEvt ++ ;
 }
 

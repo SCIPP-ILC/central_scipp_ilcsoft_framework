@@ -193,9 +193,7 @@ void ThrustSusy::processEvent( LCEvent * evt ) {
             }
             
             if(_thrustDetectability == 2){
-                
-                if(isDetected){ 
-                    
+                if(isDetected){  
                     _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
                 }
             }
@@ -274,7 +272,6 @@ void ThrustSusy::processEvent( LCEvent * evt ) {
     streamlog_out( DEBUG4 ) << " thrust: " << _principleThrustSusyValue << " TV: " << _principleThrustSusyAxis << endl;
     streamlog_out( DEBUG4 ) << "  major: " << _majorThrustSusyValue << " TV: " << _majorThrustSusyAxis << endl;
     streamlog_out( DEBUG4 ) << "  minor: " << _minorThrustSusyValue << " TV: " << _minorThrustSusyAxis << endl;
-    cout << "EVENT: " << _nEvt << endl;
     cout << " thrust: " << _principleThrustSusyValue << " TV: " << _principleThrustSusyAxis << endl;
     cout <<"                       "<< _principleThrustSusyAxis.x()<<","<< _principleThrustSusyAxis.y()<< ","<<_principleThrustSusyAxis.z()<<endl;
     cout << "  major: " << _majorThrustSusyValue << " TV: " << _majorThrustSusyAxis << endl;

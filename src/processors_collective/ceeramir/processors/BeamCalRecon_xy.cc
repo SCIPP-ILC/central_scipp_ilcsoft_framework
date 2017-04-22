@@ -20,6 +20,7 @@
 #include <chrono>
 #include <string>
 #include <sstream>
+#include <unordered_map>
 
 typedef std::chrono::high_resolution_clock Clock;
 
@@ -94,7 +95,7 @@ BeamCalRecon_xy::BeamCalRecon_xy() : Processor("BeamCalRecon_xy") {
 
 void BeamCalRecon_xy::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
-    gStyle->SetStatX(0.1);
+    //    gStyle->SetStatX(0.1);
 
     _rootfile = new TFile(_root_file_name.c_str(),"RECREATE");
     _radeff = new TProfile("radeff","Radial Efficiency",14*2,0.0,140.0,0.0,1.0);
@@ -121,7 +122,7 @@ void BeamCalRecon_xy::init() {
     //    _hlego->GetXaxis()->SetTitleOffset(1.4);
     //    _hlego->GetYaxis()->SetTitleOffset(1.6);
 
-    gStyle->SetOptStat(0);
+    //    gStyle->SetOptStat(0);
 
 
     s1.str("");
@@ -213,11 +214,11 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     }else{                                      //Graph of not detected
       _hitmap_zeros->Fill(endx,endy,true);
       _hlego_zeros->Fill(endx,endy,true);
-      /*      if((_zeros_map)[pos]>=1.0){
-		(_zeros_map)[pos]+= 1.0;
-      }else{
-		(_zeros_map)[pos] = 1.0;
-	}*/
+      if((_zeros_map)[pos]>=1.0){
+	(_zeros_map)[pos]+= 1.0;
+	//      }else{
+	//	(_zeros_map)[pos] = 1.0;
+      }
     }
     //    if(!detected){                              //Print out xy-coords of not detected
     //      cout << "detected:  " << detected<< "        x-y: "<< endx << "\t" <<endy << endl;

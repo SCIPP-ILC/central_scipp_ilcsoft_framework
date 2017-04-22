@@ -76,24 +76,43 @@ void EventAnalysisL2::processRunHeader( LCRunHeader* run) {
 
 
 
-/void EventAnalysisL2::processEvent( LCEvent * evt ) { 
+void EventAnalysisL2::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
 
     LCCollection* col = evt->getCollection( _colName ) ;
+    double highestEnergy = 0;
+    double Energy = 0;
+    double highestEnergyContributed = 0;
+    double actualHighestEnergyContributed = 0;
 
     // this will only be entered if the collection is available
     if( col != NULL ){
-        int nElements = col->getNumberOfElements()  ;
+      int nElements = col->getNumberOfElements();	
+	
+      for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
+	SimCalorimeterHit* hit = dynamic_cast<SimCalorimeterHit*>( col->getElementAt(hitIndex) );
+	int nContribs = hit->getNMCContributions();
+	Energy = hit->getEnergy();
+	highestEnergyContributed = 0;
 
-        for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
-           SimCalorimeterHit* hit = dynamic_cast<SimCalorimeterHit*>( col->getElementAt(hitIndex) );
-
-           const float* pos = hit->getPosition();
-           _hitmap->Fill(pos[0],pos[1]);
-        } 
+	if (Energy > highestEnergy){
+	  highestEnergy = Energy;
+	  for(int c = 0; c < nContribs; c++){
+	    highestEnergyContributed += hit->getEnergyCont(c);
+	  }
+	  actualHighestEnergyContributed = highestEnergyContributed;
+	  printf("This is the highest energy thr contrib %f", highestEnergyContributed);
+	}
+	if (Energy == 0) {printf("There is a ZERO energy hit"); }
+	
+	const float* pos = hit->getPosition();
+	_hitmap->Fill(pos[0],pos[1]);
+      } 
     }
-
+    printf("This is the highest energy %f", highestEnergy);
+    printf("This is the highest energy thr contrib %f", actualHighestEnergyContributed);
+ 
     _nEvt ++ ;
     std::cout << _nEvt;
 }

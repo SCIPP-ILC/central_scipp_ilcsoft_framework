@@ -106,7 +106,9 @@ void Thrust::processEvent( LCEvent * evt ) {
     // this gets called for every event 
     // usually the working horse ...
 
-    _inParVec = evt->getCollection( _colName) ;
+ 
+
+   _inParVec = evt->getCollection( _colName) ;
 
     if (!_partMom.empty()) _partMom.clear();
 
