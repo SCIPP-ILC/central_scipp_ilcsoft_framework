@@ -21,6 +21,7 @@
 #include <string>
 #include <sstream>
 #include <unordered_map>
+#include <cmath>
 
 typedef std::chrono::high_resolution_clock Clock;
 
@@ -33,7 +34,6 @@ typedef std::chrono::high_resolution_clock Clock;
 //#include "beamcal_scanner.h"
 #include "include/beamcal_scanner_xy.h"
 
-#include <iostream>
 
 #include <EVENT/LCCollection.h>
 #include <EVENT/SimCalorimeterHit.h>
@@ -48,6 +48,7 @@ typedef std::chrono::high_resolution_clock Clock;
 #include <TProfile2D.h>
 #include <TH2D.h>
 #include <TCanvas.h>
+#include <TPaveStats.h>
 
 using namespace lcio;
 using namespace marlin;
@@ -68,6 +69,8 @@ static TProfile2D* _test_slice;
 static TH2F* _hlego;
 static TH2F* _hlego_zeros;
 static TH2F* _hlego_inefficiency;
+static TH2F* _hlego_test;
+
 static TCanvas* _c2;
 
 static unordered_map<pair<float,float>,double>* _all_map;
@@ -92,6 +95,43 @@ BeamCalRecon_xy::BeamCalRecon_xy() : Processor("BeamCalRecon_xy") {
 }
 
 
+// This function edits a root plot passed from init
+void BeamCalRecon_xy::RootPlot(TH2F* graph){
+
+  /**
+  Double_t edges[68] = { -199.50, -189.57, -181.02, -172.60, 
+			 -164.32,    -156.17,    -148.16,    -140.30,    -132.57,
+			 -125.00,    -117.58,    -110.30,    -103.19,    -96.23,
+			 -89.44,    -82.82,    -76.37,    -70.09,    -64.00,
+			 -58.09,    -52.38,    -46.87,    -41.57,    -36.48,
+			 -31.62,    -27.00,    -22.63,    -18.52,    -14.70,
+			 -11.18,    -8.00,    -5.20,    -2.83,    -1.00,
+			 0.00,    1.00,    2.83,    5.20,    8.00,
+			 11.18,    14.70,    18.52,    22.63,    27.00,
+			 31.62,    36.48,    41.57,    46.87,    52.38,
+			 58.09,    64.00,    70.09,    76.37,    82.82,
+			 89.44,    96.23,    103.19,    110.30,    117.58,
+			 125.00,    132.57,    140.30,    148.16,    156.17,
+			 164.32, 172.60, 181.02, 189.57, 199.50};
+  */
+  graph->GetXaxis()->SetTitle("X axis (mm)");
+  graph->GetYaxis()->SetTitle("Y axis (mm)");
+  graph->GetZaxis()->SetTitle("Efficiency");
+
+  graph->GetXaxis()->CenterTitle();
+  graph->GetYaxis()->CenterTitle();
+  graph->GetZaxis()->CenterTitle();
+
+  graph->GetXaxis()->SetTitleOffset(1.4);
+  graph->GetYaxis()->SetTitleOffset(1.6);
+  TPaveStats *st = (TPaveStats*)graph->FindObject("stats");
+  st->SetX1NDC(0.0);
+  st->SetX2NDC(0.0);
+
+    //    gStyle->SetOptStat(0);
+}
+
+
 
 void BeamCalRecon_xy::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
@@ -106,33 +146,74 @@ void BeamCalRecon_xy::init() {
     _c2 = new TCanvas("c2","c2",300,300);
 
     int LEGObins = 60;
-    std::stringstream s1;
 
+    const Int_t NBINS = 68;
+    //    Double_t edges[NBINS + 1] = {};
+    //    static float edges[] = { -199.50, -189.57, -181.02, -172.60,
+    Double_t edges[69] = { -199.50, -189.57, -181.02, -172.60,
+			   -164.32,    -156.17,    -148.16,    -140.30,    -132.57,
+			   -125.00,    -117.58,    -110.30,    -103.19,    -96.23,
+			   -89.44,    -82.82,    -76.37,    -70.09,    -64.00,
+			   -58.09,    -52.38,    -46.87,    -41.57,    -36.48,
+			   -31.62,    -27.00,    -22.63,    -18.52,    -14.70,
+			   -11.18,    -8.00,    -5.20,    -2.83,    -1.00,
+			   0.00,    1.00,    2.83,    5.20,    8.00,
+			   11.18,    14.70,    18.52,    22.63,    27.00,
+			   31.62,    36.48,    41.57,    46.87,    52.38,
+			   58.09,    64.00,    70.09,    76.37,    82.82,
+			   89.44,    96.23,    103.19,    110.30,    117.58,
+			   125.00,    132.57,    140.30,    148.16,    156.17,
+			   164.32, 172.60, 181.02, 189.57, 199.50}; 
+
+
+      
+    /**    -199.5, -189.6, -181.0, -172.6,
+	-164.3,    -156.2,    -148.2,    -140.3,    -132.6,
+			   -125.0,    -117.6,    -110.3,    -103.2,    -96.2,
+			   -89.4,    -82.8,    -76.4,    -70.1,    -64.0,
+			   -58.1,    -52.4,    -46.9,    -41.6,    -36.5,
+			   -31.6,    -27.0,    -22.6,    -18.5,    -14.7,
+			   -11.2,    -8.0,    -5.2,    -2.8,    -1.0,
+			   0.0,    1.0,    2.8,    5.2,    8.0,
+			   11.2,    14.7,    18.5,    22.6,    27.0,
+			   31.6,    36.5,    41.6,    46.9,    52.4,
+			   58.1,    64.0,    70.1,    76.4,    82.8,
+			   89.4,    96.2,    103.2,    110.3,    117.6,
+			   125.0,    132.6,    140.3,    148.2,    156.2,
+			   164.3, 172.6, 181.0, 189.6, 199.5};
+    */
+
+    std::stringstream s1;
 
     s1 << "LEGO 1s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
     const char* LEGOtitle = s1.str().c_str();
-    _hlego = new TH2F("hlego", LEGOtitle ,LEGObins ,-150,150,LEGObins,-150,150);
-    _hlego->GetXaxis()->SetTitle("X axis (mm)");
-    _hlego->GetYaxis()->SetTitle("Y axis (mm)");
-    _hlego->GetZaxis()->SetTitle("Efficiency");
-
-    _hlego->GetXaxis()->CenterTitle();
-    _hlego->GetYaxis()->CenterTitle();
-    _hlego->GetZaxis()->CenterTitle();
-    //    _hlego->GetXaxis()->SetTitleOffset(1.4);
-    //    _hlego->GetYaxis()->SetTitleOffset(1.6);
-
-    //    gStyle->SetOptStat(0);
+    //    _hlego = new TH2F("hlego", LEGOtitle ,LEGObins ,-150,150,LEGObins,-150,150);
+    _hlego = new TH2F("hlego", LEGOtitle, 67, edges, 67, edges);
+    RootPlot(_hlego);
 
 
     s1.str("");
     s1 << "LEGO 0s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
     const char* LEGOtitlez = s1.str().c_str();
-    _hlego_zeros = new TH2F("hlego_0s", LEGOtitlez ,LEGObins,-150,150,LEGObins,-150,150);
+    //    _hlego_zeros = new TH2F("hlego_0s", LEGOtitlez ,LEGObins,-150,150,LEGObins,-150,150);
+    _hlego_zeros = new TH2F("hlego_0s", LEGOtitlez, 67, edges, 67, edges);
+    RootPlot(_hlego_zeros);
+
 
     s1.str("");
     s1 << "LEGO , inefficiency"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
-    _hlego_inefficiency = new TH2F("hlego_inefficiency", LEGOtitlez ,LEGObins,-150,150,LEGObins,-150,150);
+    const char* LEGOTitleInefficiency = s1.str().c_str();
+    //    _hlego_inefficiency = new TH2F("hlego_inefficiency", LEGOTitleInefficiency, LEGObins,-150,150,LEGObins,-150,150);
+    _hlego_inefficiency = new TH2F("hlego_inefficiency", LEGOTitleInefficiency, 67, edges, 67, edges);
+
+    RootPlot(_hlego_inefficiency);
+
+    s1.str("");
+    s1 << "LEGO , test"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
+    const char* LEGOTestTitle = s1.str().c_str();
+    //_hlego_test = new TH2F("hlego_test", LEGOTestTitle ,LEGObins,-150,150,LEGObins,-150,150);
+    _hlego_test = new TH2F("hlego_test", LEGOTestTitle, 67, edges, 67, edges);
+    RootPlot(_hlego_test);
 
     // TH2F
     // TProfile2D
@@ -214,11 +295,12 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     }else{                                      //Graph of not detected
       _hitmap_zeros->Fill(endx,endy,true);
       _hlego_zeros->Fill(endx,endy,true);
-      if((_zeros_map)[pos]>=1.0){
-	(_zeros_map)[pos]+= 1.0;
+      
+      //      if((_zeros_map)[pos]>=1.0){
+      //	(_zeros_map)[pos]+= 1.0;
 	//      }else{
 	//	(_zeros_map)[pos] = 1.0;
-      }
+      //      }
     }
     //    if(!detected){                              //Print out xy-coords of not detected
     //      cout << "detected:  " << detected<< "        x-y: "<< endx << "\t" <<endy << endl;
@@ -241,8 +323,14 @@ void BeamCalRecon_xy::end(){
   //    pair<float,float> ID = bit.first;
   //    double bit_hit = bit.second;
   //    double all_hit = *_all_map[ID];
-  //    _hlego_inefficiency->Fill(ID.first,ID.second,bit_hit/all_hit)
+  //  _hlego_inefficiency->Fill(ID.first,ID.second,bit_hit/all_hit)
   //  }
+  _hlego_inefficiency->Add(_hlego_zeros);
+
+  _hlego_test->Add(_hlego_zeros);
+  _hlego_test->Add(_hlego);
+  _hlego_inefficiency->Divide(_hlego_test);
+
 
     cout << "\ndetected: " << _detected_num << endl;
     cout << "\n in \'slice\' of beamcal: " << _test_num << endl;
