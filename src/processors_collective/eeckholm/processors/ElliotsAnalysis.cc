@@ -76,15 +76,21 @@ void ElliotsAnalysis::processRunHeader( LCRunHeader* run) {
 
 void ElliotsAnalysis::printParticleProperties(SimCalorimeterHit* hit){
 
-  int highestParticleEnergy = 0;
-  int type = 0;
-  double energy = 0;
-  float charge = 0;
-  float px = 0, py = 0, pz = 0;
+    int highestParticleEnergy = 0;
+    int type = 0;
+    double energy = 0;
+    float charge = 0;
+    float px = 0, py = 0, pz = 0;
 
-  MCParticle* particle; 
+    MCParticle* particle; 
 
     for (int i = 0; i < hit->getNMCContributions(); i++){
+
+      if (particle->getEnergy() > highestParticleEnergy){
+        highestParticleEnergy = particle->getEnergy();
+      
+
+      }
 
       particle = hit->getParticleCont(i);
       type = particle->getPDG();
@@ -93,10 +99,6 @@ void ElliotsAnalysis::printParticleProperties(SimCalorimeterHit* hit){
       py = particle->getMomentum()[1];
       pz = particle->getMomentum()[2];
       charge = particle->getCharge();
-
-      if (particle->getEnergy() > highestParticleEnergy){
-	highestParticleEnergy = particle->getEnergy();
-      }
     }
 
     printf("");
