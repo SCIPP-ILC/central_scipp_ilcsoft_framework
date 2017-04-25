@@ -3,6 +3,7 @@
 
 #include "marlin/Processor.h"
 #include "lcio.h"
+#include <EVENT/SimCalorimeterHit.h>
 #include <string>
 
 
@@ -44,6 +45,10 @@ class EventAnalysisL2 : public Processor {
         /** Called for every run.
         */
         virtual void processRunHeader( LCRunHeader* run ) ;
+
+	virtual void printParticleProperties(SimCalorimeterHit* hit)  ;
+
+
 
         /** Called for every event - the working horse.
         */

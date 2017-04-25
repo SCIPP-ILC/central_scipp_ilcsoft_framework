@@ -98,8 +98,14 @@ BeamCalRecon_xy::BeamCalRecon_xy() : Processor("BeamCalRecon_xy") {
 }
 
 
-// This function edits a root plot passed from init
-void BeamCalRecon_xy::RootPlot(TH2F* graph){
+/*
+void BeamCalRecon_xy::RootPlotTitle(stringstream s1, string ){
+    s1.str("");
+}
+ */
+
+
+void BeamCalRecon_xy::RootPlot(TH2F* graph){                                        // This function edits a root plot passed from init
 
   graph->GetXaxis()->SetTitle("X axis (mm)");
   graph->GetYaxis()->SetTitle("Y axis (mm)");
@@ -187,7 +193,6 @@ void BeamCalRecon_xy::init() {
     s1 << "LEGO 0s, var"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
     const char* LEGOtitlezVar = s1.str().c_str();
     _hlego_zeros_var = new TH2F("hlego_0s_var", LEGOtitlezVar, 67, edges, 67, edges);
-
      */
 
 
@@ -200,7 +205,6 @@ void BeamCalRecon_xy::init() {
 
     _nRun = 0 ;
     _nEvt = 0 ;
-
 }
 
 
@@ -208,7 +212,6 @@ void BeamCalRecon_xy::init() {
 void BeamCalRecon_xy::processRunHeader( LCRunHeader* run) { 
 //    _nRun++ ;
 } 
-
 
 
 void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
@@ -244,7 +247,7 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     pair<float,float> pos;
     pos.first = (float) endx;
     pos.second = (float) endy;
-	
+    
     string endx_s = std::to_string(pos.first);
     string endy_s = std::to_string(pos.second);
     cout << "endx string"<< endx_s << endl;

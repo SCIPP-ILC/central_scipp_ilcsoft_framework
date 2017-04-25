@@ -1,5 +1,5 @@
-#ifndef EventAnalysis_h
-#define EventAnalysis_h 1
+#ifndef ElliotsAnalysis_h
+#define ElliotsAnalysis_h 1
 
 #include "marlin/Processor.h"
 #include "lcio.h"
@@ -27,14 +27,14 @@ using namespace marlin ;
  * @version $Id: EventAnalysis.h,v 1.4 2005-10-11 12:57:39 gaede Exp $ 
  */
 
-class EventAnalysis : public Processor {
+class ElliotsAnalysis : public Processor {
 
     public:
 
-        virtual Processor*  newProcessor() { return new EventAnalysis ; }
+        virtual Processor*  newProcessor() { return new ElliotsAnalysis ; }
 
 
-        EventAnalysis() ;
+        ElliotsAnalysis() ;
 
         /** Called at the begin of the job before anything is read.
          * Use to initialize the processor, e.g. book histograms.
@@ -48,8 +48,9 @@ class EventAnalysis : public Processor {
         /** Called for every event - the working horse.
         */
         virtual void processEvent( LCEvent * evt ) ; 
-
-
+	
+	virtual void printParticleProperties(SimCalorimeterHit* hit);
+	
         virtual void check( LCEvent * evt ) ; 
 
 

@@ -31,10 +31,10 @@ class EventAnalysisL2 : public Processor {
 
     public:
 
-        virtual Processor*  newProcessor() { return new EventAnalysis ; }
+        virtual Processor*  newProcessor() { return new EventAnalysisL2 ; }
 
 
-        EventAnalysis() ;
+        EventAnalysisL2() ;
 
         /** Called at the begin of the job before anything is read.
          * Use to initialize the processor, e.g. book histograms.
@@ -44,6 +44,10 @@ class EventAnalysisL2 : public Processor {
         /** Called for every run.
         */
         virtual void processRunHeader( LCRunHeader* run ) ;
+
+	virtual void printParticleProperties(int n)  ;
+
+
 
         /** Called for every event - the working horse.
         */

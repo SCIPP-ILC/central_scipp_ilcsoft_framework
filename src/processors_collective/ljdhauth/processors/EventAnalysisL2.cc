@@ -74,6 +74,10 @@ void EventAnalysisL2::processRunHeader( LCRunHeader* run) {
 //    _nRun++ ;
 } 
 
+void EventAnalysisL2::printParticleProperties(SimCalorimeterHit* hit){
+  printf("This is the energy of the hit %f", hit->getEnergy());
+}
+
 
 
 void EventAnalysisL2::processEvent( LCEvent * evt ) { 
@@ -92,6 +96,7 @@ void EventAnalysisL2::processEvent( LCEvent * evt ) {
 	
       for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
 	SimCalorimeterHit* hit = dynamic_cast<SimCalorimeterHit*>( col->getElementAt(hitIndex) );
+	printParticleProperties(hit);
 	int nContribs = hit->getNMCContributions();
 	Energy = hit->getEnergy();
 	highestEnergyContributed = 0;
@@ -110,6 +115,7 @@ void EventAnalysisL2::processEvent( LCEvent * evt ) {
 	_hitmap->Fill(pos[0],pos[1]);
       } 
     }
+
     printf("This is the highest energy %f", highestEnergy);
     printf("This is the highest energy thr contrib %f", actualHighestEnergyContributed);
  

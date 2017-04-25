@@ -76,32 +76,41 @@ void ElliotsAnalysis::processRunHeader( LCRunHeader* run) {
 
 void ElliotsAnalysis::printParticleProperties(SimCalorimeterHit* hit){
 
-    int highestParticleEnergy = 0;
+  
     int type = 0;
     double energy = 0;
     float charge = 0;
     float px = 0, py = 0, pz = 0;
 
-    MCParticle* particle; 
+    MCParticle* currentParticle; 
+    MCParticle* highestEnergyParticle = hit->getParticleCont(0);
+    
+    
 
     for (int i = 0; i < hit->getNMCContributions(); i++){
-
-      if (particle->getEnergy() > highestParticleEnergy){
-        highestParticleEnergy = particle->getEnergy();
+      currentParticle = hit->getParticleCont(i);
       
 
+      if (currentParticle->getEnergy() > highestEnergyParticle->getEnergy()){
+        highestEnergyParticle = currentParticle;
       }
 
-      particle = hit->getParticleCont(i);
-      type = particle->getPDG();
-     
-      px = particle ->getMomentum()[0];
-      py = particle->getMomentum()[1];
-      pz = particle->getMomentum()[2];
-      charge = particle->getCharge();
     }
+    energy = highestEnergyParticle->getEnergy();
+    type =  highestEnergyParticle->getPDG(); 
+    px =  highestEnergyParticle->getMomentum()[0];
+    py =  highestEnergyParticle->getMomentum()[1];
+    pz =  highestEnergyParticle->getMomentum()[2];
+    charge =  highestEnergyParticle->getCharge();
+    
 
-    printf("");
+    printf("\nHighest energy Particle in hit: %0.5f\n", energy);
+    printf("Type: %d\n",type);
+    printf("Momentum: (%0.2f,%0.2f, %0.2f)\n", px,py,pz);
+    printf("Charge: %0.2f\n", charge);
+  
+  
+ 
 
 }
 
@@ -156,31 +165,16 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
     }
     for (int i = 0; i < maxHit->getNMCContributions(); i++){
       hParticleEnergy += maxHit->getEnergyCont(i);
-
     }
 
-    // printMaxParticle(SimCalorimetHit* hit)
-    for (int i = 0; i < minHit->getNMCContributions(); i++){
-      //  lParticleEnergy += minHit->getEnergyCont(i);
-      MCParticle*  lParticle = minHit->getParticleCont(i);
-      printf("Particle Energy: %0.25f\n", lParticle->getEnergy());
-    }
-    
-    double highestParticleEnergy =0;
-    for (int i = 0; i < maxHit->getNMCContributions(); i++){
-                                                                                                              
-      MCParticle*  hParticle = maxHit->getParticleCont(i);
-      if (hParticle->getEnergy() > highestParticleEnergy){
-	highestParticleEnergy =hParticle->getEnergy();
-	
-      }
-      
-    }
+   
 
-    printf("Highest Energy: %0.15f\n", highestEnergy);
+    printf("Highest Energy Hit: %0.15f\n", highestEnergy);
     printf("Highest Energy Position:( %f,%f,%f) \n", hPosX, hPosY, hPosZ);
     printf("Sum of %d Particle Energies: %f\n",maxHit->getNMCContributions(), hParticleEnergy);
-    printf("Highest Particle Energy: %0.25f\n", highestParticleEnergy);
+    
+    
+    printParticleProperties(maxHit);
 
     printf("Lowest Energy: %0.25f\n", lowestEnergy);
     printf("Lowest Energy Position:( %f,%f,%f) \n", lPosX, lPosY, lPosZ);

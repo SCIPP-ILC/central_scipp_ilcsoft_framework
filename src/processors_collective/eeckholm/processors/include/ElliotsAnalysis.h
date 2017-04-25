@@ -4,7 +4,8 @@
 #include "marlin/Processor.h"
 #include "lcio.h"
 #include <string>
-
+#include <EVENT/SimCalorimeterHit.h>
+#include <EVENT/MCParticle.h>
 
 using namespace lcio ;
 using namespace marlin ;
@@ -48,8 +49,9 @@ class ElliotsAnalysis : public Processor {
         /** Called for every event - the working horse.
         */
         virtual void processEvent( LCEvent * evt ) ; 
-
-
+	
+	virtual void printParticleProperties(SimCalorimeterHit* hit);
+	
         virtual void check( LCEvent * evt ) ; 
 
 
