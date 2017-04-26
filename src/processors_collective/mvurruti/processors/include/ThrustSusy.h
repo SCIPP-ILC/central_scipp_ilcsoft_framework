@@ -1,5 +1,5 @@
-#ifndef TwoPhotonThrustRazor_h
-#define TwoPhotonThrustRazor_h 1
+#ifndef ThrustSusy_h
+#define ThrustSusy_h 1
 #include <vector>
 #include "marlin/Processor.h"
 #include "lcio.h"
@@ -30,17 +30,17 @@ using namespace marlin ;
  * @param CollectionName Name of the MCParticle collection
  * 
  * @author F. Gaede, DESY
- * @version $Id: TwoPhotonThrustRazor.h,v 1.4 2005-10-11 12:57:39 gaede Exp $ 
+ * @version $Id: ThrustSusy.h,v 1.4 2005-10-11 12:57:39 gaede Exp $ 
  */
 
-class TwoPhotonThrustRazor : public Processor {
+class ThrustSusy : public Processor {
 
     public:
 
-        virtual Processor*  newProcessor() { return new TwoPhotonThrustRazor ; }
+        virtual Processor*  newProcessor() { return new ThrustSusy ; }
 
 
-        TwoPhotonThrustRazor() ;
+        ThrustSusy() ;
 
         /** Called at the begin of the job before anything is read.
          * Use to initialize the processor, e.g. book histograms.
@@ -69,25 +69,22 @@ class TwoPhotonThrustRazor : public Processor {
         */
         std::string _colName ;
         std::string _root_file_name;
-        int TassoThrustRazor();
-        int JetsetTwoPhotonThrustRazor();
+        int TassoThrustSusy();
+        int JetsetThrustSusy();
         double sign(double a,double b);
         double min(double a,double b);
 
-        bool partMom_0;
-        bool partMom_1; 
-
       /** Input collection name.
        */
-        int _typeOfTwoPhotonThrustRazorFinder;
-        int _ThrustDetectability; // added 2/2/17 SZ 
-
-        float _principleTwoPhotonThrustRazorValue;
-        float _majorTwoPhotonThrustRazorValue;
-        float _minorTwoPhotonThrustRazorValue;
-        Hep3Vector _principleTwoPhotonThrustRazorAxis;
-        Hep3Vector _majorTwoPhotonThrustRazorAxis;
-        Hep3Vector _minorTwoPhotonThrustRazorAxis;
+        std::string partMomCheck;
+        int _typeOfThrustSusyFinder;
+        int _thrustDetectability;
+        float _principleThrustSusyValue;
+        float _majorThrustSusyValue;
+        float _minorThrustSusyValue;
+        Hep3Vector _principleThrustSusyAxis;
+        Hep3Vector _majorThrustSusyAxis;
+        Hep3Vector _minorThrustSusyAxis;
         float _min,_max;
         LCCollection* _inParVec;
         std::vector<Hep3Vector> _partMom;

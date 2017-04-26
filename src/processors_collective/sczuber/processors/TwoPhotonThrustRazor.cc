@@ -85,11 +85,11 @@ void TwoPhotonThrustRazor::init() {
 
 
     if(_ThrustDetectability==0){_rootfile = new TFile("TwoPhotonThrustRazor_.eW.pW.I39212._T.root","RECREATE");
-        _R_T = new TH1F("R_T", "R=MTR/MR",100,0,10);}
+        _R_T = new TH1F("R_T", "R=MTR/MR",130,-3,10);}
     if(_ThrustDetectability==1){_rootfile = new TFile("TwoPhotonThrustRazor_.eW.pW.I39212._DAB.root","RECREATE");
-        _R_DAB = new TH1F("R_DAB", "R=MTR/MR",100,0,10);}
+        _R_DAB = new TH1F("R_DAB", "R=MTR/MR",130,-3,10);}
     if(_ThrustDetectability==2){_rootfile = new TFile("TwoPhotonThrustRazor_.eW.pW.I39212._DED.root","RECREATE");
-        _R_DED = new TH1F("R_DED", "R=MTR/MR",100,0,10);} 
+        _R_DED = new TH1F("R_DED", "R=MTR/MR",130,-3,10);} 
 
     //irameters() ;
 
@@ -131,6 +131,8 @@ void TwoPhotonThrustRazor::processEvent( LCEvent * evt ) {
     //cout << " get collection " << endl;
     //cout << _inParVec->getNumberOfElements() << endl;
     if (!_partMom.empty()) _partMom.clear();
+    partMom_0 = false;
+    partMom_1 = false; 
 
     MCParticle* high_e;
     MCParticle* high_p; 
@@ -228,12 +230,12 @@ void TwoPhotonThrustRazor::processEvent( LCEvent * evt ) {
     // Switch to the desired type of thrust finder
     if (_typeOfTwoPhotonThrustRazorFinder == 1)
     { 
-        //TassoTwoPhotonThrustRazor();
+        TassoThrustRazor();
     }
     else if (_partMom.size()<=1)
     {
         cout << " part Mom size less or equal 1 " << endl; 
-        //TassoTwoPhotonThrustRazor();
+        TassoThrustRazor();
     }
     else if (_typeOfTwoPhotonThrustRazorFinder == 2)
     {
@@ -425,6 +427,21 @@ void TwoPhotonThrustRazor::processEvent( LCEvent * evt ) {
         if(d==1){_R_DAB->Fill(R);}
         if(d==2){_R_DED->Fill(R);}
     }
+    if(beta2>1){
+        if(d==0){_R_T  ->Fill(-2);}
+        if(d==1){_R_DAB->Fill(-2);}
+        if(d==2){_R_DED->Fill(-2);}
+    }
+    if(partMom_0==true){
+        if(d==0){_R_T  ->Fill(-.5);}
+        if(d==1){_R_DAB->Fill(-.5);}
+        if(d==2){_R_DED->Fill(-.5);}
+    }
+    if(partMom_1==true){
+        if(d==0){_R_T  ->Fill(-1.5);}
+        if(d==1){_R_DAB->Fill(-1.5);}
+        if(d==2){_R_DED->Fill(-1.5);}
+    }
 
     if (_principleTwoPhotonThrustRazorValue >= _max) _max = _principleTwoPhotonThrustRazorValue;
     if (_principleTwoPhotonThrustRazorValue <= _min) _min = _principleTwoPhotonThrustRazorValue;
@@ -441,6 +458,26 @@ void TwoPhotonThrustRazor::check( LCEvent * evt ) {
 
 void TwoPhotonThrustRazor::end(){ 
     _rootfile->Write();
+}
+
+int TwoPhotonThrustRazor::TassoThrustRazor(){
+    int ThrustError = 0;
+    if(_partMom.size()<=0)
+    {
+        ThrustError = -1;
+        cout<< "NO PARTICLES IN EVENT AAAAAH" << endl;
+        _principleTwoPhotonThrustRazorValue = -1;
+        _principleTwoPhotonThrustRazorAxis.set(0,0,0);
+        partMom_0 = true;
+    }
+    if(_partMom.size()==1)
+    {
+        cout << "partMom.size"<< _partMom.size() << endl;
+        _principleTwoPhotonThrustRazorValue = 1;
+        _principleTwoPhotonThrustRazorAxis = _partMom[0];
+        partMom_1 = true; 
+    }
+    return ThrustError;
 }
 
 int TwoPhotonThrustRazor::JetsetTwoPhotonThrustRazor(){
