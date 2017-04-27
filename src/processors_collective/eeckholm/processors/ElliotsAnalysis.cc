@@ -74,6 +74,38 @@ void ElliotsAnalysis::processRunHeader( LCRunHeader* run) {
 //    _nRun++ ;
 } 
 
+
+void ElliotsAnalysis::calculateBarycenter( LCCollection* col ){
+  
+    float barycenterPosX = 0, barycenterPosY = 0;
+    float numX = 0, numY = 0, denomX = 0, denomY = 0;
+
+    
+    if( col != NULL ){
+        int nElements = col->getNumberOfElements()  ;
+
+        for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
+            SimCalorimeterHit* hit = dynamic_cast<SimCalorimeterHit*>( col->getElementAt(hitIndex) );
+	    float currentEnergy = hit->getEnergy();
+	    float currentPosX = hit->getPosition()[0];
+	    float currentPosY = hit->getPosition()[1];
+
+	    //calculate numerator and denominator of barycenter x value
+	    numX += currentPosX * currentEnergy;
+	    denomX += currentEnergy;
+
+	    //calculate numerator and denominator of barycenter y value
+	    numY += currentPosY * currentEnergy;
+	    denomY += currentEnergy;
+	}
+    }
+
+    barycenterPosX = numX / denomX;
+    barycenterPosY = numY / denomY;
+
+    printf("\n\nBarycenter Position: (%f, %f)\n\n", barycenterPosX, barycenterPosY);
+} 
+
 void ElliotsAnalysis::printParticleProperties(SimCalorimeterHit* hit){
 
   
@@ -119,6 +151,9 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
     // usually the working horse ...
 
     LCCollection* col = evt->getCollection( _colName ) ;
+    
+    calculateBarycenter(col);
+
     double highestEnergy = 0;
     double lowestEnergy = 10000;
     double hParticleEnergy = 0;
@@ -163,22 +198,8 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
            _hitmap->Fill(pos[0],pos[1]);
         } 
     }
-    for (int i = 0; i < maxHit->getNMCContributions(); i++){
-      hParticleEnergy += maxHit->getEnergyCont(i);
-    }
-
    
-
-    printf("Highest Energy Hit: %0.15f\n", highestEnergy);
-    printf("Highest Energy Position:( %f,%f,%f) \n", hPosX, hPosY, hPosZ);
-    printf("Sum of %d Particle Energies: %f\n",maxHit->getNMCContributions(), hParticleEnergy);
-    
-    
     printParticleProperties(maxHit);
-
-    printf("Lowest Energy: %0.25f\n", lowestEnergy);
-    printf("Lowest Energy Position:( %f,%f,%f) \n", lPosX, lPosY, lPosZ);
-
     
     _nEvt ++ ;
 }

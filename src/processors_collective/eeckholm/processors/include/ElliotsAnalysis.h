@@ -50,6 +50,8 @@ class ElliotsAnalysis : public Processor {
         */
         virtual void processEvent( LCEvent * evt ) ; 
 	
+	virtual void calculateBarycenter(LCCollection* col);
+	
 	virtual void printParticleProperties(SimCalorimeterHit* hit);
 	
         virtual void check( LCEvent * evt ) ; 
