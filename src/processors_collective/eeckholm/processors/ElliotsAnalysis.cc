@@ -25,6 +25,7 @@
 
 #include <TFile.h>
 #include <TH2D.h>
+#include <math.h>
 
 // ----- include for verbosity dependend logging ---------
 #include "marlin/VerbosityLevels.h"
@@ -74,36 +75,96 @@ void ElliotsAnalysis::processRunHeader( LCRunHeader* run) {
 //    _nRun++ ;
 } 
 
-
-void ElliotsAnalysis::calculateBarycenter( LCCollection* col ){
+double* ElliotsAnalysis::calculateMoments(LCCollection* col, double barycenters[4]){
+  double moments[2];
+  double pmom = 0, nmom = 0;
+  double pnum = 0, pdenom = 0, nnum = 0, ndenom = 0;
   
-    float barycenterPosX = 0, barycenterPosY = 0;
-    float numX = 0, numY = 0, denomX = 0, denomY = 0;
+  if( col != NULL ){
+    int nElements = col->getNumberOfElements()  ;
 
+    for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
+      SimCalorimeterHit* hit = dynamic_cast<SimCalorimeterHit*>( col->getElementAt(hitIndex) );
+     
+      double prad = std::sqrt((std::pow(barycenters[0],2)) + (std::pow(barycenters[1],2)));
+      double nrad = std::sqrt((std::pow(barycenters[2],2)) + (std::pow(barycenters[4],2)));
+      
+	pnum += prad * hit->getEnergy();
+        pdenom += hit->getEnergy();
+
+        nnum += nrad * hit->getEnergy();
+	ndenom += hit->getEnergy();
+    }
+  }
+  
+  pmom = pnum / pdenom;
+  nmom = nnum / ndenom;
+  
+  moments[0] = pmom;
+  moments[1] = nmom;
+
+  return moments;
+  
+}
+
+double*  ElliotsAnalysis::calculateBarycenter( LCCollection* col ){
+  
+  double pbarycenterPosX = 0, pbarycenterPosY = 0, nbarycenterPosX = 0, nbarycenterPosY = 0;
+  double pnumX = 0, pnumY = 0, pdenomX = 0, pdenomY = 0, nnumX = 0, nnumY = 0, ndenomX = 0, ndenomY = 0;
+  double pEnergy = 0, nEnergy = 0;
     
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
 
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
             SimCalorimeterHit* hit = dynamic_cast<SimCalorimeterHit*>( col->getElementAt(hitIndex) );
-	    float currentEnergy = hit->getEnergy();
-	    float currentPosX = hit->getPosition()[0];
-	    float currentPosY = hit->getPosition()[1];
+	    double currentEnergy = hit->getEnergy();
+	    double currentPosX = hit->getPosition()[0];
+	    double currentPosY = hit->getPosition()[1];
+	    double currentPosZ = hit->getPosition()[2];
 
-	    //calculate numerator and denominator of barycenter x value
-	    numX += currentPosX * currentEnergy;
-	    denomX += currentEnergy;
+	    currentPosX = currentPosX - std::abs(currentPosZ * 0.007);
 
-	    //calculate numerator and denominator of barycenter y value
-	    numY += currentPosY * currentEnergy;
-	    denomY += currentEnergy;
-	}
+	    if (currentPosZ < 0){
+	      //calculate numerator and denominator of barycenter x value                                                                              
+	      nnumX += currentPosX * currentEnergy;
+	      ndenomX += currentEnergy;
+
+	      //calculate numerator and denominator of barycenter y value                                                                              
+	      nnumY += currentPosY * currentEnergy;
+	      ndenomY += currentEnergy;
+	    }
+	    else {
+
+	      //calculate numerator and denominator of barycenter x value
+	      pnumX += currentPosX * currentEnergy;
+	      pdenomX += currentEnergy;
+
+	      //calculate numerator and denominator of barycenter y value
+	      pnumY += currentPosY * currentEnergy;
+	      pdenomY += currentEnergy;
+	    }
+	 }
     }
+    
+    pEnergy = pdenomX;
+    pbarycenterPosX = pnumX / pdenomX;
+    pbarycenterPosY = pnumY / pdenomY;
 
-    barycenterPosX = numX / denomX;
-    barycenterPosY = numY / denomY;
+    nEnergy = ndenomX;
+    nbarycenterPosX = nnumX / ndenomX;
+    nbarycenterPosY = nnumY / ndenomY;
 
-    printf("\n\nBarycenter Position: (%f, %f)\n\n", barycenterPosX, barycenterPosY);
+    double* barycenters; 
+    barycenters[0] = pbarycenterPosX;
+    barycenters[1] = pbarycenterPosY;
+    barycenters[2] = nbarycenterPosX;
+    barycenters[3] = nbarycenterPosY;
+    
+    printf("\n\nPositive Barycenter Position: (%f, %f) with Energy: %f\n\n", barycenters[0],barycenters[1], pEnergy);
+    printf("\n\nNegative Barycenter Position: (%f, %f) with Energy: %f\n\n", nbarycenterPosX, nbarycenterPosY, nEnergy);
+    
+    return barycenters;
 } 
 
 void ElliotsAnalysis::printParticleProperties(SimCalorimeterHit* hit){
@@ -152,7 +213,20 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
 
     LCCollection* col = evt->getCollection( _colName ) ;
     
-    calculateBarycenter(col);
+    double* barycenters;
+    barycenters[0] = calculateBarycenter(col)[0];
+    barycenters[1] = calculateBarycenter(col)[1];
+    barycenters[2] = calculateBarycenter(col)[2];
+    barycenters[3] = calculateBarycenter(col)[3];
+
+    printf("Postive: %f %f Negative %f %f", barycenters[0], barycenters[1], barycenters[2], barycenters[3]);
+
+    //    double *moments = calculateMoments(col, barycenters);
+
+    // printf("\nPostive moment: %f \n", moments[0]);
+    // printf("\nNegative moment: %f \n", moments[1]);
+
+
 
     double highestEnergy = 0;
     double lowestEnergy = 10000;

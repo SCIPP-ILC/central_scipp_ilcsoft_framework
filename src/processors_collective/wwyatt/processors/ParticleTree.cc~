@@ -60,7 +60,7 @@ ParticleTree::ParticleTree() : Processor("ParticleTree") {
 
 void ParticleTree::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
-    cout << "Initialized" << endl;
+
     _rootfile = new TFile("eBpW_dump.root","RECREATE");
     //_hitmap = new TH2F("hitmap","Hit Distribution",600.0,-300.0,300.0,600.0,-300.0,300.0);
     //_scalar = new TH1F("scalar", "Transverse Momentum Scalar Magnitude", 2000.0, 0.0, 20.0);
@@ -109,7 +109,6 @@ void ParticleTree::getChildren(MCParticle* hit, int gen){
 int ParticleTree::numberOfTrees(LCEvent * evt){
   LCCollection* col = evt->getCollection( _colName ) ;
   int id, stat;
-  cout << "***** Event " << _nEvt << ". *****" << endl;
   if( col != NULL ){
     int nElements = col->getNumberOfElements()  ;
     //first, find last electron and positron in the event
@@ -117,16 +116,13 @@ int ParticleTree::numberOfTrees(LCEvent * evt){
       MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex));
       id = hit->getPDG(); 
       stat = hit->getGeneratorStatus();      
-      cout << "-- Particle index " << hitIndex << " --" << endl;
-      if(stat != 3){
-	cout << "This particle, " << id << ", with gen status of " << stat<< " has " << hit->getParents().size() << " parents and has the energy " << hit->getEnergy() << "."<< endl;
+      if(stat==1){
 	for(MCParticle* parent : hit->getParents()){
 	  cout << "This is the parent id: " << parent->getPDG() << endl;
 	}	     
       }
     }
   }
-  return 0;
 }
 
 void ParticleTree::processEvent( LCEvent * evt ) {   
@@ -251,9 +247,8 @@ void ParticleTree::check( LCEvent * evt ) {
 
 void ParticleTree::end(){
     _rootfile->Write();
-    cout << endl;
-    //    cout << "Number of events with abs(x-mom sum) > 1.9: " << _b_def_count << endl;
-    //    double rat = _b_def_count/_nEvt;
-    //    cout << "Ratio of events with abs(x-mom sum) > 1.9: " << rat << endl;
+    cout << "Number of events with abs(x-mom sum) > 1.9: " << _b_def_count << endl;
+    double rat = _b_def_count/_nEvt;
+    cout << "Ratio of events with abs(x-mom sum) > 1.9: " << rat << endl;
 }
 

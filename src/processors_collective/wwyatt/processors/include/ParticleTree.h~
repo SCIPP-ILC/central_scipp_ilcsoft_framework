@@ -59,7 +59,6 @@ class ParticleTree : public Processor {
    */
   virtual void end() ;
   
-  int numberOfTrees(LCEvent*);
   
  protected:
 
