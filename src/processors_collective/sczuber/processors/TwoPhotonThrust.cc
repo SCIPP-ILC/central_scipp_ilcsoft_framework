@@ -77,7 +77,7 @@ TwoPhotonThrust::TwoPhotonThrust() : Processor("TwoPhotonThrust") {
             _typeOfTwoPhotonThrustFinder , 2 ) ;
     registerProcessorParameter( "ThrustDetectability" ,
             "Detectability Level of the Thrust and Thrust Axis:\n#\t0 : True\n#\t1 : Detectable\n#\t2 : Detected" ,
-            _ThrustDetectability, 0  );
+            _ThrustDetectability, 2  );
 }
 
 
@@ -88,17 +88,17 @@ void TwoPhotonThrust::init() {
 
     if(_ThrustDetectability==0){
         _rootfile = new TFile("TwoPhotonThrust_eW.pW.I39212._T.root","RECREATE");
-        _TV_T = new TH1F("TV_T", "Thrust Value",100,0,1); 
+        _TV_T = new TH1F("TV_T", "Thrust Value",100,-1,1); 
         _TA_T = new TH1F("TA_T", "Cosine(Thrust Angle)",100,0,1);
     }
     if(_ThrustDetectability==1){
         _rootfile = new TFile("TwoPhotonThrust_eW.pW.I39212._DAB.root","RECREATE");
-        _TV_DAB = new TH1F("TV_DAB", "Thrust Value",100,0,1);
+        _TV_DAB = new TH1F("TV_DAB", "Thrust Value",100,-1,1);
         _TA_DAB = new TH1F("TA_DAB", "Cosine(Thrust Angle)",100,0,1);
     }
     if(_ThrustDetectability==2){
         _rootfile = new TFile("TwoPhotonThrust_eW.pW.I39212._DED.root","RECREATE");
-        _TV_DED = new TH1F("TV_DED", "Thrust Value",100,0,1);
+        _TV_DED = new TH1F("TV_DED", "Thrust Value",100,-1,1);
         _TA_DED = new TH1F("TA_DED", "Cosine(Thrust Angle)",100,0,1);
     } 
 
@@ -148,19 +148,19 @@ void TwoPhotonThrust::processEvent( LCEvent * evt ) {
 
     int id, stat;
     for (int n=0; n<_inParVec->getNumberOfElements();n++)
-     {
-         MCParticle* part = dynamic_cast<MCParticle*>(_inParVec->getElementAt(n));
-         id = part->getPDG();
-         stat = part->getGeneratorStatus();
-         if(stat == 1){
-             if(id==11){
-                 high_e = part;
-             }
-             if(id==-11){
-                 high_p = part;
-             }
-         } //end final state 
-     } //end for loop
+    {
+        MCParticle* part = dynamic_cast<MCParticle*>(_inParVec->getElementAt(n));
+        id = part->getPDG();
+        stat = part->getGeneratorStatus();
+        if(stat == 1){
+            if(id==11){
+                high_e = part;
+            }
+            if(id==-11){
+                high_p = part;
+            }
+        } //end final state 
+    } //end for loop
     for (int n = 0; n<_inParVec->getNumberOfElements() ; n++){
         MCParticle* part = dynamic_cast<MCParticle*>(_inParVec->getElementAt(n));
         id = part->getPDG();
@@ -203,19 +203,19 @@ void TwoPhotonThrust::processEvent( LCEvent * evt ) {
             bool isDetectable = (!isDarkMatter && !isNeutrino);
             bool isDetected = (isDetectable && !isForward); 
             if(aPart != high_e && aPart != high_p){
-            if(_ThrustDetectability == 0){ 
-                _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
-            }
-            if(_ThrustDetectability == 1){
-                if(isDetectable){
-                    _partMom.push_back(Hep3Vector(partMom[0], partMom[1], partMom[2]));
+                if(_ThrustDetectability == 0){ 
+                    _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
                 }
-            }
-            if(_ThrustDetectability == 2){
-                if(isDetected){
-                    _partMom.push_back(Hep3Vector(partMom[0], partMom[1], partMom[2]));
+                if(_ThrustDetectability == 1){
+                    if(isDetectable){
+                        _partMom.push_back(Hep3Vector(partMom[0], partMom[1], partMom[2]));
+                    }
                 }
-            }
+                if(_ThrustDetectability == 2){
+                    if(isDetected){
+                        _partMom.push_back(Hep3Vector(partMom[0], partMom[1], partMom[2]));
+                    }
+                }
             }
         } //stat==1
     } // for particle 
@@ -231,12 +231,12 @@ void TwoPhotonThrust::processEvent( LCEvent * evt ) {
     // Switch to the desired type of thrust finder
     if (_typeOfTwoPhotonThrustFinder == 1)
     { 
-        //TassoTwoPhotonThrust();
+        TassoThrust();
     }
     else if (_partMom.size()<=1)
     {
         cout << " part Mom size less or equal 1 " << endl; 
-        //TassoTwoPhotonThrust();
+        TassoThrust();
     }
     else if (_typeOfTwoPhotonThrustFinder == 2)
     {

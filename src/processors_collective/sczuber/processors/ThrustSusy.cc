@@ -60,6 +60,9 @@ static TH1F* _TV_DED;
 static TH1F* _TA_T;
 static TH1F* _TA_DAB;
 static TH1F* _TA_DED;
+static TH2F* _TVTA_T;
+static TH2F* _TVTA_DAB;
+static TH2F* _TVTA_DED;
 
 ThrustSusy ThrustSusy;
 
@@ -77,6 +80,7 @@ ThrustSusy::ThrustSusy() : Processor("ThrustSusy") {
     registerProcessorParameter( "thrustDetectability",
             "Detectability of the Thrust Axis/Value to be used:\n#\t0 : True \n#t1 : Detectable \n#t2 : Detected" ,
             _thrustDetectability, 2 );
+    
 }
 
 
@@ -89,22 +93,25 @@ void ThrustSusy::init() {
 
         _rootfile = new TFile("ThrustSusy_.39133._T.root","RECREATE");
 
-        _TV_T = new TH1F("TV_T", "Thrust Value", 100, 0,1);
+        _TV_T = new TH1F("TV_T", "Thrust Value", 100, -1.5,1);
         _TA_T = new TH1F("TA_T", "Cosine of Thrust Angle", 100, 0,1);
+        _TVTA_T = new TH2F("TVTA_T", "Thrust Value v Thrust Angle",100, 0,1,100,0,1);  
     }
     if(_thrustDetectability==1){
 
         _rootfile = new TFile("ThrustSusy_.39133._DAB.root","RECREATE");
 
-        _TV_DAB = new TH1F("TV_DAB", "Thrust Value", 100, 0,1);
+        _TV_DAB = new TH1F("TV_DAB", "Thrust Value", 100, -1.5,1);
         _TA_DAB = new TH1F("TA_DAB", "Cosine of Thrust Angle", 100, 0,1);
+        _TVTA_DAB = new TH2F("TVTA_DAB", "Thrust Value v Thrust Angle",100, 0,1,100,0,1);  
 
     }
     if(_thrustDetectability==2){
         _rootfile = new TFile("ThrustSusy_.39133._DED.root","RECREATE");
 
-        _TV_DED = new TH1F("TV_DED", "Thrust Value", 100, 0,1);
+        _TV_DED = new TH1F("TV_DED", "Thrust Value", 100, -1.5,1);
         _TA_DED = new TH1F("TA_DED", "Cosine of Thrust Angle", 100, 0,1);
+        _TVTA_DED = new TH2F("TVTA_DED", "Thrust Value v Thrust Angle",100, 0,1,100,0,1);  
 
     }
 
@@ -288,16 +295,19 @@ void ThrustSusy::processEvent( LCEvent * evt ) {
     if(_thrustDetectability == 0){
         _TV_T->Fill(_principleThrustSusyValue);
         _TA_T->Fill(cosTT);
+        _TVTA_T->Fill(cosTT,_principleThrustSusyValue);
     }
     if(_thrustDetectability == 1){
 
         _TV_DAB->Fill(_principleThrustSusyValue);
         _TA_DAB->Fill(cosTT);
+        _TVTA_DAB->Fill(cosTT,_principleThrustSusyValue);
     }
     if(_thrustDetectability == 2){
 
         _TV_DED->Fill(_principleThrustSusyValue);
         _TA_DED->Fill(cosTT);
+        _TVTA_DED->Fill(cosTT,_principleThrustSusyValue);
     }    
 
     if (_principleThrustSusyValue >= _max) _max = _principleThrustSusyValue;
@@ -324,7 +334,7 @@ int ThrustSusy::TassoThrustSusy(){
     {
         //partMom0 = true;
         ThrustError = -1;
-        cout<< "NO PARTICLES IN EVENT AAAAAH" << endl;
+        //cout<< "NO PARTICLES IN EVENT AAAAAH" << endl;
         _principleThrustSusyValue = -1;
         _principleThrustSusyAxis.set(0,0,0);
     }

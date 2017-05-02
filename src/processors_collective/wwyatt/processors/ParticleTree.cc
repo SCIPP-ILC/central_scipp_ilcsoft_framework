@@ -21,6 +21,8 @@
 #include "polar_coords.h"
 #include <iostream>
 #include <cmath>
+#include <vector>
+#include <map>
 
 #include <EVENT/LCCollection.h>
 #include <EVENT/SimCalorimeterHit.h>
@@ -106,25 +108,63 @@ void ParticleTree::getChildren(MCParticle* hit, int gen){
     }
     cout << endl;
 }
-int ParticleTree::numberOfTrees(LCEvent * evt){
+int ParticleTree::numberOfTrees(LCEvent * evt, bool v){
+
   LCCollection* col = evt->getCollection( _colName ) ;
   int id, stat;
-  cout << "***** Event " << _nEvt << ". *****" << endl;
+
+  //v is verbosity, if v is true, then this function will print a lot a data to the console.
+  //I do not know how to send data only to the log or error console.
+  if(v)cout <<endl<< "***** Event " << _nEvt << ". *****" << endl;
+
   if( col != NULL ){
     int nElements = col->getNumberOfElements()  ;
-    //first, find last electron and positron in the event
+    vector<pair<int,double>> children_index; //used to index the children map.
+    vector<pair<int,double>> parent_index; //used to index the children map.
+    map<pair<int,double>, MCParticle *> parents; //Set of all particles with PDG 0
+    map<pair<int,double>, MCParticle *> children; // All other particles
+    //There maps have key of a pair of int as their PDG and a double as their energy.
+    //The idea is that each even has a unique particle with a unique enegy.
+    //If not an error will throw and I will find a way to make them unique.
+
+    //Looping through all MCParitles
     for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
       MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex));
-      id = hit->getPDG(); 
+      id = hit->getPDG();
       stat = hit->getGeneratorStatus();      
-      cout << "-- Particle index " << hitIndex << " --" << endl;
-      if(stat != 3){
+      if(v)cout << "-- Particle index " << hitIndex << " --" << endl;
+
+      //If the gen status is zero then it is a initial particle and add it to the parent map.
+      if(stat == 0){
+	pair<int,double> key(id, hit->getEnergy());
+	parent_index.push_back(key);
+	pair<pair<int,double>,MCParticle *> ret=parents.insert(key,hit);
+	//Check to see if the particle is already in the map
+	if(ret.second == false){
+	  //Paritle is already there, if this prints then pair<id, enery> is not unique.
+	  cout << "Error: there is multiple of particle PDG " << id << "." << endl;
+	}
+      }else if(stat == 2){
+	pair<int,double> key(id, hit->getEnergy());
+	children_index.push_back(key);
+	pair<pair<int,double>, MCParticle *>ret = children.insert(key, hit);
+	//Check to see if the particle is already in the map
+	if(ret.second == false){
+	  //Paritle is already there, if this prints then pair<id, enery> is not unique.
+	  cout << "Error: there is multiple of particle PDG " << id << "." << endl;
+	}
+      }
+
+      //Verbose Print statements
+      if(v && stat != 3){
 	cout << "This particle, " << id << ", with gen status of " << stat<< " has " << hit->getParents().size() << " parents and has the energy " << hit->getEnergy() << "."<< endl;
 	for(MCParticle* parent : hit->getParents()){
-	  cout << "This is the parent id: " << parent->getPDG() << endl;
+	  cout << "For the particle with PGD: " << id<< " this the parent id: " << parent->getPDG() << " and energy " << parent->getEnergy() << endl;
 	}	     
       }
     }
+    int numTrees = 0;
+    for(
   }
   return 0;
 }
