@@ -338,8 +338,7 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
                             vec[i][2][3]+= part4mom[3];
                         }
                     }
-                } 
-                cout << "finished filling "<< endl;           
+                }       
             }
         }
         cout << "end loop 3 "<< endl; 
@@ -375,6 +374,8 @@ void ThrustRazor::processEvent( LCEvent * evt ) {
             bool isDetectable = (!isDarkMatter && !isNeutrino);
             bool isDetected = (isDetectable && !isForward); 
             if(stat ==1){
+            cout << "id: "<<id<<endl;
+            cout << partMom<< endl;
                 if(_thrustDetectability == 0){
                     if(!isDarkMatter){
                         Rvec[d][0]+=R4Vec[0];

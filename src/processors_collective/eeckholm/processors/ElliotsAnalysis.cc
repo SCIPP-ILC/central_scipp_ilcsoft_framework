@@ -76,7 +76,7 @@ void ElliotsAnalysis::processRunHeader( LCRunHeader* run) {
 } 
 
 double* ElliotsAnalysis::calculateMoments(LCCollection* col, double barycenters[4]){
-  double moments[2];
+  double* moments = new double[2];
   double pmom = 0, nmom = 0;
   double pnum = 0, pdenom = 0, nnum = 0, ndenom = 0;
   
@@ -155,14 +155,14 @@ double*  ElliotsAnalysis::calculateBarycenter( LCCollection* col ){
     nbarycenterPosX = nnumX / ndenomX;
     nbarycenterPosY = nnumY / ndenomY;
 
-    double* barycenters; 
+    double* barycenters = new double[4]; 
     barycenters[0] = pbarycenterPosX;
     barycenters[1] = pbarycenterPosY;
     barycenters[2] = nbarycenterPosX;
     barycenters[3] = nbarycenterPosY;
     
-    printf("\n\nPositive Barycenter Position: (%f, %f) with Energy: %f\n\n", barycenters[0],barycenters[1], pEnergy);
-    printf("\n\nNegative Barycenter Position: (%f, %f) with Energy: %f\n\n", nbarycenterPosX, nbarycenterPosY, nEnergy);
+    //    printf("\n\nPositive Barycenter Position: (%f, %f) with Energy: %f\n\n", barycenters[0],barycenters[1], pEnergy);
+    // printf("\n\nNegative Barycenter Position: (%f, %f) with Energy: %f\n\n", barycenters[2],barycenters[3], nEnergy);
     
     return barycenters;
 } 
@@ -213,18 +213,15 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
 
     LCCollection* col = evt->getCollection( _colName ) ;
     
-    double* barycenters;
-    barycenters[0] = calculateBarycenter(col)[0];
-    barycenters[1] = calculateBarycenter(col)[1];
-    barycenters[2] = calculateBarycenter(col)[2];
-    barycenters[3] = calculateBarycenter(col)[3];
+    double* barycenters = calculateBarycenter(col);
 
-    printf("Postive: %f %f Negative %f %f", barycenters[0], barycenters[1], barycenters[2], barycenters[3]);
 
-    //    double *moments = calculateMoments(col, barycenters);
+    printf("\nPostive:( %f,%f) Negative (%f,%f)\n", barycenters[0], barycenters[1], barycenters[2], barycenters[3]);
 
-    // printf("\nPostive moment: %f \n", moments[0]);
-    // printf("\nNegative moment: %f \n", moments[1]);
+    double *moments = calculateMoments(col, barycenters);
+
+    printf("\nPostive moment: %f \n", moments[0]);
+    printf("\nNegative moment: %f \n", moments[1]);
 
 
 
@@ -273,7 +270,7 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
         } 
     }
    
-    printParticleProperties(maxHit);
+    // printParticleProperties(maxHit);
     
     _nEvt ++ ;
 }

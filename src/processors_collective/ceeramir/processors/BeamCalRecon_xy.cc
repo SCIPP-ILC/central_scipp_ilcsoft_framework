@@ -69,12 +69,19 @@ static TH2F* _hlego_zeros;
 static TH2F* _hlego_inefficiency;
 static TH2F* _hlego_test;
 
+
+static TH2F* _hlego_pol1;
+static TH2F* _hlego_pol2;
+static TH2F* _hlego_pol3;
+static TH2F* _hlego_pol4;
+
 //static TH2F* _hlego_var;
 //static TH2F* _hlego_zeros_var;
 //static TH2F* _hlego_inefficiency_var;
 //static TH2F* _hlego_test_var;
 
 static TCanvas* _c2;
+static TCanvas* _c1;
 
 static unordered_map<pair<float,float>,double>* _all_map;
 static unordered_map<pair<float,float>,double>* _zeros_map;
@@ -136,9 +143,11 @@ void BeamCalRecon_xy::init() {
     _hitmap_bgd = new TProfile2D("hitmap_bgd","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _hitmap_zeros = new TProfile2D("hitmap_zeros","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _test_slice = new TProfile2D("hitmap_slice","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
-    _c2 = new TCanvas("c2","c2",300,300);
+    //    _c2 = new TCanvas("c2","c2",300,300);
+
 
     int LEGObins = 60;
+    int POLARbins = 40;
     const Int_t NBINS = 68;
     //    Double_t edges[NBINS + 1] = {};
     //    static float edges[] = { -199.50, -189.57, -181.02, -172.60,
@@ -157,11 +166,21 @@ void BeamCalRecon_xy::init() {
 			   125.00,    132.57,    140.30,    148.16,    156.17,
 			   164.32, 172.60, 181.02, 189.57, 199.50};
     std::stringstream s1;
+    string bgd_events = "bgd,";
+    
 
     s1 << "LEGO 1s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
     const char* LEGOtitle = s1.str().c_str();
     _hlego = new TH2F("hlego", LEGOtitle ,LEGObins ,-150,150,LEGObins,-150,150);
     RootPlot(_hlego);
+
+    s1 << "LEGO 1s,"<< _num_bgd_events_to_read << bgd_events << LEGObins << "bin";
+    const char* LEGOtitle2 = s1.str().c_str();
+    _c1 = new TCanvas("c1","c1",600,400);
+    _hlego_pol1 = new TH2F("hlego_pol1", LEGOtitle2 ,POLARbins ,-150,150,POLARbins,-150,150);
+    RootPlot(_hlego_pol1);
+
+
 
     s1.str("");
     s1 << "LEGO 0s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
@@ -195,6 +214,8 @@ void BeamCalRecon_xy::init() {
     _hlego_zeros_var = new TH2F("hlego_0s_var", LEGOtitlezVar, 67, edges, 67, edges);
      */
 
+
+    //    TLegend *legend = new TLegend(0.55,0.65,0.76,0.82);
 
     // TH2F
     // TProfile2D
@@ -255,7 +276,9 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     string ID = endx_s + "," + endy_s;
     cout << "ID string"<< ID << endl;
 
-
+    Float_t px,py;
+    px = endx;
+    py =endy;
     //	int ID = scipp_ilc::beamcal_recon_xy::getID(end_x,end_y);
     //	int ID = scipp_ilc::simple_list_geometry_xy::getID(end_x,end_y);
 
@@ -271,6 +294,7 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     if(detected){                               //Graph of detected
       _hitmap_bgd->Fill(endx,endy,detected);    //      _hitmap_bgd->Fill(endx,endy);
       _hlego->Fill(endx,endy,detected);
+      _hlego_pol1->Fill(px,py);
       //      _hlego_var->Fill(endx,endy,detected);
     }else{                                      //Graph of not detected
       _hitmap_zeros->Fill(endx,endy,true);
@@ -290,6 +314,7 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
 
 
     _hlego->SetFillColor(kYellow);
+    gStyle->SetPalette(kBird);
     cout << _nEvt++ << endl;
 }
 
@@ -308,10 +333,10 @@ void BeamCalRecon_xy::end(){
   //  }
 
   _hlego_inefficiency->Add(_hlego_zeros);
-  _hlego_test->Add(_hlego_zeros);
+  /*  _hlego_test->Add(_hlego_zeros);
   _hlego_test->Add(_hlego);
   _hlego_inefficiency->Divide(_hlego_test);
-
+  */
     cout << "\ndetected: " << _detected_num << endl;
     cout << "\n in \'slice\' of beamcal: " << _test_num << endl;
 

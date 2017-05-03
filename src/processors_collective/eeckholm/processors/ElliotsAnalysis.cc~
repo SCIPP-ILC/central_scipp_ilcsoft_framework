@@ -155,14 +155,14 @@ double*  ElliotsAnalysis::calculateBarycenter( LCCollection* col ){
     nbarycenterPosX = nnumX / ndenomX;
     nbarycenterPosY = nnumY / ndenomY;
 
-    double* barycenters; 
+    double* barycenters = new double[4]; 
     barycenters[0] = pbarycenterPosX;
     barycenters[1] = pbarycenterPosY;
     barycenters[2] = nbarycenterPosX;
     barycenters[3] = nbarycenterPosY;
     
-    printf("\n\nPositive Barycenter Position: (%f, %f) with Energy: %f\n\n", barycenters[0],barycenters[1], pEnergy);
-    printf("\n\nNegative Barycenter Position: (%f, %f) with Energy: %f\n\n", nbarycenterPosX, nbarycenterPosY, nEnergy);
+    //    printf("\n\nPositive Barycenter Position: (%f, %f) with Energy: %f\n\n", barycenters[0],barycenters[1], pEnergy);
+    // printf("\n\nNegative Barycenter Position: (%f, %f) with Energy: %f\n\n", barycenters[2],barycenters[3], nEnergy);
     
     return barycenters;
 } 
@@ -213,8 +213,9 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
 
     LCCollection* col = evt->getCollection( _colName ) ;
     
-    double barycenters[4] = calculateBarycenter(col);
-    
+    double* barycenters = calculateBarycenter(col);
+
+
     printf("Postive: %f %f Negative %f %f", barycenters[0], barycenters[1], barycenters[2], barycenters[3]);
 
     //    double *moments = calculateMoments(col, barycenters);
