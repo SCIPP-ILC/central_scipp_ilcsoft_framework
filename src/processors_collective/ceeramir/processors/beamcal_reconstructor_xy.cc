@@ -133,6 +133,9 @@ namespace scipp_ilc {
 
                     const float* old_pos = hit->getPosition();
 
+
+
+
                     old_z = old_pos[2];
                     old_y = old_pos[1];
                     old_x = old_pos[0] - abs(old_z)*_transform;

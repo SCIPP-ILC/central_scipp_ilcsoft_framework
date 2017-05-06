@@ -97,6 +97,7 @@ void ThrustRazor::init() {
         _MR_DED = new TH1F("MR_DED","MR", 100, 0 ,10); 
         _R_DED = new TH1F("R_DED", "R =MTR/MR",130,-3,10);
     }
+    
     freopen( "ThrustRazor.log", "w", stdout );
     // irameters() ;
 

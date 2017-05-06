@@ -159,6 +159,7 @@ namespace scipp_ilc {
 	  string y_string = "";
 	  bool x_condition = true;
 	  bool y_condition = true;
+
 	  while (x_condition || y_condition){
 	    //	  while (y_condition ){
 	    if((x <= _x_table[count]) && x_condition){

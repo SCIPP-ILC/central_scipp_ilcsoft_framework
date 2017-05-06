@@ -38,12 +38,17 @@
 // ----- include for verbosity dependend logging ---------
 #include "marlin/VerbosityLevels.h"
 
+// ----- all for ploting -----
 #include <TFile.h>
 #include <TProfile.h>
 #include <TProfile2D.h>
 #include <TH2D.h>
 #include <TCanvas.h>
 #include <TPaveStats.h>
+
+#include <TStyle.h>
+#include <TColor.h>
+#include <TLegend.h>
 
 typedef std::chrono::high_resolution_clock Clock;
 
@@ -112,7 +117,7 @@ void BeamCalRecon_xy::RootPlotTitle(stringstream s1, string ){
  */
 
 
-void BeamCalRecon_xy::RootPlot(TH2F* graph){                                        // This function edits a root plot passed from init
+void BeamCalRecon_xy::RootPlot(TH2F* graph){                              // This function edits a root plot passed from init
 
   graph->GetXaxis()->SetTitle("X axis (mm)");
   graph->GetYaxis()->SetTitle("Y axis (mm)");
@@ -125,6 +130,15 @@ void BeamCalRecon_xy::RootPlot(TH2F* graph){                                    
   graph->GetXaxis()->SetTitleOffset(1.4);
   graph->GetYaxis()->SetTitleOffset(1.6);
 
+  graph->SetTheta(90);
+  /* 
+     gStyle->SetOptStat(1111111);            // Set stat options
+     gStyle->SetStatY(0.9);                  // Set y-position (fraction of pad size)
+     gStyle->SetStatX(0.9);                  // Set x-position (fraction of pad size)
+     gStyle->SetStatW(0.4);                  // Set width of stat-box (fraction of pad size)
+     gStyle->SetStatH(0.2);                  // Set height of stat-box (fraction of pad size)
+  */
+
   //  graph->SetPhi(60);
   //  TPaveStats *st = (TPaveStats*)graph->FindObject("stats");
   //  st->SetX1NDC(0.0);
@@ -136,22 +150,21 @@ void BeamCalRecon_xy::RootPlot(TH2F* graph){                                    
 
 void BeamCalRecon_xy::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
-    //    gStyle->SetStatX(0.1);
 
     _rootfile = new TFile(_root_file_name.c_str(),"RECREATE");
     _radeff = new TProfile("radeff","Radial Efficiency",14*2,0.0,140.0,0.0,1.0);
     _hitmap_bgd = new TProfile2D("hitmap_bgd","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _hitmap_zeros = new TProfile2D("hitmap_zeros","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _test_slice = new TProfile2D("hitmap_slice","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
-    //    _c2 = new TCanvas("c2","c2",300,300);
-
+    _c2 = new TCanvas("c2","c2",300,300);
+    //    _c1 = new TCanvas("c1","c1",600,400);
 
     int LEGObins = 60;
     int POLARbins = 40;
     const Int_t NBINS = 68;
     //    Double_t edges[NBINS + 1] = {};
     //    static float edges[] = { -199.50, -189.57, -181.02, -172.60,
-    Double_t edges[69] = { -199.50, -189.57, -181.02, -172.60,
+    Double_t _var_edges[69] = { -199.50, -189.57, -181.02, -172.60,
 			   -164.32,    -156.17,    -148.16,    -140.30,    -132.57,
 			   -125.00,    -117.58,    -110.30,    -103.19,    -96.23,
 			   -89.44,    -82.82,    -76.37,    -70.09,    -64.00,
@@ -165,57 +178,60 @@ void BeamCalRecon_xy::init() {
 			   89.44,    96.23,    103.19,    110.30,    117.58,
 			   125.00,    132.57,    140.30,    148.16,    156.17,
 			   164.32, 172.60, 181.02, 189.57, 199.50};
+
     std::stringstream s1;
-    string bgd_events = "bgd,";
-    
+    string bgd_events = "bgd,";    
 
     s1 << "LEGO 1s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
     const char* LEGOtitle = s1.str().c_str();
     _hlego = new TH2F("hlego", LEGOtitle ,LEGObins ,-150,150,LEGObins,-150,150);
     RootPlot(_hlego);
 
+    // ------ POLAR GRAPH ------
     s1 << "LEGO 1s,"<< _num_bgd_events_to_read << bgd_events << LEGObins << "bin";
     const char* LEGOtitle2 = s1.str().c_str();
-    _c1 = new TCanvas("c1","c1",600,400);
     _hlego_pol1 = new TH2F("hlego_pol1", LEGOtitle2 ,POLARbins ,-150,150,POLARbins,-150,150);
     RootPlot(_hlego_pol1);
-
+    // ------ end POLAR GRAPH ------
 
 
     s1.str("");
     s1 << "LEGO 0s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
-    const char* LEGOtitlez = s1.str().c_str();
-    _hlego_zeros = new TH2F("hlego_0s", LEGOtitlez ,LEGObins,-150,150,LEGObins,-150,150);
+    const char* LEGOtitleZeros = s1.str().c_str();
+    _hlego_zeros = new TH2F("hlego_0s", LEGOtitleZeros, LEGObins,-150,150,LEGObins,-150,150);
     RootPlot(_hlego_zeros);
 
     s1.str("");
     s1 << "LEGO,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
     const char* LEGOtitleInefficiency = s1.str().c_str();
     _hlego_inefficiency = new TH2F("hlego_inefficiency", LEGOtitleInefficiency, LEGObins,-150,150,LEGObins,-150,150);
-    //    _hlego_inefficiency_var = new TH2F("hlego_inefficiency_var", LEGOTitleInefficiency, 67, edges, 67, edges);
+    //    _hlego_inefficiency_var = new TH2F("hlego_inefficiency_var", LEGOTitleInefficiency, 67, _var_edges, 67, _var_edges);
     RootPlot(_hlego_inefficiency);
 
     s1.str("");
     s1 << "LEGO , test"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
     const char* LEGOTestTitle = s1.str().c_str();
     _hlego_test = new TH2F("hlego_test", LEGOTestTitle ,LEGObins,-150,150,LEGObins,-150,150);
-    //    _hlego_test_var = new TH2F("hlego_test_var", LEGOTestTitle, 67, edges, 67, edges);
+    //    _hlego_test_var = new TH2F("hlego_test_var", LEGOTestTitle, 67, _var_edges, 67, _var_edges);
     RootPlot(_hlego_test);
 
+
+
     /*
+      // ------ Variable binning ------
     s1.str("");
     s1 << "LEGO 1s, var"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
     const char* LEGOtitleVar = s1.str().c_str();
-    _hlego_var = new TH2F("hlego_var", LEGOtitleVar, 67, edges, 67, edges);
+    _hlego_var = new TH2F("hlego_var", LEGOtitleVar, 67, _var_edges, 67, _var_edges);
 
     s1.str("");
     s1 << "LEGO 0s, var"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
     const char* LEGOtitlezVar = s1.str().c_str();
-    _hlego_zeros_var = new TH2F("hlego_0s_var", LEGOtitlezVar, 67, edges, 67, edges);
+    _hlego_zeros_var = new TH2F("hlego_0s_var", LEGOtitlezVar, 67, _var_edges, 67, _var_edges);
      */
 
 
-    //    TLegend *legend = new TLegend(0.55,0.65,0.76,0.82);
+    TLegend *legend = new TLegend(0.05,0.05,0.06,0.1);
 
     // TH2F
     // TProfile2D
@@ -312,9 +328,9 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     //    }
     //    (*_all_map)[ID]+= (detected || !detected);
 
-
+    //    gStyle->SetPalette(kBird);
     _hlego->SetFillColor(kYellow);
-    gStyle->SetPalette(kBird);
+
     cout << _nEvt++ << endl;
 }
 
@@ -344,5 +360,6 @@ void BeamCalRecon_xy::end(){
     //    cout << "*******************this is the end***********************" << endl;
     //    cout << "******************* time elapsed: " << (_end - _begin) << " ***********************" << endl;
     //    cout << "******************* time elapsed: " << std::chrono::duration_cast<std::chrono::nanoseconds>(_t2 - _t1).count() << " ***********************" << endl;
+
     _rootfile->Write();
 }

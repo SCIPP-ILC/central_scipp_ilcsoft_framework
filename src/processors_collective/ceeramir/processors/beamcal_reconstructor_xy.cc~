@@ -15,10 +15,10 @@
 #include "IMPL/LCRunHeaderImpl.h"
 
 
-#include "include/simple_list_geometry_edit.h"
-#include "include/beamcal_scanner_edit.h"
+#include "include/simple_list_geometry_xy.h"
+#include "include/beamcal_scanner_xy.h"
 #include "include/beamcal_reconstructor_xy.h"
-#include "include/BeamCalRecon_edit.h"
+#include "include/BeamCalRecon_xy.h"
 
 #include "scipp_ilc_globals.h"
 
@@ -26,7 +26,7 @@
 using namespace std;
 
 namespace scipp_ilc {
-    namespace beamcal_recon_C {
+    namespace beamcal_recon_xy {
 
 
 /*

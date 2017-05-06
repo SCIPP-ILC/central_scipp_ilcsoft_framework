@@ -176,14 +176,14 @@ namespace scipp_ilc {
 
 	  //	  cout << "x: " << x << "\t" << "y: " << y << endl;
 	  //	  cout << "IDx: " << IDx << "\t" << "IDy: " << IDy << "\n" << endl;
-	  cout << "x_string: " << x_string << "\t" << "y_string: " << y_string << endl;
-	  string temp = "";
-	  temp = x_string + y_string;
-	  cout << "temp: "<< temp << endl;
+	  //	  cout << "x_string: " << x_string << "\t" << "y_string: " << y_string << endl;
+	  //	  string temp = "";
+	  //	  temp = x_string + y_string;
+	  //	  cout << "temp: "<< temp << endl;
 	  IDxy = std::stoi(x_string + y_string);
 
 	  //	  IDxy = (IDx + IDy) * 1000;
-	  cout << "IDxy: " << IDxy << "\n" << endl;
+	  //	  cout << "IDxy: " << IDxy << "\n" << endl;
 	  return IDxy;
         }
 

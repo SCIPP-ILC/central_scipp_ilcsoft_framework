@@ -79,21 +79,28 @@ double* ElliotsAnalysis::calculateMoments(LCCollection* col, double barycenters[
   double* moments = new double[2];
   double pmom = 0, nmom = 0;
   double pnum = 0, pdenom = 0, nnum = 0, ndenom = 0;
-  
+  double prad = 0, nrad = 0;
+ 
   if( col != NULL ){
     int nElements = col->getNumberOfElements()  ;
 
     for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
       SimCalorimeterHit* hit = dynamic_cast<SimCalorimeterHit*>( col->getElementAt(hitIndex) );
-     
-      double prad = std::sqrt((std::pow(barycenters[0],2)) + (std::pow(barycenters[1],2)));
-      double nrad = std::sqrt((std::pow(barycenters[2],2)) + (std::pow(barycenters[4],2)));
-      
-	pnum += prad * hit->getEnergy();
-        pdenom += hit->getEnergy();
+      double currentPosX = hit->getPosition()[0];
 
-        nnum += nrad * hit->getEnergy();
-	ndenom += hit->getEnergy();
+       currentPosX = currentPosX - std::abs(hit->getPosition()[2] * 0.007);
+     
+      if (hit->getPosition()[2] > 0){
+	prad = std::sqrt((std::pow(currentPosX - barycenters[0],2) + (std::pow(hit->getPosition()[1] - barycenters[1],2))));
+	pnum += prad * hit->getEnergy();
+	pdenom += hit->getEnergy();
+      }else {
+	nrad = std::sqrt((std::pow(currentPosX - barycenters[2],2) + (std::pow(hit->getPosition()[1] - barycenters[3],2))));
+	nnum += nrad * hit->getEnergy();
+        ndenom += hit->getEnergy();
+      }
+
+
     }
   }
   
