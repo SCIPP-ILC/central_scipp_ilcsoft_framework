@@ -49,6 +49,7 @@
 #include <TStyle.h>
 #include <TColor.h>
 #include <TLegend.h>
+#include <TH2I.h>
 
 typedef std::chrono::high_resolution_clock Clock;
 
@@ -74,7 +75,7 @@ static TH2F* _hlego_zeros;
 static TH2F* _hlego_inefficiency;
 static TH2F* _hlego_test;
 
-
+static TH2I* _h2;
 static TH2F* _hlego_pol1;
 static TH2F* _hlego_pol2;
 static TH2F* _hlego_pol3;
@@ -130,7 +131,7 @@ void BeamCalRecon_xy::RootPlot(TH2F* graph){                              // Thi
   graph->GetXaxis()->SetTitleOffset(1.4);
   graph->GetYaxis()->SetTitleOffset(1.6);
 
-  c1->SetTheta(90);
+  //  graph->SetTheta(90);
   /* 
      gStyle->SetOptStat(1111111);            // Set stat options
      gStyle->SetStatY(0.9);                  // Set y-position (fraction of pad size)
@@ -158,6 +159,12 @@ void BeamCalRecon_xy::init() {
     _test_slice = new TProfile2D("hitmap_slice","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _c2 = new TCanvas("c2","c2",300,300);
     //    _c1 = new TCanvas("c1","c1",600,400);
+
+    _h2 = new TH1I("h2","Gaus",100,-5,5);
+    _h2->GetXaxis()->SetTitle("Standard deviation #sigma");
+    _h2->GetYaxis()->SetTitle("dN/d#sigma");
+
+
 
     int LEGObins = 60;
     int POLARbins = 40;
@@ -260,6 +267,8 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     bool detectable_electron = scipp_ilc::get_detectable_signal_event(signal_event,electron);
     if ( not detectable_electron ) return;
 
+    double electron_energy = electron->getEnergy();
+
     //Get the radius at which the signal electron hit
     const double* endpoint = electron->getEndpoint();
     double end_x = (endpoint[0] - 0.007*endpoint[2]);
@@ -311,6 +320,7 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
       _hitmap_bgd->Fill(endx,endy,detected);    //      _hitmap_bgd->Fill(endx,endy);
       _hlego->Fill(endx,endy,detected);
       _hlego_pol1->Fill(px,py);
+      _h2->Fill(electron_energy);
       //      _hlego_var->Fill(endx,endy,detected);
     }else{                                      //Graph of not detected
       _hitmap_zeros->Fill(endx,endy,true);

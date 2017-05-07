@@ -129,12 +129,7 @@ namespace scipp_ilc {
                 for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
                     lcio::SimCalorimeterHit* hit = dynamic_cast<lcio::SimCalorimeterHit*>( col->getElementAt(hitIndex) );
 
-
-
                     const float* old_pos = hit->getPosition();
-
-
-
 
                     old_z = old_pos[2];
                     old_y = old_pos[1];
@@ -160,6 +155,9 @@ namespace scipp_ilc {
                     } else {
                         ID = getID(old_x,old_y);
                         (*new_pixels)[ID] += old_energy;
+			
+			
+			
 			//			cout << " old x:"<< old_x << ", old y:"<< old_y << endl;
 			if(_adding_to_stats==true){
 			  //			  _hitmap_bgd->Fill(old_x,old_y);
