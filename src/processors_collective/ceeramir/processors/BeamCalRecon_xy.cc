@@ -81,6 +81,9 @@ static TH2F* _hlego_pol2;
 static TH2F* _hlego_pol3;
 static TH2F* _hlego_pol4;
 
+
+static TGraphPolar* _hlegoo;
+
 //static TH2F* _hlego_var;
 //static TH2F* _hlego_zeros_var;
 //static TH2F* _hlego_inefficiency_var;
@@ -159,6 +162,22 @@ void BeamCalRecon_xy::init() {
     _test_slice = new TProfile2D("hitmap_slice","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _c2 = new TCanvas("c2","c2",300,300);
     //    _c1 = new TCanvas("c1","c1",600,400);
+
+
+    Double_t theta[8];
+    Double_t radius[8];
+    Double_t e_theta[8];
+    Double_t e_radius[8];
+
+    _hlegoo = new TgraphPolar(8, theta, radius, e_theta, e_radius);
+
+
+    _hlegoo->SetMarkerStyle(20);
+    _hlegoo->SetMarkerSize(20);
+    _hlegoo->SetMarkerColor(20);
+    _hlegoo->SetLineColor(20);
+    _hlegoo->SetLineWidth(20);
+
 
     _h2 = new TH1I("h2","Gaus",100,-5,5);
     _h2->GetXaxis()->SetTitle("Standard deviation #sigma");
