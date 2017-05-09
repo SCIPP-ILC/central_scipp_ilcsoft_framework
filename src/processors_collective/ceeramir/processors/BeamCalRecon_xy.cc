@@ -82,7 +82,7 @@ static TH2F* _hlego_pol3;
 static TH2F* _hlego_pol4;
 
 
-static TGraphPolar* _hlegoo;
+//static TGraphPolar* _hlegoo;
 
 //static TH2F* _hlego_var;
 //static TH2F* _hlego_zeros_var;
@@ -169,6 +169,7 @@ void BeamCalRecon_xy::init() {
     Double_t e_theta[8];
     Double_t e_radius[8];
 
+    /*
     _hlegoo = new TgraphPolar(8, theta, radius, e_theta, e_radius);
 
 
@@ -183,7 +184,7 @@ void BeamCalRecon_xy::init() {
     _h2->GetXaxis()->SetTitle("Standard deviation #sigma");
     _h2->GetYaxis()->SetTitle("dN/d#sigma");
 
-
+    */
 
     int LEGObins = 60;
     int POLARbins = 40;
@@ -279,7 +280,6 @@ void BeamCalRecon_xy::processRunHeader( LCRunHeader* run) {
 
 void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     //Make sure we are using an electron that actually hits the Positive BeamCal
-
   //  _hitmap_bgd->Fill
 
     MCParticle* electron = NULL;
@@ -339,7 +339,9 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
       _hitmap_bgd->Fill(endx,endy,detected);    //      _hitmap_bgd->Fill(endx,endy);
       _hlego->Fill(endx,endy,detected);
       _hlego_pol1->Fill(px,py);
-      _h2->Fill(electron_energy);
+
+      //      _h2->Fill(electron_energy);
+
       //      _hlego_var->Fill(endx,endy,detected);
     }else{                                      //Graph of not detected
       _hitmap_zeros->Fill(endx,endy,true);

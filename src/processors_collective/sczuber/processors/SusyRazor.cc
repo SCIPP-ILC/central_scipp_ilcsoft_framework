@@ -83,10 +83,10 @@ SusyRazor::SusyRazor() : Processor("SusyRazor") {
     registerProcessorParameter( "RootOutputName" , "output file"  , _root_file_name , std::string("output.root") );
     registerProcessorParameter( "typeOfThrustRazorFinder" ,
             "Type of thrust reconstruction algorithm to be used:\n#\t1 : Tasso algorithm\n#\t2 : JetSet algorithm"  ,
-            _typeOfThrustRazorFinder , 1 ) ;
+            _typeOfThrustRazorFinder , 2 ) ;
     registerProcessorParameter( "thrustDetectability",
             "Detectability of the Thrust Axis/Value to be used:\n#\t0 : True \n#t1 : Detectable \n#t2 : Detected" ,
-            _thrustDetectability, 0 );
+            _thrustDetectability, 2 );
 }
 
 
@@ -95,16 +95,22 @@ void SusyRazor::init() {
     streamlog_out(DEBUG)  << "   init called  " << std::endl ;
     cout << "initialized" << endl;
     if(_thrustDetectability==0){_rootfile = new TFile("SusyRazor_.39133._T.root","RECREATE");
-        _R_T = new TH1F("R_T", "R =MTR/MR",130,-3,10);
+        cout << "TRUE"<< endl;
+        _R_T = new TH1F("R_T", "R =MTR/MR",220,-2,20);
         _MR0_T = new TH1F("MR0_T","MR", 400, 0 ,200); 
+        _MR1_T = new TH1F("MR1_T","MR", 400, 0 ,200); 
     }
     if(_thrustDetectability==1){_rootfile = new TFile("SusyRazor_.39133._DAB.root","RECREATE");
+        cout << "DETECTABLE"<< endl;
         _MR0_DAB = new TH1F("MR0_DAB","MR", 400, 0 ,200); 
-        _R_DAB = new TH1F("R_DAB", "R =MTR/MR",130,-3,10);
+        _MR1_DAB = new TH1F("MR1_DAB","MR", 400, 0 ,200);  
+        _R_DAB = new TH1F("R_DAB", "R =MTR/MR",230,-3,20);
     }
     if(_thrustDetectability==2){_rootfile = new TFile("SusyRazor_.39133._DED.root","RECREATE");
+        cout << "DETECTED "<< endl; 
         _MR0_DED = new TH1F("MR0_DED","MR", 400, 0 ,200); 
-        _R_DED = new TH1F("R_DED", "R =MTR/MR",130,-3,10);
+        _MR1_DED = new TH1F("MR1_DED","MR", 400, 0 ,200); 
+        _R_DED = new TH1F("R_DED", "R =MTR/MR",230,-3,20);
     }
 
     freopen( "SusyRazor.log", "w", stdout );
@@ -419,16 +425,23 @@ void SusyRazor::processEvent( LCEvent * evt ) {
 
     double ptj1mag = sqrt(vec[0][d][1]*vec[0][d][1]+vec[0][d][2]*vec[0][d][2]);
     double ptj2mag = sqrt(vec[1][d][1]*vec[1][d][1]+vec[1][d][2]*vec[1][d][2]);
+
+    double ptj1magR = sqrt(j14vecR[1]*j14vecR[1]+j14vecR[2]*j14vecR[2]);
+    double ptj2magR = sqrt(j24vecR[1]*j24vecR[1]+j24vecR[2]*j24vecR[2]);
     double ptmagsum = ptj1mag + ptj2mag; 
 
+    double ptmagsumR =ptj1magR +ptj2magR ;
     double ptvecsum[2] = {vec[0][d][1]+vec[1][d][1], vec[0][d][2]+vec[1][d][2]};
-    double ETMdotptvecsum = ETM[0]*ptvecsum[0]+ETM[1]*ptvecsum[1];
-    double MTR = sqrt((ETMmag*ptmagsum-ETMdotptvecsum)/2);
+    double ptvecsumR[2] = {j14vecR[1]+j24vecR[1], j14vecR[2]+j24vecR[2]};
+
+    double ETMdotptvecsumR = ETM[0]*ptvecsumR[0]+ETM[1]*ptvecsumR[1];
+    double MTR = sqrt((ETMmag*ptmagsumR-ETMdotptvecsumR)/2);
 
     double pj1cm = sqrt(vec[0][d][1]*vec[0][d][1]+vec[0][d][2]*vec[0][d][2]+vec[0][d][3]*vec[0][d][3]);
     double pj1R = sqrt(j14vecR[1]*j14vecR[1]+j14vecR[2]*j14vecR[2]+j14vecR[3]*j14vecR[3]);
     double pj2R = sqrt(j24vecR[1]*j24vecR[1]+j24vecR[2]*j24vecR[2]+j24vecR[3]*j24vecR[3]);
     double R = MTR/(2*pj1R);
+    cout <<"R" << R<< endl; 
 
 
     if(beta2<=1){
@@ -455,9 +468,9 @@ void SusyRazor::processEvent( LCEvent * evt ) {
         }
     }
     else{
-        if(d==0){_R_T->Fill(-2);}
-        if(d==1){_R_DAB->Fill(-2);}
-        if(d==2){_R_DED->Fill(-2);}
+        if(d==0){_R_T->Fill(-1);}
+        if(d==1){_R_DAB->Fill(-1);}
+        if(d==2){_R_DED->Fill(-1);}
 
         if(partMom1){
             cout << "there are inval beta events that have only 1 particle"<< endl;

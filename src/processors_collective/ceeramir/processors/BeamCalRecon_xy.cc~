@@ -82,7 +82,7 @@ static TH2F* _hlego_pol3;
 static TH2F* _hlego_pol4;
 
 
-static TGraphPolar* _hlegoo;
+//static TGraphPolar* _hlegoo;
 
 //static TH2F* _hlego_var;
 //static TH2F* _hlego_zeros_var;
@@ -169,21 +169,22 @@ void BeamCalRecon_xy::init() {
     Double_t e_theta[8];
     Double_t e_radius[8];
 
-    _polar1s = new TgraphPolar(8, theta, radius, e_theta, e_radius);
+    /*
+    _hlegoo = new TgraphPolar(8, theta, radius, e_theta, e_radius);
 
 
-    _polar1s->SetMarkerStyle(20);
-    _polar1s->SetMarkerSize(20);
-    _polar1s->SetMarkerColor(20);
-    _polar1s->SetLineColor(20);
-    _polar1s->SetLineWidth(20);
+    _hlegoo->SetMarkerStyle(20);
+    _hlegoo->SetMarkerSize(20);
+    _hlegoo->SetMarkerColor(20);
+    _hlegoo->SetLineColor(20);
+    _hlegoo->SetLineWidth(20);
 
 
     _h2 = new TH1I("h2","Gaus",100,-5,5);
     _h2->GetXaxis()->SetTitle("Standard deviation #sigma");
     _h2->GetYaxis()->SetTitle("dN/d#sigma");
 
-
+    */
 
     int LEGObins = 60;
     int POLARbins = 40;
@@ -339,7 +340,9 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
       _hitmap_bgd->Fill(endx,endy,detected);    //      _hitmap_bgd->Fill(endx,endy);
       _hlego->Fill(endx,endy,detected);
       _hlego_pol1->Fill(px,py);
-      _h2->Fill(electron_energy);
+
+      //      _h2->Fill(electron_energy);
+
       //      _hlego_var->Fill(endx,endy,detected);
     }else{                                      //Graph of not detected
       _hitmap_zeros->Fill(endx,endy,true);
