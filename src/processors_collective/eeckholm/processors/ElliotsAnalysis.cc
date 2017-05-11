@@ -42,6 +42,16 @@ ElliotsAnalysis ElliotsAnalysis;
 static TFile* _rootfile;
 static TH2F* _hitmap;
 
+double* peventBarycenterX = new double[];
+
+
+
+double* peventPositions;
+double* neventBarycenters;
+double* neventPositions;
+double pAvgEnergy = 0;
+double nAvgEnergy = 0;
+int currentEvent = 0;
 
 ElliotsAnalysis::ElliotsAnalysis() : Processor("ElliotsAnalysis") {
     // modify processor description
@@ -214,6 +224,28 @@ void ElliotsAnalysis::printParticleProperties(SimCalorimeterHit* hit){
 
 }
 
+double ElliotsAnalysis::findAvgBarycenter(double barycenters[]){
+  double sum = 0;
+  double avgBarycenter = 0;
+
+  int num = 0;
+
+  for (int i = 0;i < (sizeof(barycenters)/sizeof(*barycenters)) ; i++ ){
+
+    sum += barycenters[i];
+
+    num++;
+
+
+  }
+
+  avgBarycenter = sum / num;
+
+  return avgBarycenter;
+
+  
+}
+
 void ElliotsAnalysis::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
@@ -221,17 +253,20 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
     LCCollection* col = evt->getCollection( _colName ) ;
     
     double* barycenters = calculateBarycenter(col);
-
-
-    printf("\nPostive:( %f,%f) Negative (%f,%f)\n", barycenters[0], barycenters[1], barycenters[2], barycenters[3]);
-
     double *moments = calculateMoments(col, barycenters);
-
+    
+    peventBarycenterX[currentEvent] = barycenters[0];
+    //    double peventBarycenterY[currentEvent] = barycenters[1]; 
+    
+  
+  
+    /*
+    printf("\nPostive:( %f,%f) Negative (%f,%f)\n", barycenters[0], barycenters[1], barycenters[2], barycenters[3]);
     printf("\nPostive moment: %f \n", moments[0]);
     printf("\nNegative moment: %f \n", moments[1]);
-
-
-
+    
+    printf("\n=====================EVENT========================== \n", moments[1]);
+    */
     double highestEnergy = 0;
     double lowestEnergy = 10000;
     double hParticleEnergy = 0;
@@ -278,7 +313,7 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
     }
    
     // printParticleProperties(maxHit);
-    
+    currentEvent++;
     _nEvt ++ ;
 }
 
@@ -290,6 +325,11 @@ void ElliotsAnalysis::check( LCEvent * evt ) {
 
 
 
-void ElliotsAnalysis::end(){ 
+void ElliotsAnalysis::end(){
+
+    double pAvgBarycenterX = findAvgBarycenter(peventBarycenterX);
+
+    printf("\nPostive X: %f\n", pAvgBarycenterX);
+ 
     _rootfile->Write();
 }
