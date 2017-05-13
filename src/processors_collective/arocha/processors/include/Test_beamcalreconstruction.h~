@@ -36,7 +36,7 @@ class Test_beamcalreconstruction : public Processor {
 
         Test_beamcalreconstruction() ;
 
-        /** Called at the begining of the job before anything is read.
+        /** Called at the begin of the job before anything is read.
          * Use to initialize the processor, e.g. book histograms.
          */
         virtual void init() ;
