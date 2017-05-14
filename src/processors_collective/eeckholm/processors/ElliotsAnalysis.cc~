@@ -48,7 +48,7 @@ int numEvents = 4;
 double* peventBarycenterX = new double[numEvents];
 double* peventBarycenterY = new double[numEvents];
 double* neventBarycenterX = new double[numEvents];
-double* neventbarycenterY = new double[numEvents];
+double* neventBarycenterY = new double[numEvents];
 
 
 double* peventPositions;
@@ -270,7 +270,7 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
     peventBarycenterX[currentEvent] = barycenters[0];
     peventBarycenterY[currentEvent] = barycenters[1];
     neventBarycenterX[currentEvent] = barycenters[2];
-    neventBarycenterX[currentEvent] = barycenters[3];
+    neventBarycenterY[currentEvent] = barycenters[3];
 
 
     
