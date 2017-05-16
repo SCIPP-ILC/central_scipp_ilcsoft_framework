@@ -54,7 +54,7 @@ static TH1F* _outliersP;
 static TH1F* _outliersE;
 static TH1F* _inliersE;
 static TH1F* _inliersP;
-
+static TH1F* _vsum;
 
 //th2f hitmap
 //th1f histogram
@@ -62,6 +62,9 @@ static double delta = 0;
 static int delta_count = 0;
 static double d=0;
 static int d_count = 0;
+
+static double vector_sum=0.0;
+
 first::first() : Processor("first") {
     // modify processor description
     _description = "Protype Processor" ;
@@ -75,10 +78,6 @@ first::first() : Processor("first") {
 
 void first::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
-    
-    Overlay o;
-    
-
 
     cout << "Initialized " << endl;
     _rootfile = new TFile("Phi_Bhabha.root","RECREATE");
@@ -86,6 +85,7 @@ void first::init() {
     _hh = new TH2F("hh", "Hit-Hit Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     _mm = new TH2F("mm", "Miss-Miss Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
     _hm = new TH2F("hm", "Hit-Miss Distribution", 300.0, -150.0, 150.0, 300.0, -150.0, 150.0);
+    _vsum = new TH1F("vsum", "Vector Sum", 300,-.1,.1);
     _cos = new TH1F("Theta", "Theta Distribution", 300, -1,1);
     _cose = new TH1F("ETheta", "Theta Electron Distribution", 300, -1,1);
     _cosp = new TH1F("PTheta", "Theta Positron Distribution", 300, -1,1);
@@ -135,6 +135,8 @@ void first::processEvent( LCEvent * evt ) {
     info = 0;
     electron=NULL;
     positron=NULL;
+    double x_sum=0.0;
+    double y_sum=0.0;
     int stat, id =0;
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
@@ -144,6 +146,8 @@ void first::processEvent( LCEvent * evt ) {
             stat = hit->getGeneratorStatus();
             if(stat==1){
 	      //hit is an end particle:
+	      x_sum += hit->getMomentum()[0];
+	      y_sum += hit->getMomentum()[1];
 	      addParticle(hit); //The bundle object has the rest of the processing.
 	      if(getPositron() != NULL && getElectron() != NULL){
 		//Start analysis
@@ -155,6 +159,9 @@ void first::processEvent( LCEvent * evt ) {
             }//end final state   
         }//end for
     }
+    double vsum=sqrt(x_sum*x_sum + y_sum*y_sum);
+    _vsum->Fill(vsum);
+    vector_sum+=vsum;
     _nEvt ++ ;
 }
 
@@ -175,6 +182,7 @@ void first::end(){
   print("mm: " + to_string(electronStore.mm.size()));
   cout << "delta: " << delta/delta_count << endl;
   cout << "d: " << d/d_count << endl;
+  cout << "The vector sum: " << to_string(vector_sum) << endl;
   //Making thoes hit-miss plots on the data. 
   //  plotHitMiss(_hh, {electronStore.hh, positronStore.hh});
   plotHitMiss(_mm, {electronStore.mm, positronStore.mm});
