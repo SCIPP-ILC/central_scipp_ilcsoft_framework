@@ -43,7 +43,7 @@ static TFile* _rootfile;
 static TH2F* _hitmap;
 
 
-int numEvents = 99;
+int numEvents = 4;
 
 double* peventBarycenterX = new double[numEvents];
 double* peventBarycenterY = new double[numEvents];
