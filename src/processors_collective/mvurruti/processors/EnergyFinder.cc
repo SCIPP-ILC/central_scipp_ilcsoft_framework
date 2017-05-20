@@ -87,10 +87,21 @@ void EnergyFinder::processEvent( LCEvent * evt ) {
         int nElements = col->getNumberOfElements()  ;
 
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
-           SimCalorimeterHit* hit = dynamic_cast<SimCalorimeterHit*>( col->getElementAt(hitIndex) );
+	   // SimCalorimeterHit* hit = dynamic_cast<SimCalorimeterHit*>( col->getElementAt(hitIndex) );
+	   // The line above casts the hits in the event as Sim Calorimeter Hits. 
+	   // But your xml defines this processor as working with MCParticles. 
+	   // So you have to cast these to MCParticles as below:
+	   MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );	   
 
-           const float* pos = hit->getPosition();
-           _hitmap->Fill(pos[0],pos[1]);
+	   //These next lines pose another problem. MCParticle are 4-vectors (momentum, energy) of all the particles created after the beams interact.
+	   //MCPartile do NOT have a position and so there is no getPosition() function defined for them. 
+           //const float* pos = hit->getPosition();
+           //_hitmap->Fill(pos[0],pos[1]);
+	   //Instead, you can use the getEnergy() or getMomentum() functions. 
+           const double* mom = particle->getMomentum();
+	   //And let's go ahead and print the momentum just to make sure this is working. Notice that once I define a momentum array (as I did above),
+	   //I can refer to each component of this array using index notation (i.e. mom[0] is the x-momentum)
+	   cout << "Momentum: [" << mom[0] << ", " << mom[1] << ", " << mom[2] << "]" << endl; 	
         } 
     }
 cout << "Finished Event " << _nEvt << endl;
