@@ -191,7 +191,7 @@ void BeamCalRecon_xy::init() {
     const Int_t NBINS = 68;
     //    Double_t edges[NBINS + 1] = {};
     //    static float edges[] = { -199.50, -189.57, -181.02, -172.60,
-    Double_t _var_edges[69] = { -199.50, -189.57, -181.02, -172.60,
+    Double_t _var_edges[NBINS + 1] = { -199.50, -189.57, -181.02, -172.60,
 			   -164.32,    -156.17,    -148.16,    -140.30,    -132.57,
 			   -125.00,    -117.58,    -110.30,    -103.19,    -96.23,
 			   -89.44,    -82.82,    -76.37,    -70.09,    -64.00,
@@ -280,7 +280,6 @@ void BeamCalRecon_xy::processRunHeader( LCRunHeader* run) {
 
 void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     //Make sure we are using an electron that actually hits the Positive BeamCal
-
   //  _hitmap_bgd->Fill
 
     MCParticle* electron = NULL;

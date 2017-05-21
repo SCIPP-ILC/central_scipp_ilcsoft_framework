@@ -172,13 +172,11 @@ void BeamCalRecon_xy::init() {
     /*
     _hlegoo = new TgraphPolar(8, theta, radius, e_theta, e_radius);
 
-
     _hlegoo->SetMarkerStyle(20);
     _hlegoo->SetMarkerSize(20);
     _hlegoo->SetMarkerColor(20);
     _hlegoo->SetLineColor(20);
     _hlegoo->SetLineWidth(20);
-
 
     _h2 = new TH1I("h2","Gaus",100,-5,5);
     _h2->GetXaxis()->SetTitle("Standard deviation #sigma");
@@ -189,9 +187,8 @@ void BeamCalRecon_xy::init() {
     int LEGObins = 60;
     int POLARbins = 40;
     const Int_t NBINS = 68;
-    //    Double_t edges[NBINS + 1] = {};
     //    static float edges[] = { -199.50, -189.57, -181.02, -172.60,
-    Double_t _var_edges[69] = { -199.50, -189.57, -181.02, -172.60,
+    Double_t _var_edges[NBINS + 1] = { -199.50, -189.57, -181.02, -172.60,
 			   -164.32,    -156.17,    -148.16,    -140.30,    -132.57,
 			   -125.00,    -117.58,    -110.30,    -103.19,    -96.23,
 			   -89.44,    -82.82,    -76.37,    -70.09,    -64.00,
@@ -209,10 +206,12 @@ void BeamCalRecon_xy::init() {
     std::stringstream s1;
     string bgd_events = "bgd,";    
 
+    // ------ LEGO hits GRAPH ------
     s1 << "LEGO 1s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
     const char* LEGOtitle = s1.str().c_str();
     _hlego = new TH2F("hlego", LEGOtitle ,LEGObins ,-150,150,LEGObins,-150,150);
     RootPlot(_hlego);
+    // ------ end LEGO GRAPH ------
 
     // ------ POLAR GRAPH ------
     s1 << "LEGO 1s,"<< _num_bgd_events_to_read << bgd_events << LEGObins << "bin";
@@ -221,13 +220,16 @@ void BeamCalRecon_xy::init() {
     RootPlot(_hlego_pol1);
     // ------ end POLAR GRAPH ------
 
-
+    // ------ LEGO non-hits GRAPH ------
     s1.str("");
     s1 << "LEGO 0s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
     const char* LEGOtitleZeros = s1.str().c_str();
     _hlego_zeros = new TH2F("hlego_0s", LEGOtitleZeros, LEGObins,-150,150,LEGObins,-150,150);
     RootPlot(_hlego_zeros);
+    // ------ end LEGO non-hits GRAPH ------
 
+
+    // ------ LEGO inefficiency GRAPH ------
     s1.str("");
     s1 << "LEGO,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
     const char* LEGOtitleInefficiency = s1.str().c_str();
@@ -241,7 +243,7 @@ void BeamCalRecon_xy::init() {
     _hlego_test = new TH2F("hlego_test", LEGOTestTitle ,LEGObins,-150,150,LEGObins,-150,150);
     //    _hlego_test_var = new TH2F("hlego_test_var", LEGOTestTitle, 67, _var_edges, 67, _var_edges);
     RootPlot(_hlego_test);
-
+    // ------ end LEGO inefficiency GRAPH ------
 
 
     /*
@@ -260,8 +262,8 @@ void BeamCalRecon_xy::init() {
 
     TLegend *legend = new TLegend(0.05,0.05,0.06,0.1);
 
-    // TH2F
-    // TProfile2D
+
+    // ------ clock start ------
     //    _t1 = Clock::now();
 
     //Load up all the bgd events, and initialize the reconstruction algorithm.
@@ -319,6 +321,7 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
 
     string ID = endx_s + "," + endy_s;
     cout << "ID string"<< ID << endl;
+
 
     Float_t px,py;
     px = endx;
@@ -387,6 +390,7 @@ void BeamCalRecon_xy::end(){
     cout << "\ndetected: " << _detected_num << endl;
     cout << "\n in \'slice\' of beamcal: " << _test_num << endl;
 
+    // ------ clock end ------
     //    _t2 = Clock::now();
     //    cout << "*******************this is the end***********************" << endl;
     //    cout << "******************* time elapsed: " << (_end - _begin) << " ***********************" << endl;
