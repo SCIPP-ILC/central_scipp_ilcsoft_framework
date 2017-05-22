@@ -282,7 +282,7 @@ void BeamCalRecon_xy::processRunHeader( LCRunHeader* run) {
 
 void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     //Make sure we are using an electron that actually hits the Positive BeamCal
-  //  _hitmap_bgd->Fill
+    //  _hitmap_bgd->Fill
 
     MCParticle* electron = NULL;
     bool detectable_electron = scipp_ilc::get_detectable_signal_event(signal_event,electron);
@@ -310,7 +310,9 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     //      cout << "******************************************************************" << endl;
     //      cout << "detected:  " << detected<< "        x-y: "<< endx << "\t" <<endy << endl;
     //      cout << "******************************************************************" << endl;
-    
+
+
+    // ------ set up map ------
     pair<float,float> pos;
     pos.first = (float) endx;
     pos.second = (float) endy;
@@ -322,12 +324,12 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     string ID = endx_s + "," + endy_s;
     cout << "ID string"<< ID << endl;
 
-
     Float_t px,py;
     px = endx;
     py =endy;
     //	int ID = scipp_ilc::beamcal_recon_xy::getID(end_x,end_y);
     //	int ID = scipp_ilc::simple_list_geometry_xy::getID(end_x,end_y);
+    // ------  map  ------
 
 
     //Plot our results with respect to the radius of the signal electron.
@@ -344,7 +346,6 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
       _hlego_pol1->Fill(px,py);
 
       //      _h2->Fill(electron_energy);
-
       //      _hlego_var->Fill(endx,endy,detected);
     }else{                                      //Graph of not detected
       _hitmap_zeros->Fill(endx,endy,true);
@@ -375,6 +376,7 @@ void BeamCalRecon_xy::check( LCEvent * evt ){
 
 
 void BeamCalRecon_xy::end(){ 
+  // ------ ------
   //  for(auto bit:*_zeros_map){
   //    pair<float,float> ID = bit.first;
   //    double bit_hit = bit.second;

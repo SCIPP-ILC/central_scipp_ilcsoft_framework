@@ -37,6 +37,11 @@ namespace scipp_ilc {
 					      178.5, 182.0, 185.5, 189.0, 192.5,
 					      196.0, 199.5};       
 
+      static float _variable_radius_table[] = {
+
+
+      };
+
         static float _x_table[] = {
 	  -199.5, -196.0, -192.5, -189.0, -185.5,
 	  -182.0, -178.5, -175.0, -171.5, -168.0,
@@ -159,6 +164,7 @@ namespace scipp_ilc {
 	  string y_string = "";
 	  bool x_condition = true;
 	  bool y_condition = true;
+
 	  while (x_condition || y_condition){
 	    //	  while (y_condition ){
 	    if((x <= _x_table[count]) && x_condition){

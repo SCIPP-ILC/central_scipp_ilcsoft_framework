@@ -92,8 +92,15 @@ void ElliotsAnalysis::processRunHeader( LCRunHeader* run) {
 //    _nRun++ ;
 } 
 
-double* ElliotsAnalysis::calculateMoments(LCCollection* col, double barycenters[4]){
-  double* moments = new double[2];
+//pEnerygDep, nEnergyDep, pLR, nLR, pTD, nTD, pmeanDepth, nmeanDepth, prmoment, nrmoment, pinvrmoment, ninvrmoment   
+double* ElliotsAnalysis::calculateObservables(LCCollection* col, double barycenters[4]){
+
+  double ptotalEnergy = 0, ntotalEnergy = 0;
+  double pLR = 0, nLR = 0, pTD = 0, nTD = 0;
+  double pmeanDepth = 0, nmeanDepth = 0;
+  double prmoment = 0, nrmoment = 0;
+  double pinvrmoment = 0, ninvrmoment = 0;
+
   double pmom = 0, nmom = 0;
   double pnum = 0, pdenom = 0, nnum = 0, ndenom = 0;
   double prad = 0, nrad = 0;
@@ -103,15 +110,25 @@ double* ElliotsAnalysis::calculateMoments(LCCollection* col, double barycenters[
 
     for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
       SimCalorimeterHit* hit = dynamic_cast<SimCalorimeterHit*>( col->getElementAt(hitIndex) );
+      double currentEnergy = hit->getEnergy();
       double currentPosX = hit->getPosition()[0];
-
-       currentPosX = currentPosX - std::abs(hit->getPosition()[2] * 0.007);
+      double currentPosY = hit->getPosition()[1];
+      double currentPosZ = hit->getPosition()[2];
+      currentPosX = currentPosX - std::abs(hit->getPosition()[2] * 0.007);
      
       if (hit->getPosition()[2] > 0){
+	//total  energy deposit
+	ptotalEnergy += currentEnergy;
+	
+	//r-moment
 	prad = std::sqrt((std::pow(currentPosX - barycenters[0],2) + (std::pow(hit->getPosition()[1] - barycenters[1],2))));
 	pnum += prad * hit->getEnergy();
 	pdenom += hit->getEnergy();
       }else {
+	//total energy deposit
+	ntotalEnergy += currentEnergy();
+
+	//r-moment
 	nrad = std::sqrt((std::pow(currentPosX - barycenters[2],2) + (std::pow(hit->getPosition()[1] - barycenters[3],2))));
 	nnum += nrad * hit->getEnergy();
         ndenom += hit->getEnergy();
@@ -124,8 +141,13 @@ double* ElliotsAnalysis::calculateMoments(LCCollection* col, double barycenters[
   pmom = pnum / pdenom;
   nmom = nnum / ndenom;
   
-  moments[0] = pmom;
-  moments[1] = nmom;
+  double* obs = new double[12];
+
+  obs[0] = ptotalEnergy;
+  obs[1] = ntotalEnergy;
+  obs[8] = pmom;
+  obs[9] = nmom;
+ 
 
   return moments;
   
@@ -253,6 +275,10 @@ double ElliotsAnalysis::findAvgBarycenter(double* barycenters){
   
 }
 
+
+
+
+
 void ElliotsAnalysis::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
@@ -265,7 +291,7 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
     double* barycenters = calculateBarycenter(col);
     double* moments = calculateMoments(col, barycenters);
     
-
+    double* totalEnergyDep = findEnergyDep(col);
 
     peventBarycenterX[currentEvent] = barycenters[0];
     peventBarycenterY[currentEvent] = barycenters[1];
@@ -273,15 +299,12 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
     neventBarycenterY[currentEvent] = barycenters[3];
 
 
+    printf("\n=====================EVENT %d========================== \n", currentEvent + 1);  
     
-  
-  
+    printf("\nPostive:( %f,%f) Negative (%f,%f)\n", barycenters[0], barycenters[1], barycenters[2], barycenters[3]);
+    printf("\nPostive moment: %f \n", moments[0]);
+    printf("\nNegative moment: %f \n", moments[1]);
     
-       printf("\nPostive:( %f,%f) Negative (%f,%f)\n", barycenters[0], barycenters[1], barycenters[2], barycenters[3]);
-     printf("\nPostive moment: %f \n", moments[0]);
-        printf("\nNegative moment: %f \n", moments[1]);
-    
-    printf("\n=====================EVENT %d========================== \n", currentEvent);
     
     double highestEnergy = 0;
     double lowestEnergy = 10000;
@@ -338,10 +361,10 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
       double nAvgBarycenterX = findAvgBarycenter(neventBarycenterX);
       double nAvgBarycenterY = findAvgBarycenter(neventBarycenterY);
 
-      printf("\nPostive: (%f,%f) Negative: (%f,%f)\n", pAvgBarycenterX, pAvgBarycenterY,nAvgBarycenterX, nAvgBarycenterY);
-
+      printf("\nAVERAGE BARYCENTER: Postive: (%f,%f) Negative: (%f,%f)\n", pAvgBarycenterX, pAvgBarycenterY,nAvgBarycenterX, nAvgBarycenterY);
+      printf("\nTOTAL ENERGY DEPOSIT: Positive %f Negative: %f\n", totalEnergyDep[0], totalEnergyDep[1]);
       
-      
+      printf("\n \n",);
     }
     
 
