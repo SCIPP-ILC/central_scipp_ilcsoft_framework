@@ -64,7 +64,7 @@ void Test_beamcalreconstruction::init() {
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
     _rootfile = new TFile(_root_file_name.c_str(),"RECREATE");
-    _radeff = new TProfile("radeff","Radial Efficiency",14,0.0,140.0,0.0,1.0);
+    _radeff = new TProfile("radeff","Radial Efficiency",28,0.0,140.0,0.0,1.0);
 
     //Load up all the bgd events, and initialize the reconstruction algorithm.
     scipp_ilc::beamcal_recon::initialize_beamcal_reconstructor(_beamcal_geometry_file_name, _background_event_list, _num_bgd_events_to_read);

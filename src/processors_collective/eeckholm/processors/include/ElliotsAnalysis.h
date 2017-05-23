@@ -50,9 +50,10 @@ class ElliotsAnalysis : public Processor {
         */
         virtual void processEvent( LCEvent * evt ) ; 
 
-	double* calculateMoments(LCCollection* col, double barycenters[4]);
+	virtual double* calculateObservables(LCCollection* col, double barycenters[4]);
 
-	virtual double findAvgBarycenter(double* barycenters); 
+
+	virtual double findAvgObs(double* obs); 
 	
 	virtual double* calculateBarycenter(LCCollection* col);
 	

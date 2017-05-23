@@ -45,17 +45,28 @@ static TH2F* _hitmap;
 
 int numEvents = 4;
 
+double* pX = new double[numEvents];
+double* pY = new double[numEvents];
+double* nX = new double[numEvents];
+double* nY = new double[numEvents];
 double* peventBarycenterX = new double[numEvents];
 double* peventBarycenterY = new double[numEvents];
 double* neventBarycenterX = new double[numEvents];
 double* neventBarycenterY = new double[numEvents];
+double* pEnergyDep = new double[numEvents];
+double* nEnergyDep = new double[numEvents];
+double* pLR = new double[numEvents];
+double* nLR = new double[numEvents];
+double* pTD = new double[numEvents];
+double* nTD = new double[numEvents];
+double* pmeanDepth = new double[numEvents];
+double* nmeanDepth = new double[numEvents];
+double* prmoment = new double[numEvents];
+double* nrmoment = new double[numEvents]; 
+double* pinvrmoment = new double[numEvents];
+double* ninvrmoment = new double[numEvents];
 
 
-double* peventPositions;
-double* neventPositions;
-
-double pAvgEnergy = 0;
-double nAvgEnergy = 0;
 int currentEvent = 0;
 
 ElliotsAnalysis::ElliotsAnalysis() : Processor("ElliotsAnalysis") {
@@ -92,10 +103,27 @@ void ElliotsAnalysis::processRunHeader( LCRunHeader* run) {
 //    _nRun++ ;
 } 
 
-double* ElliotsAnalysis::calculateMoments(LCCollection* col, double barycenters[4]){
-  double* moments = new double[2];
-  double pmom = 0, nmom = 0;
-  double pnum = 0, pdenom = 0, nnum = 0, ndenom = 0;
+//pEnerygDep, nEnergyDep, pLR, nLR, pTD, nTD, pmeanDepth, nmeanDepth, prmoment, nrmoment, pinvrmoment, ninvrmoment, pX, pY, nX, nY   
+double* ElliotsAnalysis::calculateObservables(LCCollection* col, double barycenters[4]){
+
+  double ptotalEnergy = 0, ntotalEnergy = 0;
+  double pLR = 0, nLR = 0, pTD = 0, nTD = 0;
+  double pmeanDepth = 0, nmeanDepth = 0;
+  double prmoment = 0, nrmoment = 0;
+  double pinvrmoment = 0, ninvrmoment = 0;
+  double pX = 0, pY = 0, nX = 0, nY = 0;
+
+  //LR
+  double pnum_LR = 0, pdenom_LR = 0, nnum_LR = 0, ndenom_LR = 0;
+  //TD
+  double pnum_TD = 0, pdenom_TD = 0, nnum_TD = 0, ndenom_TD = 0; 
+  //meanDepth
+  double pnum_meanDepth = 0, nnum_meanDepth = 0;
+  //r-moment
+  double pnum_moment = 0, pdenom_moment = 0, nnum_moment = 0, ndenom_moment = 0;
+  //invr-moment
+  double pnum_invrmoment = 0, nnum_invrmoment = 0;
+  
   double prad = 0, nrad = 0;
  
   if( col != NULL ){
@@ -103,31 +131,113 @@ double* ElliotsAnalysis::calculateMoments(LCCollection* col, double barycenters[
 
     for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
       SimCalorimeterHit* hit = dynamic_cast<SimCalorimeterHit*>( col->getElementAt(hitIndex) );
+      double currentEnergy = hit->getEnergy();
       double currentPosX = hit->getPosition()[0];
-
-       currentPosX = currentPosX - std::abs(hit->getPosition()[2] * 0.007);
+      double currentPosY = hit->getPosition()[1];
+      double currentPosZ = hit->getPosition()[2];
+      currentPosX = currentPosX - std::abs(hit->getPosition()[2] * 0.007);
      
       if (hit->getPosition()[2] > 0){
+	//Positions
+	pX = currentPosX;
+	pY = currentPosY;
+
+	//total  energy deposit
+	ptotalEnergy += currentEnergy;
+	
+	//LR
+	pnum_LR += currentPosX * currentEnergy;
+	pdenom_LR += std::abs(currentPosX) * currentEnergy;
+
+	//TD
+	pnum_TD += currentPosY * currentEnergy;
+	pdenom_TD += std::abs(currentPosY) * currentEnergy;
+
+	//Mean Depth
+	pnum_meanDepth = currentPosZ * currentEnergy;
+
+	//r-moment
 	prad = std::sqrt((std::pow(currentPosX - barycenters[0],2) + (std::pow(hit->getPosition()[1] - barycenters[1],2))));
-	pnum += prad * hit->getEnergy();
-	pdenom += hit->getEnergy();
+	pnum_moment += prad * currentEnergy;
+	pdenom_moment += currentEnergy;
+
+	//invr-moment
+	pnum_invrmoment += (1 / prad) * currentEnergy;
       }else {
+	//Positions                                                                                                                        
+	nX = currentPosX;
+	nY = currentPosY;
+
+	//total energy deposit
+	ntotalEnergy += currentEnergy;
+
+	//LR                                                                                                                               
+        nnum_LR+= currentPosX * currentEnergy;
+	ndenom_LR += std::abs(currentPosX) * currentEnergy;
+
+	//TD                                                                                                                               
+	nnum_TD+= currentPosY * currentEnergy;
+	ndenom_TD += std::abs(currentPosY) * currentEnergy;
+
+	//Mean Depth                                                                                                                       
+	nnum_meanDepth = currentPosZ * currentEnergy;
+
+	//r-moment
 	nrad = std::sqrt((std::pow(currentPosX - barycenters[2],2) + (std::pow(hit->getPosition()[1] - barycenters[3],2))));
-	nnum += nrad * hit->getEnergy();
-        ndenom += hit->getEnergy();
+	nnum_moment += nrad * currentEnergy;
+        ndenom_moment += currentEnergy;
+
+	//invr-moment                                                                                                                      
+	nnum_invrmoment += (1 / prad) * currentEnergy;
       }
 
 
     }
   }
-  
-  pmom = pnum / pdenom;
-  nmom = nnum / ndenom;
-  
-  moments[0] = pmom;
-  moments[1] = nmom;
 
-  return moments;
+  double* obs = new double[16];
+
+  //Energy Deposit
+  obs[0] = ptotalEnergy;
+  obs[1] = ntotalEnergy;
+  
+  //LR
+  pLR = pnum_LR / pdenom_LR;
+  nLR = nnum_LR / ndenom_LR;
+  obs[2] = pLR;
+  obs[3] = nLR;
+
+  //TD
+  pTD = pnum_TD / pdenom_TD;
+  nTD = nnum_TD / ndenom_TD;
+  obs[4] = pTD;
+  obs[5] = nTD;
+
+  //mean Depth
+  pmeanDepth = pnum_meanDepth / ptotalEnergy;
+  nmeanDepth = nnum_meanDepth / ntotalEnergy;
+  obs[6] = pmeanDepth;
+  obs[7] = nmeanDepth;
+
+  //r-moment
+  prmoment = pnum_moment / pdenom_moment;
+  nrmoment = nnum_moment / ndenom_moment;
+  obs[8] = prmoment;
+  obs[9] = nrmoment;
+
+  //invr-moment
+  pinvrmoment = pnum_invrmoment / ptotalEnergy;
+  ninvrmoment = nnum_invrmoment / ntotalEnergy;
+  obs[10] = pinvrmoment;
+  obs[11] = ninvrmoment;
+
+  //Positons
+  obs[12] = pX;
+  obs[13] = pY;    
+  obs[14] = nX;
+  obs[15] = nY;
+
+  return obs;
   
 }
 
@@ -226,62 +336,68 @@ void ElliotsAnalysis::printParticleProperties(SimCalorimeterHit* hit){
     printf("Momentum: (%0.2f,%0.2f, %0.2f)\n", px,py,pz);
     printf("Charge: %0.2f\n", charge);
   
-  
  
-
 }
 
-double ElliotsAnalysis::findAvgBarycenter(double* barycenters){
+double ElliotsAnalysis::findAvgObs(double* obs){
   double sum = 0;
-  double avgBarycenter = 0;
+  double avgObs = 0;
 
   int num = 0;
 
   for (int i = 0;i < numEvents ; i++ ){
 
-    sum += barycenters[i];
+    sum += obs[i];
 
     num++;
 
-
   }
 
-  avgBarycenter = sum / num;
+  avgObs = sum / num;
 
-  return avgBarycenter;
+  return avgObs;
 
-  
 }
+
+
 
 void ElliotsAnalysis::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
 
-    
-    // printf("Current Event:%d \n ",currentEvent);
-
     LCCollection* col = evt->getCollection( _colName ) ;
     
     double* barycenters = calculateBarycenter(col);
-    double* moments = calculateMoments(col, barycenters);
+    double* obs = calculateObservables(col, barycenters);
     
-
-
+   
     peventBarycenterX[currentEvent] = barycenters[0];
     peventBarycenterY[currentEvent] = barycenters[1];
     neventBarycenterX[currentEvent] = barycenters[2];
     neventBarycenterY[currentEvent] = barycenters[3];
+    pEnergyDep[currentEvent] = obs[0];
+    nEnergyDep[currentEvent] = obs[1];
+    pLR[currentEvent] = obs[2];
+    nLR[currentEvent] = obs[3];
+    pTD[currentEvent] = obs[4];
+    nTD[currentEvent] = obs[5];
+    pmeanDepth[currentEvent] = obs[6];
+    nmeanDepth[currentEvent] = obs[7];
+    prmoment[currentEvent] = obs[8];
+    nrmoment[currentEvent] = obs[9];
+    pinvrmoment[currentEvent] = obs[10];
+    ninvrmoment[currentEvent] = obs[11];
+    pX[currentEvent] = obs[12];
+    pY[currentEvent] = obs[13];
+    nX[currentEvent] = obs[14];
+    nY[currentEvent] = obs[15];
 
-
+    printf("\n=====================EVENT %d========================== \n", currentEvent + 1);  
     
+    printf("\nBARYCENTER Postive:( %f,%f) Negative (%f,%f)\n", barycenters[0], barycenters[1], barycenters[2], barycenters[3]);
+    printf("\nENERYG DEPOSIT Postive: %f  Negative: %f\n", obs[0], obs[1]);
+   
   
-  
-    
-       printf("\nPostive:( %f,%f) Negative (%f,%f)\n", barycenters[0], barycenters[1], barycenters[2], barycenters[3]);
-     printf("\nPostive moment: %f \n", moments[0]);
-        printf("\nNegative moment: %f \n", moments[1]);
-    
-    printf("\n=====================EVENT %d========================== \n", currentEvent);
     
     double highestEnergy = 0;
     double lowestEnergy = 10000;
@@ -333,15 +449,31 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
     currentEvent++;
     if (currentEvent % numEvents == 0){
 
-      double pAvgBarycenterX = findAvgBarycenter(peventBarycenterX);
-      double pAvgBarycenterY = findAvgBarycenter(peventBarycenterY);
-      double nAvgBarycenterX = findAvgBarycenter(neventBarycenterX);
-      double nAvgBarycenterY = findAvgBarycenter(neventBarycenterY);
-
-      printf("\nPostive: (%f,%f) Negative: (%f,%f)\n", pAvgBarycenterX, pAvgBarycenterY,nAvgBarycenterX, nAvgBarycenterY);
-
       
+      double pAvgBarycenterX = findAvgObs(peventBarycenterX);
+      double pAvgBarycenterY = findAvgObs(peventBarycenterY);
+      double nAvgBarycenterX = findAvgObs(neventBarycenterX);
+      double nAvgBarycenterY = findAvgObs(neventBarycenterY);
+      double pAvgEnergyDep = findAvgObs(pEnergyDep);
+      double nAvgEventDep = findAvgObs(nEnergDep);
+      double pAvgLR = findAvgObs(pLR);
+      double nAvgLR = findAvgObs(nLR);
+      double pAvgTD = findAvgObs(pTD);
+      double nAvgTD = findAvgObs(nTD);
+      double pAvgmeanDepth = findAvgObs(pmeanDepth);
+      double nAvgmeanDepth = findAvgObs(nmeanDepth);
+      double pAvgrmoment = findAvgObs(prmoment);
+      double nAvgrmoment = findAvgObs(nrmoment);
+      double pAvginvrmoment = findAvgObs(pinvrmoment);
+      double nAvginvrmoment = findAvgObs(ninvrmoment);
+      double pAvgX = findAvgObs(pX);
+      double pAvgY = findAvgObs(pY);
+      double nAvgX = findAvgObs(nX);
+      double nAvgY = findAvgObs(nY);
+
+      printf("\nAVERAGE BARYCENTER: Postive: (%f,%f) Negative: (%f,%f)\n", pAvgBarycenterX, pAvgBarycenterY,nAvgBarycenterX, nAvgBarycenterY);
       
+     
     }
     
 

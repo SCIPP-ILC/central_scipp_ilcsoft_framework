@@ -91,13 +91,16 @@ namespace scipp_ilc {
          * based on the _ring_to_radius_table.
          */
         static int getRing(double radius) {
-            if (radius <= _ring_to_radius_table[0]) return 0;
+
+	  //            if (radius <= _ring_to_radius_table[0]) return 0;
+            if (radius <= _variable_radius_table[0]) return 0;
 
             int start = 0;
             int end = _LastRing;
             while ( end-start > 1 ) {
                 int center = (int)(end-start)/2 + start;
-                if ( radius < _ring_to_radius_table[center] ) end = center;
+		//                if ( radius < _ring_to_radius_table[center] ) end = center;
+                if ( radius < _variable_radius_table[center] ) end = center;
                 else start = center;
             }
             return end;
@@ -159,44 +162,55 @@ namespace scipp_ilc {
          * given cartesian coordinates.
          */
         int getID(double x, double y) {
-	  double r,phi;
-	  scipp_ilc::cartesian_to_polar(x,y,r,phi);
-	  int ID = getIDpolar(r,phi);
-	  int count = 0;
-	  int IDx = 0;
-	  int IDy = 0;
-	  int IDxy = 0;
-	  string x_string = "";
-	  string y_string = "";
-	  bool x_condition = true;
-	  bool y_condition = true;
+	  bool polar_coords = true;
+	  
+	  if(polar_coords){
 
-	  while (x_condition || y_condition){
-	    //	  while (y_condition ){
-	    if((x <= _x_table[count]) && x_condition){
-	      IDx = (_x_table[count] + 200) * 10;
-	      x_string = to_string(IDx);
-	      x_condition = false;
+	    double r,phi;
+	    scipp_ilc::cartesian_to_polar(x,y,r,phi);
+	    int ID = getIDpolar(r,phi);
+
+	    //	    cout << "In polar, ID = " << ID << endl;
+
+	    return ID;
+	  }else{
+	    int count = 0;
+	    int IDx = 0;
+	    int IDy = 0;
+	    int IDxy = 0;
+	    string x_string = "";
+	    string y_string = "";
+	    bool x_condition = true;
+	    bool y_condition = true;
+
+	    while (x_condition || y_condition){
+	      //	  while (y_condition ){
+	      if((x <= _x_table[count]) && x_condition){
+		IDx = (_x_table[count] + 200) * 10;
+		x_string = to_string(IDx);
+		x_condition = false;
+	      }
+	      if((y <= _x_table[count]) && y_condition){
+		IDy = (_x_table[count] + 200) * 10;
+		y_string = to_string(IDy);
+		y_condition = false;
+	      }
+	      count ++;
 	    }
-	    if((y <= _x_table[count]) && y_condition){
-	      IDy = (_x_table[count] + 200) * 10;
-	      y_string = to_string(IDy);
-	      y_condition = false;
-	    }
-	    count ++;
+
+	    //	  cout << "x: " << x << "\t" << "y: " << y << endl;
+	    //	  cout << "IDx: " << IDx << "\t" << "IDy: " << IDy << "\n" << endl;
+	    //	  cout << "x_string: " << x_string << "\t" << "y_string: " << y_string << endl;
+	    //	  string temp = "";
+	    //	  temp = x_string + y_string;
+	    //	  cout << "temp: "<< temp << endl;
+	    IDxy = std::stoi(x_string + y_string);
+
+	    //	  cout << "IDxy: " << IDxy << "\n" << endl;
+
+	    cout << "In x-y, IDxy = " << IDxy << endl;
+	    return IDxy;
 	  }
-
-	  //	  cout << "x: " << x << "\t" << "y: " << y << endl;
-	  //	  cout << "IDx: " << IDx << "\t" << "IDy: " << IDy << "\n" << endl;
-	  //	  cout << "x_string: " << x_string << "\t" << "y_string: " << y_string << endl;
-	  //	  string temp = "";
-	  //	  temp = x_string + y_string;
-	  //	  cout << "temp: "<< temp << endl;
-	  IDxy = std::stoi(x_string + y_string);
-
-	  //	  IDxy = (IDx + IDy) * 1000;
-	  //	  cout << "IDxy: " << IDxy << "\n" << endl;
-	  return IDxy;
         }
 
 
@@ -211,10 +225,12 @@ namespace scipp_ilc {
 
 
             //get radial center
-            double outer_radius = _ring_to_radius_table[ringID];
+	    //            double outer_radius = _ring_to_radius_table[ringID];
+            double outer_radius = _variable_radius_table[ringID];
             double inner_radius = 0;
             if ( ringID != 0 ) {
-                inner_radius = _ring_to_radius_table[ringID-1];
+	      //                inner_radius = _ring_to_radius_table[ringID-1];
+                inner_radius = _variable_radius_table[ringID-1];
             }
 
             double radius = (outer_radius - inner_radius) / 2;

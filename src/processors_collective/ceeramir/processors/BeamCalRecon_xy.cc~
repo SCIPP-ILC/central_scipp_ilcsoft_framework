@@ -161,7 +161,7 @@ void BeamCalRecon_xy::init() {
     _hitmap_zeros = new TProfile2D("hitmap_zeros","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _test_slice = new TProfile2D("hitmap_slice","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _c2 = new TCanvas("c2","c2",300,300);
-    //    _c1 = new TCanvas("c1","c1",600,400);
+    _c1 = new TCanvas("c1","c1",600,400);
 
 
     Double_t theta[8];
@@ -172,13 +172,11 @@ void BeamCalRecon_xy::init() {
     /*
     _hlegoo = new TgraphPolar(8, theta, radius, e_theta, e_radius);
 
-
     _hlegoo->SetMarkerStyle(20);
     _hlegoo->SetMarkerSize(20);
     _hlegoo->SetMarkerColor(20);
     _hlegoo->SetLineColor(20);
     _hlegoo->SetLineWidth(20);
-
 
     _h2 = new TH1I("h2","Gaus",100,-5,5);
     _h2->GetXaxis()->SetTitle("Standard deviation #sigma");
@@ -189,7 +187,6 @@ void BeamCalRecon_xy::init() {
     int LEGObins = 60;
     int POLARbins = 40;
     const Int_t NBINS = 68;
-    //    Double_t edges[NBINS + 1] = {};
     //    static float edges[] = { -199.50, -189.57, -181.02, -172.60,
     Double_t _var_edges[NBINS + 1] = { -199.50, -189.57, -181.02, -172.60,
 			   -164.32,    -156.17,    -148.16,    -140.30,    -132.57,
@@ -209,25 +206,31 @@ void BeamCalRecon_xy::init() {
     std::stringstream s1;
     string bgd_events = "bgd,";    
 
+    // ------ LEGO hits GRAPH ------
     s1 << "LEGO 1s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
     const char* LEGOtitle = s1.str().c_str();
     _hlego = new TH2F("hlego", LEGOtitle ,LEGObins ,-150,150,LEGObins,-150,150);
     RootPlot(_hlego);
+    // ------ end LEGO GRAPH ------
 
     // ------ POLAR GRAPH ------
+    s1.str("");
     s1 << "LEGO 1s,"<< _num_bgd_events_to_read << bgd_events << LEGObins << "bin";
     const char* LEGOtitle2 = s1.str().c_str();
     _hlego_pol1 = new TH2F("hlego_pol1", LEGOtitle2 ,POLARbins ,-150,150,POLARbins,-150,150);
     RootPlot(_hlego_pol1);
     // ------ end POLAR GRAPH ------
 
-
+    // ------ LEGO non-hits GRAPH ------
     s1.str("");
     s1 << "LEGO 0s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
     const char* LEGOtitleZeros = s1.str().c_str();
     _hlego_zeros = new TH2F("hlego_0s", LEGOtitleZeros, LEGObins,-150,150,LEGObins,-150,150);
     RootPlot(_hlego_zeros);
+    // ------ end LEGO non-hits GRAPH ------
 
+
+    // ------ LEGO inefficiency GRAPH ------
     s1.str("");
     s1 << "LEGO,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
     const char* LEGOtitleInefficiency = s1.str().c_str();
@@ -241,7 +244,7 @@ void BeamCalRecon_xy::init() {
     _hlego_test = new TH2F("hlego_test", LEGOTestTitle ,LEGObins,-150,150,LEGObins,-150,150);
     //    _hlego_test_var = new TH2F("hlego_test_var", LEGOTestTitle, 67, _var_edges, 67, _var_edges);
     RootPlot(_hlego_test);
-
+    // ------ end LEGO inefficiency GRAPH ------
 
 
     /*
@@ -260,8 +263,8 @@ void BeamCalRecon_xy::init() {
 
     TLegend *legend = new TLegend(0.05,0.05,0.06,0.1);
 
-    // TH2F
-    // TProfile2D
+
+    // ------ clock start ------
     //    _t1 = Clock::now();
 
     //Load up all the bgd events, and initialize the reconstruction algorithm.
@@ -280,7 +283,7 @@ void BeamCalRecon_xy::processRunHeader( LCRunHeader* run) {
 
 void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     //Make sure we are using an electron that actually hits the Positive BeamCal
-  //  _hitmap_bgd->Fill
+    //  _hitmap_bgd->Fill
 
     MCParticle* electron = NULL;
     bool detectable_electron = scipp_ilc::get_detectable_signal_event(signal_event,electron);
@@ -308,23 +311,26 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     //      cout << "******************************************************************" << endl;
     //      cout << "detected:  " << detected<< "        x-y: "<< endx << "\t" <<endy << endl;
     //      cout << "******************************************************************" << endl;
-    
+
+
+    // ------ set up map ------
     pair<float,float> pos;
     pos.first = (float) endx;
     pos.second = (float) endy;
     
     string endx_s = std::to_string(pos.first);
     string endy_s = std::to_string(pos.second);
-    cout << "endx string"<< endx_s << endl;
+    //    cout << "endx string"<< endx_s << endl;
 
     string ID = endx_s + "," + endy_s;
-    cout << "ID string"<< ID << endl;
+    //    cout << "ID string"<< ID << endl;
 
     Float_t px,py;
     px = endx;
     py =endy;
     //	int ID = scipp_ilc::beamcal_recon_xy::getID(end_x,end_y);
     //	int ID = scipp_ilc::simple_list_geometry_xy::getID(end_x,end_y);
+    // ------  map  ------
 
 
     //Plot our results with respect to the radius of the signal electron.
@@ -341,7 +347,6 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
       _hlego_pol1->Fill(px,py);
 
       //      _h2->Fill(electron_energy);
-
       //      _hlego_var->Fill(endx,endy,detected);
     }else{                                      //Graph of not detected
       _hitmap_zeros->Fill(endx,endy,true);
@@ -361,8 +366,10 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
 
     //    gStyle->SetPalette(kBird);
     _hlego->SetFillColor(kYellow);
-
-    cout << _nEvt++ << endl;
+    _nEvt++;
+    if(_nEvt%20==0){
+      cout << _nEvt << endl;
+    }
 }
 
 
@@ -372,6 +379,7 @@ void BeamCalRecon_xy::check( LCEvent * evt ){
 
 
 void BeamCalRecon_xy::end(){ 
+  // ------ ------
   //  for(auto bit:*_zeros_map){
   //    pair<float,float> ID = bit.first;
   //    double bit_hit = bit.second;
@@ -387,6 +395,7 @@ void BeamCalRecon_xy::end(){
     cout << "\ndetected: " << _detected_num << endl;
     cout << "\n in \'slice\' of beamcal: " << _test_num << endl;
 
+    // ------ clock end ------
     //    _t2 = Clock::now();
     //    cout << "*******************this is the end***********************" << endl;
     //    cout << "******************* time elapsed: " << (_end - _begin) << " ***********************" << endl;

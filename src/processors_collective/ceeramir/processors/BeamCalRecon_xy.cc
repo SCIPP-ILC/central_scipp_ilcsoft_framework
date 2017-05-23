@@ -161,7 +161,7 @@ void BeamCalRecon_xy::init() {
     _hitmap_zeros = new TProfile2D("hitmap_zeros","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _test_slice = new TProfile2D("hitmap_slice","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _c2 = new TCanvas("c2","c2",300,300);
-    //    _c1 = new TCanvas("c1","c1",600,400);
+    _c1 = new TCanvas("c1","c1",600,400);
 
 
     Double_t theta[8];
@@ -214,6 +214,7 @@ void BeamCalRecon_xy::init() {
     // ------ end LEGO GRAPH ------
 
     // ------ POLAR GRAPH ------
+    s1.str("");
     s1 << "LEGO 1s,"<< _num_bgd_events_to_read << bgd_events << LEGObins << "bin";
     const char* LEGOtitle2 = s1.str().c_str();
     _hlego_pol1 = new TH2F("hlego_pol1", LEGOtitle2 ,POLARbins ,-150,150,POLARbins,-150,150);
@@ -319,10 +320,10 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     
     string endx_s = std::to_string(pos.first);
     string endy_s = std::to_string(pos.second);
-    cout << "endx string"<< endx_s << endl;
+    //    cout << "endx string"<< endx_s << endl;
 
     string ID = endx_s + "," + endy_s;
-    cout << "ID string"<< ID << endl;
+    //    cout << "ID string"<< ID << endl;
 
     Float_t px,py;
     px = endx;
@@ -365,8 +366,10 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
 
     //    gStyle->SetPalette(kBird);
     _hlego->SetFillColor(kYellow);
-
-    cout << _nEvt++ << endl;
+    _nEvt++;
+    if(_nEvt%100==0){
+      cout << _nEvt << endl;
+    }
 }
 
 

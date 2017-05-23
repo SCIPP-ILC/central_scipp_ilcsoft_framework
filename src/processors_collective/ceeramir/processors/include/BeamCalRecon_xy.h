@@ -33,10 +33,9 @@ class BeamCalRecon_xy : public Processor {
 
         virtual Processor*  newProcessor() { return new BeamCalRecon_xy ; }
 
-
         BeamCalRecon_xy() ;
 
-
+	// Used to edit the LEGO plots
 	virtual void RootPlot(TH2F* graph);
 
         /** Called at the begin of the job before anything is read.
@@ -44,27 +43,21 @@ class BeamCalRecon_xy : public Processor {
          */
         virtual void init() ;
 
-        /** Called for every run.
-        */
+        /** Called for every run.        */
         virtual void processRunHeader( LCRunHeader* run ) ;
 
-        /** Called for every event - the working horse.
-        */
+        /** Called for every event - the working horse.        */
         virtual void processEvent( LCEvent * evt ) ; 
-
 
         virtual void check( LCEvent * evt ) ; 
 
-
-        /** Called after data processing for clean up.
-        */
+        /** Called after data processing for clean up.        */
         virtual void end() ;
 
 
     protected:
 
-        /** Input collection name.
-        */
+        /** Input collection name.        */
         std::string _colName ;
         std::string _beamcal_geometry_file_name;
         std::string _background_event_list;
@@ -73,7 +66,6 @@ class BeamCalRecon_xy : public Processor {
 
         int _nRun ;
         int _nEvt ;
-
 } ;
 
 #endif
