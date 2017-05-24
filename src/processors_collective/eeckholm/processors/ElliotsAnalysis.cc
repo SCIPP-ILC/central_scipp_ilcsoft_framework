@@ -43,7 +43,7 @@ static TFile* _rootfile;
 static TH2F* _hitmap;
 
 
-int numEvents = 4;
+int numEvents = 8;
 
 double* pX = new double[numEvents];
 double* pY = new double[numEvents];
@@ -394,8 +394,8 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
 
     printf("\n=====================EVENT %d========================== \n", currentEvent + 1);  
     
-    printf("\nBARYCENTER Postive:( %f,%f) Negative (%f,%f)\n", barycenters[0], barycenters[1], barycenters[2], barycenters[3]);
-    printf("\nENERYG DEPOSIT Postive: %f  Negative: %f\n", obs[0], obs[1]);
+    printf("\nBARYCENTER Postive:( %f,%f) Negative (%f,%f)", barycenters[0], barycenters[1], barycenters[2], barycenters[3]);
+    printf("ENERYG DEPOSIT Postive: %f  Negative: %f", obs[0], obs[1]);
    
   
     
@@ -471,10 +471,38 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
       double nAvgX = findAvgObs(nX);
       double nAvgY = findAvgObs(nY);
 
-      printf("\nAVERAGE BARYCENTER: Postive: (%f,%f) Negative: (%f,%f)\n", pAvgBarycenterX, pAvgBarycenterY,nAvgBarycenterX, nAvgBarycenterY);
-      
-     
-    }
+      printf("\nAVERAGE BARYCENTER: Postive: (%f,%f) Negative: (%f,%f)", pAvgBarycenterX, pAvgBarycenterY,nAvgBarycenterX, nAvgBarycenterY);
+      printf("\nAVERAGE Energy Deposit: Postive: %f Negative: %f", pAvgEnergyDep, nAvgEnergyDep);
+
+      printf("\nAVERAGE Positions: Postive: (%f,%f) Negative: (%f,%f)", pAvgX, pAvgY, nAvgX, nAvgY);
+
+      printf("\nAVERAGE Mean Depth: Postive: %f Negative: %f", pAvgmeanDepth, nAvgmeanDepth);
+
+      printf("\nAVERAGE LR: Postive: %f Negative: %f", pAvgLR, nAvgLR);
+
+      printf("\nAVERAGE TD: Postive: %f Negative: %f", pAvgTD, nAvgTD);
+
+      std::fill_n(peventBarycenterX, numEvents, 0);
+      std::fill_n(peventBarycenterY, numEvents, 0);
+      std::fill_n(neventBarycenterX, numEvents, 0);
+      std::fill_n(neventBarycenterY, numEvents, 0);
+      std::fill_n(pEnergyDep, numEvents, 0);
+      std::fill_n(nEnergyDep, numEvents, 0);
+      std::fill_n(pLR, numEvents, 0);
+      std::fill_n(nLR, numEvents, 0);
+      std::fill_n(pTD, numEvents, 0);
+      std::fill_n(nTD, numEvents, 0);
+      std::fill_n(pmeanDepth, numEvents, 0);
+      std::fill_n(nmeanDepth, numEvents, 0);
+      std::fill_n(prmoment, numEvents, 0);
+      std::fill_n(nrmoment, numEvents, 0);
+      std::fill_n(pinvrmoment, numEvents, 0);
+      std::fill_n(ninvrmoment, numEvents, 0);
+      std::fill_n(pX, numEvents, 0);
+      std::fill_n(pY, numEvents, 0);
+      std::fill_n(nX, numEvents, 0);
+      std::fill_n(nY, numEvents, 0);
+  }
     
 
     _nEvt ++ ;

@@ -82,6 +82,8 @@ static TH2F* _hlego_pol3;
 static TH2F* _hlego_pol4;
 
 
+static TH2F* _hcol1;
+
 //static TGraphPolar* _hlegoo;
 
 //static TH2F* _hlego_var;
@@ -134,6 +136,8 @@ void BeamCalRecon_xy::RootPlot(TH2F* graph){                              // Thi
   graph->GetXaxis()->SetTitleOffset(1.4);
   graph->GetYaxis()->SetTitleOffset(1.6);
 
+  //  _c1->SetStatX(0.15);
+
   //  graph->SetTheta(90);
   /* 
      gStyle->SetOptStat(1111111);            // Set stat options
@@ -160,7 +164,7 @@ void BeamCalRecon_xy::init() {
     _hitmap_bgd = new TProfile2D("hitmap_bgd","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _hitmap_zeros = new TProfile2D("hitmap_zeros","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _test_slice = new TProfile2D("hitmap_slice","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
-    _c2 = new TCanvas("c2","c2",300,300);
+    //    _c2 = new TCanvas("c2","c2",300,300);
     _c1 = new TCanvas("c1","c1",600,400);
 
 
@@ -261,6 +265,23 @@ void BeamCalRecon_xy::init() {
      */
 
 
+    //*********************************************************************************
+    //    TCanvas *c1 = new TCanvas("c1","c1",600,400);
+    //    TH2F *_hcol1 = new TH2F("hcol1","Option COLor combined with POL",40,-4,4,40,-4,4);
+    _hcol1 = new TH2F("hcol1","Option COLor combined with POL",40,-150,150,40,-150,150);
+    Float_t px, py;
+    //    for (Int_t i = 0; i < 25000; i++) {
+    //      gRandom->Rannor(px,py);
+
+    //    }
+    //    gStyle->SetPalette(kBird);
+
+    //*********************************************************************************
+
+    //    hcol1->Fill(px,py);
+    //    hcol1->Draw("COLZPOL");
+
+
     TLegend *legend = new TLegend(0.05,0.05,0.06,0.1);
 
 
@@ -345,7 +366,7 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
       _hitmap_bgd->Fill(endx,endy,detected);    //      _hitmap_bgd->Fill(endx,endy);
       _hlego->Fill(endx,endy,detected);
       _hlego_pol1->Fill(px,py);
-
+      _hcol1->Fill((float_t(px)),(float_t(py)));
       //      _h2->Fill(electron_energy);
       //      _hlego_var->Fill(endx,endy,detected);
     }else{                                      //Graph of not detected
@@ -400,6 +421,6 @@ void BeamCalRecon_xy::end(){
     //    cout << "*******************this is the end***********************" << endl;
     //    cout << "******************* time elapsed: " << (_end - _begin) << " ***********************" << endl;
     //    cout << "******************* time elapsed: " << std::chrono::duration_cast<std::chrono::nanoseconds>(_t2 - _t1).count() << " ***********************" << endl;
-
+    _hcol1->Draw("COLZPOL");   
     _rootfile->Write();
 }
