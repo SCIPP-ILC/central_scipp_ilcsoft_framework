@@ -82,7 +82,7 @@ static TH2F* _hlego_pol3;
 static TH2F* _hlego_pol4;
 
 
-static TH2F* _hcol1;
+static TH2D* _hcol1;
 
 //static TGraphPolar* _hlegoo;
 
@@ -268,7 +268,8 @@ void BeamCalRecon_xy::init() {
     //*********************************************************************************
     //    TCanvas *c1 = new TCanvas("c1","c1",600,400);
     //    TH2F *_hcol1 = new TH2F("hcol1","Option COLor combined with POL",40,-4,4,40,-4,4);
-    _hcol1 = new TH2F("hcol1","Option COLor combined with POL",40,-150,150,40,-150,150);
+    _hcol1 = new TH2D("hcol1","Option COLor combined with POL",40,-150,150,40,-150,150);
+
     Float_t px, py;
     //    for (Int_t i = 0; i < 25000; i++) {
     //      gRandom->Rannor(px,py);

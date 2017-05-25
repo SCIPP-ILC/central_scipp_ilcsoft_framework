@@ -17,6 +17,7 @@
 
 #include "ElliotsAnalysis.h"
 #include "scipp_ilc_utilities.h"
+#include "include/Thrust.h"
 #include <iostream>
 
 #include <EVENT/LCCollection.h>
@@ -43,28 +44,29 @@ static TFile* _rootfile;
 static TH2F* _hitmap;
 
 
-int numEvents = 8;
+int numEvents = 4;
+int modEvents = 2;
 
-double* pX = new double[numEvents];
-double* pY = new double[numEvents];
-double* nX = new double[numEvents];
-double* nY = new double[numEvents];
-double* peventBarycenterX = new double[numEvents];
-double* peventBarycenterY = new double[numEvents];
-double* neventBarycenterX = new double[numEvents];
-double* neventBarycenterY = new double[numEvents];
-double* pEnergyDep = new double[numEvents];
-double* nEnergyDep = new double[numEvents];
-double* pLR = new double[numEvents];
-double* nLR = new double[numEvents];
-double* pTD = new double[numEvents];
-double* nTD = new double[numEvents];
-double* pmeanDepth = new double[numEvents];
-double* nmeanDepth = new double[numEvents];
-double* prmoment = new double[numEvents];
-double* nrmoment = new double[numEvents]; 
-double* pinvrmoment = new double[numEvents];
-double* ninvrmoment = new double[numEvents];
+double* pX = new double[modEvents];
+double* pY = new double[modEvents];
+double* nX = new double[modEvents];
+double* nY = new double[modEvents];
+double* peventBarycenterX = new double[modEvents];
+double* peventBarycenterY = new double[modEvents];
+double* neventBarycenterX = new double[modEvents];
+double* neventBarycenterY = new double[modEvents];
+double* pEnergyDep = new double[modEvents];
+double* nEnergyDep = new double[modEvents];
+double* pLR = new double[modEvents];
+double* nLR = new double[modEvents];
+double* pTD = new double[modEvents];
+double* nTD = new double[modEvents];
+double* pmeanDepth = new double[modEvents];
+double* nmeanDepth = new double[modEvents];
+double* prmoment = new double[modEvents];
+double* nrmoment = new double[modEvents]; 
+double* pinvrmoment = new double[modEvents];
+double* ninvrmoment = new double[modEvents];
 
 
 int currentEvent = 0;
@@ -154,7 +156,7 @@ double* ElliotsAnalysis::calculateObservables(LCCollection* col, double barycent
 	pdenom_TD += std::abs(currentPosY) * currentEnergy;
 
 	//Mean Depth
-	pnum_meanDepth = currentPosZ * currentEnergy;
+	pnum_meanDepth += currentPosZ * currentEnergy;
 
 	//r-moment
 	prad = std::sqrt((std::pow(currentPosX - barycenters[0],2) + (std::pow(hit->getPosition()[1] - barycenters[1],2))));
@@ -180,7 +182,7 @@ double* ElliotsAnalysis::calculateObservables(LCCollection* col, double barycent
 	ndenom_TD += std::abs(currentPosY) * currentEnergy;
 
 	//Mean Depth                                                                                                                       
-	nnum_meanDepth = currentPosZ * currentEnergy;
+	nnum_meanDepth += currentPosZ * currentEnergy;
 
 	//r-moment
 	nrad = std::sqrt((std::pow(currentPosX - barycenters[2],2) + (std::pow(hit->getPosition()[1] - barycenters[3],2))));
@@ -345,7 +347,7 @@ double ElliotsAnalysis::findAvgObs(double* obs){
 
   int num = 0;
 
-  for (int i = 0;i < numEvents ; i++ ){
+  for (int i = 0;i < modEvents ; i++ ){
 
     sum += obs[i];
 
@@ -366,6 +368,7 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
     // usually the working horse ...
 
     LCCollection* col = evt->getCollection( _colName ) ;
+    
     
     double* barycenters = calculateBarycenter(col);
     double* obs = calculateObservables(col, barycenters);
@@ -391,12 +394,12 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
     pY[currentEvent] = obs[13];
     nX[currentEvent] = obs[14];
     nY[currentEvent] = obs[15];
-
-    printf("\n=====================EVENT %d========================== \n", currentEvent + 1);  
     
+    printf("\n=====================EVENT %d========================== \n", _nEvt + 1);  
+    /*
     printf("\nBARYCENTER Postive:( %f,%f) Negative (%f,%f)", barycenters[0], barycenters[1], barycenters[2], barycenters[3]);
     printf("ENERYG DEPOSIT Postive: %f  Negative: %f", obs[0], obs[1]);
-   
+    */
   
     
     double highestEnergy = 0;
@@ -447,9 +450,33 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
     // printParticleProperties(maxHit);
   
     currentEvent++;
-    if (currentEvent % numEvents == 0){
+    if (currentEvent % modEvents == 0){
+      /*      double* barycenters = calculateBarycenter(col);
+      double* obs = calculateObservables(col, barycenters);
 
-      
+
+      peventBarycenterX[currentEvent] = barycenters[0];
+      peventBarycenterY[currentEvent] = barycenters[1];
+      neventBarycenterX[currentEvent] = barycenters[2];
+      neventBarycenterY[currentEvent] = barycenters[3];
+      pEnergyDep[currentEvent] = obs[0];
+      nEnergyDep[currentEvent] = obs[1];
+      pLR[currentEvent] = obs[2];
+      nLR[currentEvent] = obs[3];
+      pTD[currentEvent] = obs[4];
+      nTD[currentEvent] = obs[5];
+      pmeanDepth[currentEvent] = obs[6];
+      nmeanDepth[currentEvent] = obs[7];
+      prmoment[currentEvent] = obs[8];
+      nrmoment[currentEvent] = obs[9];
+      pinvrmoment[currentEvent] = obs[10];
+      ninvrmoment[currentEvent] = obs[11];
+      pX[currentEvent] = obs[12];
+      pY[currentEvent] = obs[13];
+      nX[currentEvent] = obs[14];
+      nY[currentEvent] = obs[15];
+
+      */
       double pAvgBarycenterX = findAvgObs(peventBarycenterX);
       double pAvgBarycenterY = findAvgObs(peventBarycenterY);
       double nAvgBarycenterX = findAvgObs(neventBarycenterX);
@@ -480,32 +507,34 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
 
       printf("\nAVERAGE LR: Postive: %f Negative: %f", pAvgLR, nAvgLR);
 
-      printf("\nAVERAGE TD: Postive: %f Negative: %f", pAvgTD, nAvgTD);
+      printf("\nAVERAGE TD: Postive: %f Negative: %f\n", pAvgTD, nAvgTD);
 
-      std::fill_n(peventBarycenterX, numEvents, 0);
-      std::fill_n(peventBarycenterY, numEvents, 0);
-      std::fill_n(neventBarycenterX, numEvents, 0);
-      std::fill_n(neventBarycenterY, numEvents, 0);
-      std::fill_n(pEnergyDep, numEvents, 0);
-      std::fill_n(nEnergyDep, numEvents, 0);
-      std::fill_n(pLR, numEvents, 0);
-      std::fill_n(nLR, numEvents, 0);
-      std::fill_n(pTD, numEvents, 0);
-      std::fill_n(nTD, numEvents, 0);
-      std::fill_n(pmeanDepth, numEvents, 0);
-      std::fill_n(nmeanDepth, numEvents, 0);
-      std::fill_n(prmoment, numEvents, 0);
-      std::fill_n(nrmoment, numEvents, 0);
-      std::fill_n(pinvrmoment, numEvents, 0);
-      std::fill_n(ninvrmoment, numEvents, 0);
-      std::fill_n(pX, numEvents, 0);
-      std::fill_n(pY, numEvents, 0);
-      std::fill_n(nX, numEvents, 0);
-      std::fill_n(nY, numEvents, 0);
-  }
+      std::fill_n(peventBarycenterX, modEvents, 0);
+      std::fill_n(peventBarycenterY, modEvents, 0);
+      std::fill_n(neventBarycenterX, modEvents, 0);
+      std::fill_n(neventBarycenterY, modEvents, 0);
+      std::fill_n(pEnergyDep, modEvents, 0);
+      std::fill_n(nEnergyDep, modEvents, 0);
+      std::fill_n(pLR, modEvents, 0);
+      std::fill_n(nLR, modEvents, 0);
+      std::fill_n(pTD, modEvents, 0);
+      std::fill_n(nTD, modEvents, 0);
+      std::fill_n(pmeanDepth, modEvents, 0);
+      std::fill_n(nmeanDepth, modEvents, 0);
+      std::fill_n(prmoment, modEvents, 0);
+      std::fill_n(nrmoment, modEvents, 0);
+      std::fill_n(pinvrmoment, modEvents, 0);
+      std::fill_n(ninvrmoment, modEvents, 0);
+      std::fill_n(pX, modEvents, 0);
+      std::fill_n(pY, modEvents, 0);
+      std::fill_n(nX, modEvents, 0);
+      std::fill_n(nY, modEvents, 0);
+  
+      currentEvent = 0;
+    }
     
 
-    _nEvt ++ ;
+    _nEvt++ ;
 }
 
 

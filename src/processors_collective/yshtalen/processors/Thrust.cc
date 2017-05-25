@@ -205,6 +205,95 @@ void Thrust::end(){
     _rootfile->Write();
 }
 
+int Thrust::TassoThrust(){
+  int ThrustError = 0;
+  Hep3Vector tvec;
+
+  // No particle in Event: Error
+  if (_inParVec->getNumberOfElements()<=0)
+    {
+      ThrustError = -1;
+      _principleThrustValue = 0;
+      _principleThrustAxis.set(0,0,0);
+    }
+  // only one Particle in Event: Thrust direction = direction of particle
+  else if (_inParVec->getNumberOfElements()==1)
+    {
+      _principleThrustValue = 1;
+      _principleThrustAxis = _partMom[0];
+    }
+  else
+    {
+      Hep3Vector ptm, ptot, pt;
+      std::vector<Hep3Vector> pc;
+      float sp,u, pp, tmax, t;
+
+      sp=0;
+      for (int i=0;i < _inParVec->getNumberOfElements();i++)
+    {
+      pp = _partMom[i].mag();
+      sp += pp;
+      ptot += _partMom[i];
+    } // for i
+    // ###
+      for (int m = 0; m <= 2; m++ )
+    ptot[m] *= 0.5;
+      tmax = 0;
+      for (int k = 1; k < _inParVec->getNumberOfElements(); k++)
+    {
+      for (int j = 0; j <= k-1;j++)
+        {
+              // cross product
+          tvec = _partMom[j].cross(_partMom[k]);
+          pt = -1 * ptot;
+          for (int l = 0; l < _inParVec->getNumberOfElements(); l++)
+        {
+          if (l==k) continue;
+          if (l==j) continue;
+          u = _partMom[l] * tvec;
+          if (u<0) continue;
+          pt += _partMom[l];
+            } // for l
+
+          while(!pc.empty())
+        {
+          pc.pop_back();
+        }
+        // note: the order is important!!!
+          pc.push_back(pt);
+          pc.push_back(pt + _partMom[k]);
+          pc.push_back(pt + _partMom[j]);
+          pc.push_back(pc[2] + _partMom[k]);
+          for (int m = 0; m <= 3; m++ )
+        {
+          t = pc[m].mag2();
+          if (t <= tmax) continue;
+          tmax = t;
+          ptm = pc[m];
+        } // for m 
+        } // for j
+    } // for k
+      _principleThrustValue = 2 * sqrt(tmax) / sp;
+      tvec = ptm;
+    } // end else 
+
+    //Normalization of thrust vector
+    double ax = 0;
+    ax = tvec.mag();
+    if (ax!=0)
+    {
+        ax = 1/ax;
+        _principleThrustAxis = ax * tvec;
+    }
+    else
+    {
+        ThrustError = -1;
+        _principleThrustValue = -1;
+        _principleThrustAxis.set(0,0,0);
+    }
+    return ThrustError;
+}
+
 int Thrust::JetsetThrust(){
   const int nwork=11,iFastMax = 4,iGood=2;
   const float dConv=0.0001; // 0.0001
