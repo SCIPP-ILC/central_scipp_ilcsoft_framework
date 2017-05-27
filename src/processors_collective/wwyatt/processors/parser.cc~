@@ -1,0 +1,106 @@
+#undef _GLIBCXX_USE_CXX11_ABI
+#define _GLIBCXX_USE_CXX11_ABI 0
+/* 
+ * Ok, so I like C++11. Unfortunately,
+ * Marlin is built with ansi C, so the processor
+ * constructor freaks out about the string that is
+ * passed to it as an argument. The above two lines
+ * fix that issue, allowing our code to be compatible
+ * with ansi C class declarations.
+ * Big thanks to Daniel Bittman for helping me fix this.
+ */
+
+/*
+ * author Christopher Milke
+ * April 5, 2016
+ */
+
+#include "parser.h"
+#include "scipp_ilc_utilities.h"
+#include <iostream>
+
+#include <EVENT/LCCollection.h>
+#include <EVENT/SimCalorimeterHit.h>
+#include <EVENT/MCParticle.h>
+
+#include <TFile.h>
+#include <TH2D.h>
+
+// ----- include for verbosity dependend logging ---------
+#include "marlin/VerbosityLevels.h"
+
+
+using namespace lcio;
+using namespace marlin;
+using namespace std;
+
+
+parser parser;
+
+static TFile* _rootfile;
+static int nBhabha=0;
+static int nBase=0;
+static int nTwoPhoton=0;
+
+
+parser::parser() : Processor("parser") {
+    // modify processor description
+    _description = "Protype Processor" ;
+
+    // register steering parameters: name, description, class-variable, default value
+    registerInputCollection( LCIO::MCPARTICLE, "CollectionName" , "Name of the MCParticle collection"  , _colName , std::string("MCParticle") );
+    
+    registerProcessorParameter( "RootOutputName" , "output file"  , _root_file_name , std::string("output.root") );
+}
+
+
+void parser::init() { 
+    streamlog_out(DEBUG) << "   init called  " << std::endl ;
+    _rootfile = new TFile("parser.root","RECREATE");
+    _nEvt = 0 ;
+}
+
+void parser::processRunHeader( LCRunHeader* run) { 
+//    _nRun++ ;
+} 
+
+void parser::processEvent( LCEvent * evt ) { 
+    LCCollection* col = evt->getCollection( _colName );
+    int stat, id =0;
+    if( col != NULL ){
+        int nElements = col->getNumberOfElements()  ;
+	if(nElements==4){
+	  ++nBase;
+	  return;
+	}
+	int eps = 0;
+        for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
+           MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );        
+	   
+            id = hit->getPDG();
+            stat = hit->getGeneratorStatus();
+            if(stat==1){
+	      if(true){
+		++nBhabha;
+	      }else{
+		++nTwoPhoton;
+	      }
+            }//end final state   
+        }//end for
+    }
+    _nEvt ++ ;
+}
+
+
+void parser::check( LCEvent * evt ) { 
+    // nothing to check here - could be used to fill checkplots in reconstruction processor
+}
+
+
+
+void parser::end(){ 
+  cout << "Number of empty events: " << nBase << endl;
+  cout << "Number of Bhabha events: " << nBhabha << endl;
+  cout << "Number of Two Photon events: " << nTwoPhoton << endl;
+  _rootfile->Write();
+}

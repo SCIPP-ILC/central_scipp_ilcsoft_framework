@@ -170,7 +170,7 @@ namespace scipp_ilc {
 	    scipp_ilc::cartesian_to_polar(x,y,r,phi);
 	    int ID = getIDpolar(r,phi);
 
-	    cout << "In polar, ID = " << ID << endl;
+	    //	    cout << "In polar, ID = " << ID << endl;
 
 	    return ID;
 	  }else{
