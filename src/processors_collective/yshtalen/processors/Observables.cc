@@ -41,6 +41,8 @@ Observables Observables;
 static TFile* _rootfile;
 static TH1F* _V;
 static TH1F* _S;
+static TH1F* _Vzoom;
+static TH1F* _Szoom;
 
 
 Observables::Observables() : Processor("Observables") {
@@ -58,9 +60,12 @@ Observables::Observables() : Processor("Observables") {
 void Observables::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile=new TFile("BB_obs.root", "RECREATE");
+    _rootfile=new TFile("WW_obs.root", "RECREATE");
     _V = new TH1F("V", "Magnitude of Transverse Momentum Vector Sum, Hadronic System", 100, 0.0, 20.0);
     _S = new TH1F("S", "Sum of Transverse Momentum Magnitudes, Hadronic System", 100, 0.0, 20.0);
+
+    _Vzoom = new TH1F("V", "Magnitude of Transverse Momentum Vector Sum, Hadronic System", 100, 0.0, 2.0);
+    _Szoom = new TH1F("S", "Sum of Transverse Momentum Magnitudes, Hadronic System", 100, 0.0, 2.0);
 
     
     // usually a good idea to
@@ -130,9 +135,11 @@ void Observables::processEvent( LCEvent * evt ) {
 
         V = sqrt(pow(tot_mom[0], 2)+pow(tot_mom[1], 2));
         _V->Fill(V); 
+        _Vzoom->Fill(V); 
         cout << "V: " << V << endl;
         S = tmag;
         _S->Fill(S); 
+        _Szoom->Fill(S); 
         cout << "S: " << S << endl;
     }
 
