@@ -60,7 +60,7 @@ Observables::Observables() : Processor("Observables") {
 void Observables::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile=new TFile("WW_obs.root", "RECREATE");
+    _rootfile=new TFile("WW_had.root", "RECREATE");
     _V = new TH1F("V", "Magnitude of Transverse Momentum Vector Sum, Hadronic System", 100, 0.0, 20.0);
     _S = new TH1F("S", "Sum of Transverse Momentum Magnitudes, Hadronic System", 100, 0.0, 20.0);
 
@@ -116,7 +116,7 @@ void Observables::processEvent( LCEvent * evt ) {
                 cout << "Particle " << hitIndex << " with ID: " << id;
                 cout << " status: " << stat;
 
-                double mom[4];
+                /*double mom[4];
                 mom[0] = hit->getMomentum()[0]; 
                 mom[1] = hit->getMomentum()[1]; 
                 mom[2] = hit->getMomentum()[2];
@@ -127,11 +127,27 @@ void Observables::processEvent( LCEvent * evt ) {
                 double mag = sqrt(pow(mom[0], 2)+pow(mom[1], 2));
                 tmag+=mag;
                 tot_mom[0]+=mom[0];
-                tot_mom[1]+=mom[1];
+                tot_mom[1]+=mom[1];*/
                 
             }//end final state
         }//end for
+        
+        for(MCParticle* hit : system){
+            if(hit->getEnergy()!=E_e && hit->getEnergy()!=E_p){
+                    
+                double mom[4];
+                mom[0] = hit->getMomentum()[0]; 
+                mom[1] = hit->getMomentum()[1]; 
+                mom[2] = hit->getMomentum()[2];
+                mom[3] = hit->getEnergy();
 
+                cout << " momentum [" << mom[0] << ", " << mom[1] << ", " << mom[2] << "] with energy: " << mom[3] << endl;
+                double mag = sqrt(pow(mom[0], 2)+pow(mom[1], 2));
+                tmag+=mag;
+                tot_mom[0]+=mom[0];
+                tot_mom[1]+=mom[1];
+            }    
+        }
 
         V = sqrt(pow(tot_mom[0], 2)+pow(tot_mom[1], 2));
         _V->Fill(V); 
