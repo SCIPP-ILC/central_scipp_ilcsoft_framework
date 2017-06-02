@@ -31,11 +31,11 @@ using namespace std;
 namespace marlin
 {
 
-  SatoruJetFinderProcessor aSatoruJetFinderProcessor ;
+  SatoruJetFinder aSatoruJetFinder ;
   
   
-  SatoruJetFinderProcessor::SatoruJetFinderProcessor() 
-    : Processor("SatoruJetFinderProcessor") 
+  SatoruJetFinder::SatoruJetFinder() 
+    : Processor("SatoruJetFinder") 
   {
     _description="A multi algorithm jet finder";
 
@@ -126,9 +126,9 @@ namespace marlin
   }
   
  
-  void SatoruJetFinderProcessor::init(){
+  void SatoruJetFinder::init(){
 
-		streamlog_out(DEBUG4) << "SatoruJetFinderProcessor::init()  " << name() 
+		streamlog_out(DEBUG4) << "SatoruJetFinder::init()  " << name() 
               << std::endl 
               << "  parameters: " << std::endl 
               << *parameters()  ;
@@ -183,13 +183,13 @@ namespace marlin
   
   }
 
-  void SatoruJetFinderProcessor::processRunHeader( LCRunHeader* run) { 
+  void SatoruJetFinder::processRunHeader( LCRunHeader* run) { 
     //    std::cout << "SatoruJetFinderProcessor::processRun()  " << name() 
     //        << " in run " << run->getRunNumber() 
     //        << std::endl ;  
   } 
 
-  void SatoruJetFinderProcessor::processEvent( LCEvent * evt ) { 
+  void SatoruJetFinder::processEvent( LCEvent * evt ) { 
     LCCollectionVec* JetsCol= new LCCollectionVec(LCIO::RECONSTRUCTEDPARTICLE);
     // just a simple example    
     //first write the name of all collection included ...
@@ -200,7 +200,7 @@ namespace marlin
 
   }
 
-  void SatoruJetFinderProcessor::end(){}
+  void SatoruJetFinder::end(){}
 
 
   /* *********************************************************************** */
@@ -208,7 +208,7 @@ namespace marlin
 
 
 
-  void SatoruJetFinderProcessor::goSatoru(LCEvent * evt,LCCollection* JetsCol){
+  void SatoruJetFinder::goSatoru(LCEvent * evt,LCCollection* JetsCol){
     putPartons(evt);
     //    WritePartons();
     callSatoru(evt);
@@ -217,7 +217,7 @@ namespace marlin
   }
 
 
-  void SatoruJetFinderProcessor::putPartons(LCEvent * evt){
+  void SatoruJetFinder::putPartons(LCEvent * evt){
     LCCollection* enflowcol=evt->getCollection(_inputCollection);
     int nenflow =  enflowcol->getNumberOfElements(); 
     _partonsWorkArray.NumberOfPartons=nenflow; 
@@ -233,7 +233,7 @@ namespace marlin
 
 
 
-  void SatoruJetFinderProcessor::writePartons(){
+  void SatoruJetFinder::writePartons(){
     for (int iparton=0;iparton<_partonsWorkArray.NumberOfPartons;iparton++){
 			streamlog_out(DEBUG4) << "Px,Py,Pz,E: "<< 
         _partonsWorkArray.Momentum[iparton*4+0] << ", " <<
@@ -244,7 +244,7 @@ namespace marlin
   }
 
 
-  void SatoruJetFinderProcessor::callSatoru(LCEvent * evt){
+  void SatoruJetFinder::callSatoru(LCEvent * evt){
     int DimensionOfInputArray=4;
     int DimensionOfOutputArray=4;
     int MaximalNumberOfJets=20;
@@ -267,7 +267,7 @@ namespace marlin
             _YMinus,_YPlus,IError,GlobalModusLength);
   }
 
-  void SatoruJetFinderProcessor::getJets(LCEvent * evt,LCCollection* JetsCol){
+  void SatoruJetFinder::getJets(LCEvent * evt,LCCollection* JetsCol){
     LCCollection* enflowcol=evt->getCollection(_inputCollection);
 		streamlog_out(DEBUG4) << " " << endl;
 		streamlog_out(DEBUG4) << " number of jets found: " <<_jetsWorkArray.NumberOfJets << endl;
@@ -308,8 +308,8 @@ namespace marlin
   }
 
 
-  void SatoruJetFinderProcessor::writeJets(){}
-  void SatoruJetFinderProcessor::writeParameters(){}
+  void SatoruJetFinder::writeJets(){}
+  void SatoruJetFinder::writeParameters(){}
 
 
 } //namespace marlin

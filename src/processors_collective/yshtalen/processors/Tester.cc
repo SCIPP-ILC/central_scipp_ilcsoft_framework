@@ -39,10 +39,8 @@ using namespace scipp_ilc;
 Tester Tester;
 
 static TFile* _rootfile;
-static TH1F* _tmom;
-static TH1F* _S;
-static TH2F* _SvT;
-//static TH2F* _eVp;
+static TH2F* _pos;
+static TH2F* _angle;
 
 Tester::Tester() : Processor("Tester") {
     // modify processor description
@@ -59,10 +57,10 @@ Tester::Tester() : Processor("Tester") {
 void Tester::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("BW_S.root","RECREATE");
-    _tmom = new TH1F("tmom", "Total Final State Transverse Momentum", 100, 0.0, 20.0);
-    _S = new TH1F("S", "Sum of Transverse Momentum Magnitudes, Hadronic System", 100, 0, 20.0);
-    _SvT = new TH2F("SvT", "Scattering Angle vs Transverse Momentum Mag Sum", 100, 0.0, 20.0, 1000, 0.0, 0.01);
+    _rootfile = new TFile("WW_pos.root","RECREATE");
+    _pos = new TH2F("pos", "Distribution of Deflected Beam Particles at Position of BeamCal Face", 900, -150.0, 150.0, 900, -150.0, 150.0);
+    _angle = new TH2F("ang", "Positron vs Electron Deflection Angle", 100, 0.0, 0.02, 100, 0.0, 0.02);
+
     
     // usually a good idea to
     //printParameters() ;
@@ -84,12 +82,14 @@ void Tester::processEvent( LCEvent * evt ) {
     double tot[]={0, 0, 0};
     LCCollection* col = evt->getCollection( _colName ) ;
 
-    double theta_comp = 0.0062786;
     int stat, id = 0;
     double theta_e, theta_p;
     double E_e, E_p = 0;
-    double tot_mom[]={0, 0};
-    double S = 0;
+    double* mom_e[4], mom_p[4];
+    double* pos_e[3], pos_p[3];
+
+    int hit = 0;
+
     // this will only be entered if the collection is available
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
@@ -98,7 +98,9 @@ void Tester::processEvent( LCEvent * evt ) {
     cout << "***************************EVENT: " << _nEvt << "****************************" << endl;
 
     vector<MCParticle*> system;
-
+        
+        //create final state subsystem
+        //determine beam particle energies for identification
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
         
@@ -121,33 +123,47 @@ void Tester::processEvent( LCEvent * evt ) {
 
             }//end final state
         }//end for
+
+        //find beam particles
         for(MCParticle* particle : system){
             id = particle->getPDG();
             if(id==11&&particle->getEnergy()==E_e){
-                    double mom[4];
+                    const double* mom;
                     mom[0] = particle->getMomentum()[0]; 
                     mom[1] = particle->getMomentum()[1]; 
                     mom[2] = particle->getMomentum()[2];
                     mom[3] = particle->getEnergy();
-                    if(abs(mom[0])!=0||abs(mom[1])!=0){
-                        double r = sqrt(pow(mom[0], 2)+pow(mom[1], 2));
-                        double mag = sqrt(pow(mom[0], 2)+pow(mom[1], 2)+pow(mom[2], 2));
+
+                    mom_e[0]=mom[0];
+                    mom_e[1]=mom[1];
+                    mom_e[2]=mom[2];
+                    mom_e[3]=mom[3];
+                    if(abs(mom_e[0])!=0||abs(mom_e[1])!=0){
+                        hit++;
+                        double r = sqrt(pow(mom_e[0], 2)+pow(mom_e[1], 2));
+                        double mag = sqrt(pow(mom_e[0], 2)+pow(mom_e[1], 2)+pow(mom_e[2], 2));
                         theta_e = asin(r/mag);
                     }//end scatter
             }//end high energy electron    
             else if(id==-11&&particle->getEnergy()==E_p){
-                    double mom[4];
+                    const double* mom;
                     mom[0] = particle->getMomentum()[0]; 
                     mom[1] = particle->getMomentum()[1]; 
                     mom[2] = particle->getMomentum()[2];
                     mom[3] = particle->getEnergy();
-                    if(abs(mom[0])!=0||abs(mom[1])!=0){
-                        double r = sqrt(pow(mom[0], 2)+pow(mom[1], 2));
-                        double mag = sqrt(pow(mom[0], 2)+pow(mom[1], 2)+pow(mom[2], 2));
+                    
+                    mom_p[0] = mom[0]; 
+                    mom_p[1] = mom[1]; 
+                    mom_p[2] = mom[2];
+                    mom_p[3] = mom[3];
+                    if(abs(mom_p[0])!=0||abs(mom_p[1])!=0){
+                        hit++;
+                        double r = sqrt(pow(mom_p[0], 2)+pow(mom_p[1], 2));
+                        double mag = sqrt(pow(mom_p[0], 2)+pow(mom_p[1], 2)+pow(mom_p[2], 2));
                         theta_p = asin(r/mag);
-                        cout << "THETA_P" << theta_p << endl;
                     }//end scatter
             }//end high energy electron    
+            
             else{
                 double mom[4];
                 mom[0] = particle->getMomentum()[0]; 
@@ -155,12 +171,27 @@ void Tester::processEvent( LCEvent * evt ) {
                 mom[2] = particle->getMomentum()[2];
                 mom[3] = particle->getEnergy();
                 double mag = sqrt(pow(mom[0], 2)+pow(mom[1], 2));    
-                S+=mag;
             }
         }//end for
-        _S->Fill(S); 
-        //(theta_e>theta_p) ? _SvT->Fill(S, theta_e) : _SvT->Fill(S, theta_p);    
-        _SvT->Fill(S, theta_p);
+        if(hit==2){
+            _angle->Fill(theta_e, theta_p);
+        }
+
+        scipp_ilc::transform_to_lab(mom_e[0], mom_e[3], mom_e[0], mom_e[3]);
+        scipp_ilc::transform_to_lab(mom_p[0], mom_p[3], mom_p[0], mom_p[3]);
+
+        pos_e[0] = mom_e[0]*scipp_ilc::_BeamCal_zmin/mom_e[2];
+        pos_e[1] = mom_e[1]*scipp_ilc::_BeamCal_zmin/mom_e[2];
+        pos_e[2] = scipp_ilc::_BeamCal_zmin;
+        pos_p[0] = mom_p[0]*scipp_ilc::_BeamCal_zmin/mom_p[2];
+        pos_p[1] = mom_p[1]*scipp_ilc::_BeamCal_zmin/mom_p[2];
+        pos_p[2] = scipp_ilc::_BeamCal_zmin;
+
+        scipp_ilc::z_to_beam_out(pos_p[0], pos_p[1], pos_p[2]);
+        scipp_ilc::z_to_beam_out(pos_e[0], pos_e[1], pos_e[2]);
+
+        _pos->Fill(pos_p[0], pos_p[1]);
+        _pos->Fill(pos_e[0], pos_e[1]);
     }
 
     _nEvt ++ ;

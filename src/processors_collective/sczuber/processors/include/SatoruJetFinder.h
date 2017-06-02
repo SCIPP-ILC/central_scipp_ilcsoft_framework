@@ -11,8 +11,8 @@
 **
 */ 
 
-#ifndef SatoruJetFinderProcessor_h
-#define SatoruJetFinderProcessor_h 1
+#ifndef SatoruJetFinder_h
+#define SatoruJetFinder_h 1
 
 #include "marlin/Processor.h"
 
