@@ -45,6 +45,7 @@ class parser : public Processor {
    */
   virtual void end() ;
 
+  int numberOfTrees(LCEvent*, bool=true);
 
  protected:
 

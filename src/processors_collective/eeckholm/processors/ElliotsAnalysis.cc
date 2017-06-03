@@ -94,6 +94,8 @@ double* firstBarycenters = new double[4];
 int currentEvent = 0;
 int currentScen = 0;
 
+]
+
 ElliotsAnalysis::ElliotsAnalysis() : Processor("ElliotsAnalysis") {
     // modify processor description
     _description = "Protype Processor" ;
@@ -401,6 +403,9 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
 
     LCCollection* col = evt->getCollection( _colName ) ;
     
+
+    
+
         
     double* barycenters = calculateBarycenter(col);
     

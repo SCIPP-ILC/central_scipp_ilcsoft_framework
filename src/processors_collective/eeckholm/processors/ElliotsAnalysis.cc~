@@ -434,7 +434,7 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
     nX[currentEvent] = obs[14];
     nY[currentEvent] = obs[15];
     
-    printf("\n=====================EVENT %d========================== \n", _nEvt + 1);  
+    printf("\n=====================Scenario %d========================== \n", currentScen + 1);  
     /*
     printf("\nBARYCENTER Postive:( %f,%f) Negative (%f,%f)", barycenters[0], barycenters[1], barycenters[2], barycenters[3]);
     printf("ENERYG DEPOSIT Postive: %f  Negative: %f", obs[0], obs[1]);
@@ -544,7 +544,7 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
 
       printf("\nAVERAGE TD: Postive: %f Negative: %f\n", pAvgTD, nAvgTD);
 
-      printf("\nScenario: %d R-Moment: Postive: %f Negative: %f\n", currentScen, pScenrmoment[currentScen], nScenrmoment[currentScen]);
+
 
       std::fill_n(peventBarycenterX, modEvents, 0);
       std::fill_n(peventBarycenterY, modEvents, 0);

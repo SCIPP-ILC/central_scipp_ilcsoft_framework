@@ -101,16 +101,6 @@ void Thrust::processRunHeader( LCRunHeader* run) {
 } 
 
 
-void processThrust(double* partMom){
-
-  //  const double* partMom = aPart->getMomentum();
-  
-  _partMom.push_back( Hep3Vector(partMom[0], partMom[1], 0) );
-
-  
-  JetsetThrust();
-}
-
 
 void Thrust::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
