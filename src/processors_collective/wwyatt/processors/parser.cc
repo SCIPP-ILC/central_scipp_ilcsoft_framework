@@ -76,17 +76,22 @@ bool parser::isBhabha(LCCollection* col, vector<vector<MCParticle*>>* trees){
   //Probably something wrong with this pointer syntax.
   for(const auto tree: *trees){
     cout << "size: " << tree.size() << endl;    
+    bool bhabha=true;
     for(const auto hit: tree){
       cout << "id: " << hit->getPDG() << endl;
       if(hit->getGeneratorStatus() == 1){
-	int id = hit->getPDG();
-	if (id != 11 && id != -11 && id != 22){
-	  return false;
+	string id = to_string(hit->getPDG());
+	string valid = "11 -11 22";
+	if (valid.find(id) == string::npos){
+	  bhabha=false;
 	}
       }
     }
+    if(bhabha){
+      return bhabha;
+    }
   }
-  return true;
+  return false;
 }
 
 void parser::processEvent( LCEvent * evt ) { 
@@ -142,7 +147,7 @@ void parser::addToTree(MCParticle* obj, MCParticle* associate, vector<vector<MCP
       }else{
 	all.push_back(associate);
 	tree.push_back(associate);
-      }
+	}
     }
   }
 }

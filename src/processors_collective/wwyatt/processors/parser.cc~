@@ -29,6 +29,7 @@
 #include <cmath>
 #include <vector>
 #include <map>
+#include <algorithm>
 
 // ----- include for verbosity dependend logging ---------
 #include "marlin/VerbosityLevels.h"
@@ -45,6 +46,7 @@ static TFile* _rootfile;
 static int nBhabha=0;
 static int nBase=0;
 static int nTwoPhoton=0;
+static int nCombo=0;
 
 
 parser::parser() : Processor("parser") {
@@ -68,35 +70,40 @@ void parser::processRunHeader( LCRunHeader* run) {
 //    _nRun++ ;
 } 
 
+//Returns true if it finds final state electrons or positrons.
+bool parser::isBhabha(LCCollection* col, vector<vector<MCParticle*>>* trees){
+  //It says there are 30 items in trees but only loops through one...
+  //Probably something wrong with this pointer syntax.
+  for(const auto tree: *trees){
+    cout << "size: " << tree.size() << endl;    
+    for(const auto hit: tree){
+      cout << "id: " << hit->getPDG() << endl;
+      if(hit->getGeneratorStatus() == 1){
+	int id = hit->getPDG();
+	if (id != 11 && id != -11 && id != 22){
+	  return false;
+	}
+      }
+    }
+  }
+  return true;
+}
+
 void parser::processEvent( LCEvent * evt ) { 
     LCCollection* col = evt->getCollection( _colName );
     int stat, id =0;
+    bool v=true;
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
-	int trees = numberOfTrees(evt, false);
-	cout << "There are " << trees << " trees." << endl;
-	if(nElements==4){
-	  ++nBase;
-	  return;
-	}
-	if(true){
-	  ++nBhabha;
-	}else{
-	  ++nTwoPhoton;
-	}
-
-	
-	/*	int eps = 0;
-        for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
-           MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );        
-	   
-            id = hit->getPDG();
-            stat = hit->getGeneratorStatus();
-            if(stat==1){
-            }//end final state   
-	    }//end for*/
+	if(v) cout << "##### New Event (  "<< nElements<< " elements )#####" << endl;
+	vector<vector<MCParticle*>>* trees = nTrees(evt);
+	if(v) cout << "There are " << trees->size() << " trees." << endl;
+	if(trees->size() == 1){
+	  if (isBhabha(col, trees)) ++nBhabha;
+	  else ++nBase;
+	}else if(isBhabha(col, trees)) ++nCombo;
+	else ++nTwoPhoton;
     }
-    _nEvt ++ ;
 }
 
 
@@ -110,70 +117,58 @@ void parser::end(){
   cout << "Number of empty events: " << nBase << endl;
   cout << "Number of Bhabha events: " << nBhabha << endl;
   cout << "Number of Two Photon events: " << nTwoPhoton << endl;
+  cout << "Number of Two Photon & Bhabha events: " << nCombo << endl;
   _rootfile->Write();
 }
 
-int parser::numberOfTrees(LCEvent * evt, bool v){
-  LCCollection* col = evt->getCollection( _colName ) ;
-  int id, stat;
-
-  //v is verbosity, if v is true, then this function will print a lot a data to the console.
-  //I do not know how to send data only to the log or error console.
-  if(v)cout <<endl<< "***** Event " << _nEvt << ". *****" << endl;
-
-  if( col != NULL ){
-    int nElements = col->getNumberOfElements()  ;
-    vector<pair<int,double>> children_index; //used to index the children map.
-    vector<pair<int,double>> parent_index; //used to index the children map.
-    map<pair<int,double>, MCParticle *> parents; //Set of all particles with PDG 0
-    map<pair<int,double>, MCParticle *> children; // All other particles
-    //There maps have key of a pair of int as their PDG and a double as their energy.
-    //The idea is that each even has a unique particle with a unique enegy.
-    //If not an error will throw and I will find a way to make them unique.
-
-    //Looping through all MCParitles
-    for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
-      MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex));
-      id = hit->getPDG();
-      stat = hit->getGeneratorStatus();      
-
-      if(v)cout << "-- Particle index " << hitIndex << " --" << endl;
-
-      //If the gen status is zero then it is a initial particle and add it to the parent map.
-      if(stat == 0){
-	pair<int,double> key(id, hit->getEnergy());
-	parent_index.push_back(key);
-	pair<pair<int,double>,MCParticle *> ret(key, hit);
-	bool duplicate=parents.insert(ret).second;
-	//Check to see if the particle is already in the map
-	if(duplicate == false){
-	  //Paritle is already there, if this prints then pair<id, enery> is not unique.
-	  cout << "Error: there is multiple of particle PDG " << id << "." << endl;
-	}
-      }else if(stat == 2){
-	pair<int,double> key(id, hit->getEnergy());
-	children_index.push_back(key);
-	pair<pair<int,double>, MCParticle *> ret(key, hit);
-	bool duplicate = children.insert(ret).second;
-	//Check to see if the particle is already in the map
-	if(duplicate == false){
-	  //Paritle is already there, if this prints then pair<id, enery> is not unique.
-	  cout << "Error: there is multiple of particle PDG " << id << "." << endl;
-	}
-      }
-      //Verbose Print statements
-      if(v && stat != 3){
-	cout << "This particle, " << id << ", with gen status of " << stat<< " has " << hit->getParents().size() << " parents and has the energy " << hit->getEnergy() << "."<< endl;
-	for(MCParticle* parent : hit->getParents()){
-	  cout << "For the particle with PGD: " << id<< " this the parent id: " << parent->getPDG() << " and energy " << parent->getEnergy() << endl;
-	}	     
+void parser::addToTree(MCParticle* obj, MCParticle* associate, vector<vector<MCParticle*>>* trees, vector<MCParticle*> &all){
+    if(find(all.begin(), all.end(),obj) == all.end() && find(all.begin(), all.end(),associate) == all.end()){
+    //Not in tree
+    all.push_back(obj);
+    all.push_back(associate);
+    vector<MCParticle*>* arr = new vector<MCParticle*>;
+    arr->push_back(obj);
+    arr->push_back(associate);
+    trees->push_back(*arr);
+  }else{
+    for(auto tree: *trees){
+      auto i = find(tree.begin(), tree.end(), obj);
+      auto j = find(tree.begin(), tree.end(), associate);
+      if( i != tree.end() && j != tree.end()){
+	return;
+      }else if( i == tree.end() ){
+	all.push_back(obj);
+	tree.push_back(obj);
+      }else{
+	all.push_back(associate);
+	tree.push_back(associate);
       }
     }
-
-    cout << "number of parents: " << parents.size() << endl;
-    cout << "number of children: " << children.size() << endl;
-
-    int numTrees = 0;
   }
-  return 1;
+}
+
+
+vector<vector<MCParticle*>>* parser::nTrees(LCEvent *evt, bool v){
+  vector<vector<MCParticle *>>* trees = new vector<vector<MCParticle *>>;
+  int numTrees = 0;
+  LCCollection* col = evt->getCollection( _colName ) ;
+  int id, stat;
+  if( col != NULL ){
+    int nElements = col->getNumberOfElements();
+    vector<MCParticle *> trees_all;
+    for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
+      MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex));
+      vector<MCParticle*> parents = hit->getParents();
+      vector<MCParticle*> daughters = hit->getDaughters();
+      if (hit->getGeneratorStatus()==3) continue;
+      for(auto  parent: parents){	
+	addToTree(hit, parent, trees, trees_all);
+      }
+      for(auto  child: daughters){
+	addToTree(hit, child, trees, trees_all);
+      }
+    }
+    return trees;
+  }
+  return trees;
 }
