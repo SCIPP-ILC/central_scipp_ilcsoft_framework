@@ -101,14 +101,15 @@ void Thrust::processRunHeader( LCRunHeader* run) {
 } 
 
 
-void processThrust(double* partMom){
+double Thrust::processThrust(double x, double y, double z){
 
   //  const double* partMom = aPart->getMomentum();
   
-  _partMom.push_back( Hep3Vector(partMom[0], partMom[1], 0) );
+  _partMom.push_back( Hep3Vector(x, y, 0) );
 
   
   JetsetThrust();
+  return _principleThrustValue;
 }
 
 
@@ -126,6 +127,7 @@ void Thrust::processEvent( LCEvent * evt ) {
 
       const double* partMom = aPart->getMomentum();
       _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
+
 
     _nEvt ++ ;
     }

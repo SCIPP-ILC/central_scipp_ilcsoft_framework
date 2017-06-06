@@ -30,7 +30,7 @@
 #include <vector>
 #include <map>
 #include <algorithm>
-
+#include <algorithm>
 // ----- include for verbosity dependend logging ---------
 #include "marlin/VerbosityLevels.h"
 
@@ -70,44 +70,46 @@ void parser::processRunHeader( LCRunHeader* run) {
 //    _nRun++ ;
 } 
 
-//Returns true if it finds final state electrons or positrons.
-bool parser::isBhabha(LCCollection* col, vector<vector<MCParticle*>>* trees){
+//Returns number of bhabha events.
+int parser::countBhabhas(LCCollection* col, PTree* trees){
   //It says there are 30 items in trees but only loops through one...
   //Probably something wrong with this pointer syntax.
+  bool v=true; //Verbose Mode
+  int bhabhas=0;
+  if(v)cout << "###### Trees: " << trees->size() << " ######" << endl;
   for(const auto tree: *trees){
-    cout << "size: " << tree.size() << endl;    
+    //    if(v)cout << "This Tree Size: " << tree->size() << endl;    
     bool bhabha=true;
-    for(const auto hit: tree){
-      cout << "id: " << hit->getPDG() << endl;
-      if(hit->getGeneratorStatus() == 1){
-	string id = to_string(hit->getPDG());
-	string valid = "11 -11 22";
-	if (valid.find(id) == string::npos){
-	  bhabha=false;
-	}
+    for(const auto hit: *tree){
+      //      if(v)cout << "id: " << hit->getPDG() << " and address " << hit << endl;
+      int id = hit->getPDG();
+      if ( id != 11 && id != -11 && id != 22){
+	bhabha=false;
       }
     }
     if(bhabha){
-      return bhabha;
+      //      if(v)cout << "This tree had only bhabha particles  particles." << endl;
+      ++bhabhas;
     }
   }
-  return false;
+  //  if(v) cout << "There are " << bhabhas << " many bhabhas." << endl;
+  return bhabhas;
 }
 
 void parser::processEvent( LCEvent * evt ) { 
     LCCollection* col = evt->getCollection( _colName );
     int stat, id =0;
-    bool v=true;
     if( col != NULL ){
-        int nElements = col->getNumberOfElements()  ;
-	if(v) cout << "##### New Event (  "<< nElements<< " elements )#####" << endl;
-	vector<vector<MCParticle*>>* trees = nTrees(evt);
-	if(v) cout << "There are " << trees->size() << " trees." << endl;
-	if(trees->size() == 1){
-	  if (isBhabha(col, trees)) ++nBhabha;
-	  else ++nBase;
-	}else if(isBhabha(col, trees)) ++nCombo;
-	else ++nTwoPhoton;
+        int nElements = col->getNumberOfElements();
+	PTree* trees = nTrees(evt);
+	cout << "###### Elements: " << nElements << " ######" << endl;
+	int bhabhas = countBhabhas(col,trees);
+	if(nElements == 4) ++nBase;
+	else if(bhabhas > 0){
+	  int offset = trees->size()-bhabhas;
+	  if(offset == 1) ++nBhabha;
+	  else  ++nCombo;
+	}else ++nTwoPhoton;
     }
 }
 
@@ -126,54 +128,156 @@ void parser::end(){
   _rootfile->Write();
 }
 
-void parser::addToTree(MCParticle* obj, MCParticle* associate, vector<vector<MCParticle*>>* trees, vector<MCParticle*> &all){
-    if(find(all.begin(), all.end(),obj) == all.end() && find(all.begin(), all.end(),associate) == all.end()){
-    //Not in tree
-    all.push_back(obj);
-    all.push_back(associate);
-    vector<MCParticle*>* arr = new vector<MCParticle*>;
-    arr->push_back(obj);
-    arr->push_back(associate);
-    trees->push_back(*arr);
-  }else{
-    for(auto tree: *trees){
-      auto i = find(tree.begin(), tree.end(), obj);
-      auto j = find(tree.begin(), tree.end(), associate);
-      if( i != tree.end() && j != tree.end()){
-	return;
-      }else if( i == tree.end() ){
-	all.push_back(obj);
-	tree.push_back(obj);
-      }else{
-	all.push_back(associate);
-	tree.push_back(associate);
-	}
+
+bool compareMomentum(const double* A,const double* B){
+  return A[0]==B[0]&&A[1]==B[1]&&A[2]==B[2];
+}
+
+bool compareVectors(vector<MCParticle *> A, vector<MCParticle*> B){
+  bool same = A.size() == B.size();
+  if(same){
+    for(unsigned int i=0; i < A.size(); ++i){
+      if(A.at(i)->getPDG() != B.at(i)->getPDG() || !compareMomentum(A.at(i)->getMomentum(), B.at(i)->getMomentum())){
+	return false;
+      }
     }
+  }
+  return true;
+}
+
+bool containsParticle(MCParticle* obj, vector<MCParticle*>* list){
+  for(auto hit: *list){
+    if(hit->getPDG() == obj->getPDG()&&
+       compareMomentum(hit->getMomentum(),obj->getMomentum())&&
+       hit->getGeneratorStatus() == obj->getGeneratorStatus()&&
+       compareVectors(hit->getParents(), obj->getParents())&&
+       compareVectors(hit->getDaughters(), obj->getDaughters())){
+      return true;
+    }else{
+      return false;
+    }
+  }
+  return false;
+}
+bool containsParticles(vector<MCParticle*>*base, vector<MCParticle*>* list){
+  for(auto hit: *base){
+    if(!containsParticle(hit, list)){
+      return false;
+    }
+  }
+  return true;
+}
+bool isFamily(MCParticle* base, vector<MCParticle*>*list){
+  for(auto kin: *list){
+    vector<MCParticle*> daughters=kin->getDaughters();
+    vector<MCParticle*> parents=kin->getParents();
+    vector<MCParticle*>* potentialKin= new vector<MCParticle*>;
+    potentialKin->insert(potentialKin->end(), daughters.begin(), daughters.end());
+    potentialKin->insert(potentialKin->end(), parents.begin(), parents.end());
+    potentialKin->push_back(kin);
+    if(containsParticle(base, potentialKin)){
+      return true;
+    }
+  }
+  return false;
+}
+bool isRelated(vector<MCParticle*>* A, vector<MCParticle*>* B){
+  for(auto a:*A){
+    if(isFamily(a, B)){
+      return true;
+    }
+  }
+  return false;
+}
+
+void parser::addToTree(vector<MCParticle*>* associate, parser::PTree* trees, vector<MCParticle*>*all){
+  if(!containsParticles(associate, all)){
+    for(auto tree: *trees){
+      if(isRelated(associate, tree)){
+	tree->insert(tree->end(),associate->begin(),associate->end());
+	return;
+      }
+    }
+    trees->push_back(associate);
+    all->insert(all->end(),associate->begin(),associate->end());
+  }
+}
+parser::PTree* removeDuplicates(parser::PTree* input){
+  parser::PTree* output=new parser::PTree;
+  for (auto tree: *input){
+    bool add=true;
+    for (auto amp: *output)if(sameTree(amp,tree))add=false;
+    if(add)output.push_back(biggestTree(tree, amp));
   }
 }
 
 
-vector<vector<MCParticle*>>* parser::nTrees(LCEvent *evt, bool v){
-  vector<vector<MCParticle *>>* trees = new vector<vector<MCParticle *>>;
+vector<MCParticle*>* traverseDirection(MCParticle* particle, bool up=NULL,bool down=NULL){
+  vector<MCParticle*>* output=new vector<MCParticle*>;
+  output->push_back(particle);
+  vector<MCParticle*> direction;
+  if (up!=NULL && up)direction=particle->getParents();
+  else if(down!=NULL && down)direction=particle->getDaughters();
+  for(auto parent: direction){
+    auto element=traverseDirection(hit, up=up, down=down);
+    output = output.insert(output.end(),element.begin(),elements.end());
+  }
+  return output;
+}
+vector<MCPartile*>* traverse(MCParticle* particle){
+  auto parents = traverseDirection(particle, up=true);
+  auto children= traverseChildren(particle, down=true);
+  return parents->insert(parents->end(), children->begin(), children->end());
+}
+
+bool biggestTree(vector<MCParticle*>tree,vector<MCParticle*>amp){
+  if(tree.size()>amp.size())return tree;
+  else return amp;
+}
+
+
+parser::PTree* parser::nTrees(LCEvent *evt, bool v){
+  parser::PTree* trees = new parser::PTree;
   int numTrees = 0;
   LCCollection* col = evt->getCollection( _colName ) ;
   int id, stat;
   if( col != NULL ){
     int nElements = col->getNumberOfElements();
-    vector<MCParticle *> trees_all;
     for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
       MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex));
-      vector<MCParticle*> parents = hit->getParents();
-      vector<MCParticle*> daughters = hit->getDaughters();
-      if (hit->getGeneratorStatus()==3) continue;
-      for(auto  parent: parents){	
-	addToTree(hit, parent, trees, trees_all);
-      }
-      for(auto  child: daughters){
-	addToTree(hit, child, trees, trees_all);
-      }
+      if (hit->getGeneratorStatus()!=1) continue;
+      trees->push_back(traverse(hit));
     }
+    //Each particle now has a tree.
+    removeDuplicates(trees);
     return trees;
   }
   return trees;
 }
+
+/*
+
+  if(!containsParticle(obj, all) && !containsParticle(obj,all)){
+    //Not in tree
+    all->push_back(obj);
+    all->push_back(associate);
+    vector<MCParticle*>* arr = new vector<MCParticle*>;
+    arr->push_back(obj);
+    arr->push_back(associate);
+    trees=push_back(arr);
+  }else{
+    for(auto tree: *trees){
+      bool i = containsParticle(obj, tree);
+      bool j = containsParticle(associate, tree);
+      if(i && j){
+	return;
+      }else if(i){
+	all->push_back(obj);
+	tree->push_back(obj);
+      }else{
+	all->push_back(associate);
+	tree->push_back(associate);
+      }
+    }
+  }
+*/

@@ -85,8 +85,8 @@ void Tester::processEvent( LCEvent * evt ) {
     int stat, id = 0;
     double theta_e, theta_p;
     double E_e, E_p = 0;
-    double* mom_e[4], mom_p[4];
-    double* pos_e[3], pos_p[3];
+    double mom_e[4], mom_p[4];
+    double pos_e[3], pos_p[3];
 
     int hit = 0;
 
@@ -128,16 +128,12 @@ void Tester::processEvent( LCEvent * evt ) {
         for(MCParticle* particle : system){
             id = particle->getPDG();
             if(id==11&&particle->getEnergy()==E_e){
-                    const double* mom;
-                    mom[0] = particle->getMomentum()[0]; 
-                    mom[1] = particle->getMomentum()[1]; 
-                    mom[2] = particle->getMomentum()[2];
-                    mom[3] = particle->getEnergy();
+                    const double* mom = particle->getMomentum();
 
                     mom_e[0]=mom[0];
                     mom_e[1]=mom[1];
                     mom_e[2]=mom[2];
-                    mom_e[3]=mom[3];
+                    mom_e[3]=particle->getEnergy();
                     if(abs(mom_e[0])!=0||abs(mom_e[1])!=0){
                         hit++;
                         double r = sqrt(pow(mom_e[0], 2)+pow(mom_e[1], 2));
@@ -146,16 +142,12 @@ void Tester::processEvent( LCEvent * evt ) {
                     }//end scatter
             }//end high energy electron    
             else if(id==-11&&particle->getEnergy()==E_p){
-                    const double* mom;
-                    mom[0] = particle->getMomentum()[0]; 
-                    mom[1] = particle->getMomentum()[1]; 
-                    mom[2] = particle->getMomentum()[2];
-                    mom[3] = particle->getEnergy();
+                    const double* mom = particle->getMomentum();
                     
                     mom_p[0] = mom[0]; 
                     mom_p[1] = mom[1]; 
                     mom_p[2] = mom[2];
-                    mom_p[3] = mom[3];
+                    mom_p[3] = particle->getEnergy();
                     if(abs(mom_p[0])!=0||abs(mom_p[1])!=0){
                         hit++;
                         double r = sqrt(pow(mom_p[0], 2)+pow(mom_p[1], 2));
@@ -177,6 +169,7 @@ void Tester::processEvent( LCEvent * evt ) {
             _angle->Fill(theta_e, theta_p);
         }
 
+        
         scipp_ilc::transform_to_lab(mom_e[0], mom_e[3], mom_e[0], mom_e[3]);
         scipp_ilc::transform_to_lab(mom_p[0], mom_p[3], mom_p[0], mom_p[3]);
 
@@ -192,6 +185,7 @@ void Tester::processEvent( LCEvent * evt ) {
 
         _pos->Fill(pos_p[0], pos_p[1]);
         _pos->Fill(pos_e[0], pos_e[1]);
+        
     }
 
     _nEvt ++ ;

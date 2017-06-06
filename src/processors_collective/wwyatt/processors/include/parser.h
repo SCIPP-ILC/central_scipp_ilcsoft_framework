@@ -6,6 +6,7 @@
 #include "lcio.h"
 #include <string>
 #include <vector>
+#include <algorithm>
 #include "scipp_ilc_utilities.h"
 #include <TFile.h>
 #include <TH2D.h>
@@ -18,7 +19,7 @@ using namespace marlin ;
 class parser : public Processor {
 
  public:
-
+  typedef vector<vector<MCParticle*>*> PTree;
   virtual Processor*  newProcessor() { return new parser ; }
 
 
@@ -44,9 +45,9 @@ class parser : public Processor {
   /** Called after data processing for clean up.
    */
   virtual void end() ;
-  void addToTree(MCParticle*, MCParticle*, vector<vector<MCParticle*>>*,vector<MCParticle*>&);
-  vector<vector<MCParticle*>>* nTrees(LCEvent *, bool=false);
-  bool isBhabha(LCCollection*, vector<vector<MCParticle*>>*);
+  void addToTree(vector<MCParticle*>*, PTree* ,vector<MCParticle*>*);
+  PTree* nTrees(LCEvent *, bool=false);
+  int countBhabhas(LCCollection*, PTree*);
  protected:
 
   /** Input collection name.

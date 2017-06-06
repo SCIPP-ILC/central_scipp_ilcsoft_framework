@@ -44,8 +44,8 @@ static TFile* _rootfile;
 static TH2F* _hitmap;
 
 
-int numEvents = 4;
-int modEvents = 1;
+int numEvents = 99;
+int modEvents = 99;
 
 
 double* pX = new double[modEvents];
@@ -68,6 +68,8 @@ double* prmoment = new double[modEvents];
 double* nrmoment = new double[modEvents]; 
 double* pinvrmoment = new double[modEvents];
 double* ninvrmoment = new double[modEvents];
+double* pThrustValue = new double[modEvents];
+double* nThrustValue = new double[modEvents];
 
 double* pScenBarycenterX = new double[numEvents / modEvents];
 double* pScenBarycenterY = new double[numEvents / modEvents];
@@ -89,10 +91,12 @@ double* nSceninvrmoment = new double[numEvents / modEvents];
 
 
 
-double* firstBarycenters = new double[4];
+//double* firstBarycenters = new double[4];
 
 int currentEvent = 0;
 int currentScen = 0;
+
+
 
 ElliotsAnalysis::ElliotsAnalysis() : Processor("ElliotsAnalysis") {
     // modify processor description
@@ -150,6 +154,10 @@ double* ElliotsAnalysis::calculateObservables(LCCollection* col, double barycent
   double pnum_invrmoment = 0, nnum_invrmoment = 0;
   
   double prad = 0, nrad = 0;
+
+  //Thrust
+  double pThrustValue = 0, pThrustAxis = 0;
+  double nThrustValue = 0, nThrustAxis = 0;
  
   if( col != NULL ){
     int nElements = col->getNumberOfElements()  ;
@@ -192,6 +200,10 @@ double* ElliotsAnalysis::calculateObservables(LCCollection* col, double barycent
 
 	//invr-moment
 	pnum_invrmoment += (1 / prad) * currentEnergy;
+
+	//Thrust
+	pThrustValue = 5;//processThrust(currentEnergy*currentPosX, currentEnergy*currentPosY, currentPosZ);
+
       }else {
 
 	currentPosX = currentPosX - barycenters[2];
@@ -223,13 +235,16 @@ double* ElliotsAnalysis::calculateObservables(LCCollection* col, double barycent
 
 	//invr-moment                                                                                                                      
 	nnum_invrmoment += (1 / prad) * currentEnergy;
+      
+	//Thrust                                                                                                                            
+        nThrustValue = 5;//Thrust::processThrust(currentEnergy*currentPosX, currentEnergy*currentPosY, currentPosZ);
       }
 
 
     }
   }
 
-  double* obs = new double[16];
+  double* obs = new double[18];
 
   //Energy Deposit
   obs[0] = ptotalEnergy;
@@ -270,6 +285,10 @@ double* ElliotsAnalysis::calculateObservables(LCCollection* col, double barycent
   obs[13] = pY;    
   obs[14] = nX;
   obs[15] = nY;
+
+  //Thrust
+  obs[16] = pThrustValue;
+  obs[17] = nThrustValue;
 
   return obs;
   
@@ -401,17 +420,23 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
 
     LCCollection* col = evt->getCollection( _colName ) ;
     
-        
-    double* barycenters = calculateBarycenter(col);
+
     
-    if (currentScen == 0){
 
-      firstBarycenters = barycenters;
+        
+    double* barycenters = calculateBarycenter(col);    
+    double* obs;
 
+
+
+    if (currentScen != 0){
+      double firstBarycenters[] = { pScenBarycenterX[0], pScenBarycenterY[0], nScenBarycenterX[0],  nScenBarycenterY[0]};
+      obs = calculateObservables(col, firstBarycenters);
+
+    }else {
+
+      obs = calculateObservables(col, barycenters);
     }
-
-    double* obs = calculateObservables(col, firstBarycenters);
-
    
     peventBarycenterX[currentEvent] = barycenters[0];
     peventBarycenterY[currentEvent] = barycenters[1];
@@ -433,13 +458,15 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
     pY[currentEvent] = obs[13];
     nX[currentEvent] = obs[14];
     nY[currentEvent] = obs[15];
+    pThrustValue[currentEvent] = obs[16];
+    nThrustValue[currentEvent] = obs[17];
     
-    printf("\n=====================Scenario %d========================== \n", currentScen + 1);  
+
     /*
     printf("\nBARYCENTER Postive:( %f,%f) Negative (%f,%f)", barycenters[0], barycenters[1], barycenters[2], barycenters[3]);
     printf("ENERYG DEPOSIT Postive: %f  Negative: %f", obs[0], obs[1]);
     */
-  
+    //    printf("THRUST VALUE Postive: %f  Negative: %f", obs[16], obs[17]);
     
     double highestEnergy = 0;
     double lowestEnergy = 10000;
@@ -492,7 +519,7 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
     
     if (currentEvent % modEvents == 0){
 
-      currentScen++;
+
      
       double pAvgBarycenterX = findAvgObs(peventBarycenterX);
       double pAvgBarycenterY = findAvgObs(peventBarycenterY);
@@ -533,6 +560,8 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
       pSceninvrmoment[currentScen] = pAvginvrmoment;
       nSceninvrmoment[currentScen] = nAvginvrmoment;
 
+      printf("\n=====================Scenario %d========================== \n", currentScen + 1);
+
       printf("\nAVERAGE BARYCENTER: Postive: (%f,%f) Negative: (%f,%f)", pAvgBarycenterX, pAvgBarycenterY,nAvgBarycenterX, nAvgBarycenterY);
       printf("\nAVERAGE Energy Deposit: Postive: %f Negative: %f", pAvgEnergyDep, nAvgEnergyDep);
 
@@ -545,7 +574,7 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
       printf("\nAVERAGE TD: Postive: %f Negative: %f\n", pAvgTD, nAvgTD);
 
 
-
+      currentScen++;
       std::fill_n(peventBarycenterX, modEvents, 0);
       std::fill_n(peventBarycenterY, modEvents, 0);
       std::fill_n(neventBarycenterX, modEvents, 0);
@@ -574,12 +603,25 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
 	currentScen = 0;
 	}*/
 
+	if (currentScen == (numEvents / modEvents)){
+	  printf("\nFirst BARYCENTER: Postive: (%f,%f) Negative: (%f,%f)\n", pScenBarycenterX[0],  pScenBarycenterY[0],nScenBarycenterX[0],
+		 nScenBarycenterY[0]);
+
+
+	}
+
     }
     // if (currentScen = (numEvents / modEvents)){
     // currentScen = 0;
     
       //   printf("\nScenario: %d R-Moment: Postive: %f Negative: %f\n", currentScen, pScenrmoment, nScenrmoment);
       // }
+
+
+   
+
+
+    
 
     _nEvt++ ;
 }

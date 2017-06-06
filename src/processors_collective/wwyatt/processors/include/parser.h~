@@ -44,9 +44,9 @@ class parser : public Processor {
   /** Called after data processing for clean up.
    */
   virtual void end() ;
-
-  int numberOfTrees(LCEvent*, bool=true);
-
+  void addToTree(MCParticle*, MCParticle*, vector<vector<MCParticle*>>*,vector<MCParticle*>&);
+  vector<vector<MCParticle*>>* nTrees(LCEvent *, bool=false);
+  bool isBhabha(LCCollection*, vector<vector<MCParticle*>>*);
  protected:
 
   /** Input collection name.
