@@ -190,7 +190,7 @@ bool isRelated(vector<MCParticle*>* A, vector<MCParticle*>* B){
   return false;
 }
 
-void parser::addToTree(vector<MCParticle*>* associate, PTree* trees, vector<MCParticle*>*all){
+void parser::addToTree(vector<MCParticle*>* associate, parser::PTree* trees, vector<MCParticle*>*all){
   if(!containsParticles(associate, all)){
     for(auto tree: *trees){
       if(isRelated(associate, tree)){
@@ -202,32 +202,58 @@ void parser::addToTree(vector<MCParticle*>* associate, PTree* trees, vector<MCPa
     all->insert(all->end(),associate->begin(),associate->end());
   }
 }
+parser::PTree* removeDuplicates(parser::PTree* input){
+  parser::PTree* output=new parser::PTree;
+  for (auto tree: *input){
+    bool add=true;
+    for (auto amp: *output)if(sameTree(amp,tree))add=false;
+    if(add)output.push_back(biggestTree(tree, amp));
+  }
+}
+
+
+vector<MCParticle*>* traverseDirection(MCParticle* particle, bool up=NULL,bool down=NULL){
+  vector<MCParticle*>* output=new vector<MCParticle*>;
+  output->push_back(particle);
+  vector<MCParticle*> direction;
+  if (up!=NULL && up)direction=particle->getParents();
+  else if(down!=NULL && down)direction=particle->getDaughters();
+  for(auto parent: direction){
+    auto element=traverseDirection(hit, up=up, down=down);
+    output = output.insert(output.end(),element.begin(),elements.end());
+  }
+  return output;
+}
+vector<MCPartile*>* traverse(MCParticle* particle){
+  auto parents = traverseDirection(particle, up=true);
+  auto children= traverseChildren(particle, down=true);
+  return parents->insert(parents->end(), children->begin(), children->end());
+}
+
+bool biggestTree(vector<MCParticle*>tree,vector<MCParticle*>amp){
+  if(tree.size()>amp.size())return tree;
+  else return amp;
+}
 
 
 parser::PTree* parser::nTrees(LCEvent *evt, bool v){
-  PTree* trees = new PTree;
+  parser::PTree* trees = new parser::PTree;
   int numTrees = 0;
   LCCollection* col = evt->getCollection( _colName ) ;
   int id, stat;
   if( col != NULL ){
     int nElements = col->getNumberOfElements();
-    vector<MCParticle *>* trees_all= new vector<MCParticle *>;
     for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
       MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex));
       if (hit->getGeneratorStatus()!=1) continue;
-      vector<MCParticle*> parents = hit->getParents();
-      vector<MCParticle*> daughters = hit->getDaughters();
-      vector<MCParticle*>* all=new vector<MCParticle*>;
-      all->insert(all->end(), parents.begin(), parents.end());
-      all->insert(all->end(), daughters.begin(), daughters.end());
-      all->push_back(hit);
-      addToTree(all, trees, trees_all);
+      trees->push_back(traverse(hit));
     }
+    //Each particle now has a tree.
+    removeDuplicates(trees);
     return trees;
   }
   return trees;
 }
-
 
 /*
 

@@ -190,7 +190,7 @@ bool isRelated(vector<MCParticle*>* A, vector<MCParticle*>* B){
   return false;
 }
 double getMomentumValue(double* input){
-  return input[0]*input[1]*input[2];
+  return input[0]input[1]+input[2];
 }
 bool compareTree(MCParticle* A,MCParticle*B){
   return A.getPGP*A.getEnergy()*A;
