@@ -67,7 +67,10 @@ class Pred_Compare : public Processor {
         
         std::string interest;
         int total;
-        int hh_hh, hh_hm, hh_mm, hm_hh, hm_hm, hm_mm, mm_hh, mm_hm, mm_mm;
+        //int hh_hh, hh_hm, hh_mm, hm_hh, hm_hm, hm_mm, mm_hh, mm_hm, mm_mm;
+
+        //hit status pred/real
+        int hh, hm, mh, mm;
 
         int _nRun ;
         int _nEvt ;

@@ -57,7 +57,7 @@ Tester::Tester() : Processor("Tester") {
 void Tester::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("WW_pos.root","RECREATE");
+    _rootfile = new TFile("WW_ang.root","RECREATE");
     _pos = new TH2F("pos", "Distribution of Deflected Beam Particles at Position of BeamCal Face", 900, -150.0, 150.0, 900, -150.0, 150.0);
     _angle = new TH2F("ang", "Positron vs Electron Deflection Angle", 100, 0.0, 0.02, 100, 0.0, 0.02);
 
@@ -173,7 +173,7 @@ void Tester::processEvent( LCEvent * evt ) {
         scipp_ilc::transform_to_lab(mom_e[0], mom_e[3], mom_e[0], mom_e[3]);
         scipp_ilc::transform_to_lab(mom_p[0], mom_p[3], mom_p[0], mom_p[3]);
 
-        pos_e[0] = mom_e[0]*scipp_ilc::_BeamCal_zmin/mom_e[2];
+        /*pos_e[0] = mom_e[0]*scipp_ilc::_BeamCal_zmin/mom_e[2];
         pos_e[1] = mom_e[1]*scipp_ilc::_BeamCal_zmin/mom_e[2];
         pos_e[2] = scipp_ilc::_BeamCal_zmin;
         pos_p[0] = mom_p[0]*scipp_ilc::_BeamCal_zmin/mom_p[2];
@@ -185,7 +185,7 @@ void Tester::processEvent( LCEvent * evt ) {
 
         _pos->Fill(pos_p[0], pos_p[1]);
         _pos->Fill(pos_e[0], pos_e[1]);
-        
+        */
     }
 
     _nEvt ++ ;

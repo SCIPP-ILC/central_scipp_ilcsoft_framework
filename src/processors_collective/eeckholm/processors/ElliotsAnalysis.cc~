@@ -44,7 +44,7 @@ static TFile* _rootfile;
 static TH2F* _hitmap;
 
 
-int numEvents = 99;
+int numEvents = 396;
 int modEvents = 99;
 
 
@@ -194,7 +194,7 @@ double* ElliotsAnalysis::calculateObservables(LCCollection* col, double barycent
 	pnum_meanDepth += currentPosZ * currentEnergy;
 
 	//r-moment
-	prad = std::sqrt((std::pow(currentPosX - barycenters[0],2) + (std::pow(hit->getPosition()[1] - barycenters[1],2))));
+	prad = std::sqrt((std::pow(currentPosX,2) + (std::pow(currentPosY,2))));
 	pnum_moment += prad * currentEnergy;
 	pdenom_moment += currentEnergy;
 
@@ -229,7 +229,7 @@ double* ElliotsAnalysis::calculateObservables(LCCollection* col, double barycent
 	nnum_meanDepth += currentPosZ * currentEnergy;
 
 	//r-moment
-	nrad = std::sqrt((std::pow(currentPosX - barycenters[2],2) + (std::pow(hit->getPosition()[1] - barycenters[3],2))));
+	nrad = std::sqrt((std::pow(currentPosX,2) + (std::pow(currentPosY,2))));
 	nnum_moment += nrad * currentEnergy;
         ndenom_moment += currentEnergy;
 
@@ -429,14 +429,12 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
 
 
 
-    if (currentScen != 0){
-      double firstBarycenters[] = { pScenBarycenterX[0], pScenBarycenterY[0], nScenBarycenterX[0],  nScenBarycenterY[0]};
-      obs = calculateObservables(col, firstBarycenters);
+   
+    double firstBarycenters[] = { -15.036040, -8.101348, -15.051319,  8.064840};
 
-    }else {
+    obs = calculateObservables(col, firstBarycenters);
 
-      obs = calculateObservables(col, barycenters);
-    }
+
    
     peventBarycenterX[currentEvent] = barycenters[0];
     peventBarycenterY[currentEvent] = barycenters[1];

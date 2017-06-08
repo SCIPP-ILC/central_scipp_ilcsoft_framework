@@ -194,7 +194,7 @@ double* ElliotsAnalysis::calculateObservables(LCCollection* col, double barycent
 	pnum_meanDepth += currentPosZ * currentEnergy;
 
 	//r-moment
-	prad = std::sqrt((std::pow(currentPosX - barycenters[0],2) + (std::pow(hit->getPosition()[1] - barycenters[1],2))));
+	prad = std::sqrt((std::pow(currentPosX,2) + (std::pow(currentPosY,2))));
 	pnum_moment += prad * currentEnergy;
 	pdenom_moment += currentEnergy;
 
@@ -229,12 +229,12 @@ double* ElliotsAnalysis::calculateObservables(LCCollection* col, double barycent
 	nnum_meanDepth += currentPosZ * currentEnergy;
 
 	//r-moment
-	nrad = std::sqrt((std::pow(currentPosX - barycenters[2],2) + (std::pow(hit->getPosition()[1] - barycenters[3],2))));
+	nrad = std::sqrt((std::pow(currentPosX,2) + (std::pow(currentPosY,2))));
 	nnum_moment += nrad * currentEnergy;
         ndenom_moment += currentEnergy;
 
 	//invr-moment                                                                                                                      
-	nnum_invrmoment += (1 / prad) * currentEnergy;
+	nnum_invrmoment += (1 / nrad) * currentEnergy;
       
 	//Thrust                                                                                                                            
         nThrustValue = 5;//Thrust::processThrust(currentEnergy*currentPosX, currentEnergy*currentPosY, currentPosZ);
