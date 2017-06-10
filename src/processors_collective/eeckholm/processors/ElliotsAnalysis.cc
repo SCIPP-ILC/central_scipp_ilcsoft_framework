@@ -565,6 +565,9 @@ void ElliotsAnalysis::processEvent( LCEvent * evt ) {
 
       printf("\nAVERAGE R-MOMENT: Postive: %f Negative: %f", pAvgrmoment, nAvgrmoment);
 
+
+      printf("\nAVERAGE 1/R-MOMENT: Postive: %f Negative: %f", pAvginvrmoment, nAvginvrmoment);
+
       printf("\nAVERAGE Mean Depth: Postive: %f Negative: %f", pAvgmeanDepth, nAvgmeanDepth);
 
       printf("\nAVERAGE LR: Postive: %f Negative: %f", pAvgLR, nAvgLR);

@@ -19,7 +19,8 @@ using namespace marlin ;
 class parser : public Processor {
 
  public:
-  typedef vector<vector<MCParticle*>*> PTree;
+  typedef vector<vector<MCParticle*>*> Community;
+  typedef vector<MCParticle*> Family;
   virtual Processor*  newProcessor() { return new parser ; }
 
 
@@ -45,9 +46,24 @@ class parser : public Processor {
   /** Called after data processing for clean up.
    */
   virtual void end() ;
-  void addToTree(vector<MCParticle*>*, PTree* ,vector<MCParticle*>*);
-  PTree* nTrees(LCEvent *, bool=false);
-  int countBhabhas(LCCollection*, PTree*);
+
+  bool sameTree(const Family*,const Family*);
+  bool sameTree(const Family&,const Family&);
+  bool sameMomentum(const double*,const double*);
+  bool sameParticle(const MCParticle*, const MCParticle*, bool=true);
+  Community* removeDuplicateTrees(Community*);
+  Family* removeDuplicateParticles(Family*);
+  enum class Direction {children, parents};
+
+  Family* removeTraversed(Family*, Family*);
+  Family* traverse(MCParticle*, Family* =NULL);
+  bool inFamily(MCParticle*, Family*);
+  Family biggerTree(Family,Family);
+
+  void addToTree(Family*, Community* ,Family*);
+  Community* nTrees(LCEvent*, bool=false);
+  Family* getAssociates(MCParticle*);
+  unsigned int countBhabhas(LCCollection*, Community*);
  protected:
 
   /** Input collection name.

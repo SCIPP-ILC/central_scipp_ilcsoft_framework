@@ -234,7 +234,7 @@ double* ElliotsAnalysis::calculateObservables(LCCollection* col, double barycent
         ndenom_moment += currentEnergy;
 
 	//invr-moment                                                                                                                      
-	nnum_invrmoment += (1 / prad) * currentEnergy;
+	nnum_invrmoment += (1 / nrad) * currentEnergy;
       
 	//Thrust                                                                                                                            
         nThrustValue = 5;//Thrust::processThrust(currentEnergy*currentPosX, currentEnergy*currentPosY, currentPosZ);
