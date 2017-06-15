@@ -1,5 +1,5 @@
-#ifndef Tester_h
-#define Tester_h 1
+#ifndef Undeflected_h
+#define Undeflected_h 1
 
 #include "marlin/Processor.h"
 #include "lcio.h"
@@ -24,17 +24,17 @@ using namespace marlin ;
  * @param CollectionName Name of the MCParticle collection
  * 
  * @author F. Gaede, DESY
- * @version $Id: Tester.h,v 1.4 2005-10-11 12:57:39 gaede Exp $ 
+ * @version $Id: Undeflected.h,v 1.4 2005-10-11 12:57:39 gaede Exp $ 
  */
 
-class Tester : public Processor {
+class Undeflected : public Processor {
 
     public:
 
-        virtual Processor*  newProcessor() { return new Tester ; }
+        virtual Processor*  newProcessor() { return new Undeflected ; }
 
 
-        Tester() ;
+        Undeflected() ;
 
         /** Called at the begin of the job before anything is read.
          * Use to initialize the processor, e.g. book histograms.

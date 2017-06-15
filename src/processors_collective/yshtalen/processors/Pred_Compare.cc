@@ -187,13 +187,13 @@ void Pred_Compare::processEvent( LCEvent * evt ) {
                 
                 double hyp = sqrt(pow(mom[0], 2)+pow(mom[1], 2)+pow(mom[2], 2));
                 double cos = mom[2]/hyp;
-                if(cos<0.9){
+                //if(cos<0.9){
                     //scipp_ilc::transform_to_lab(mom[0], mom[3], mom[0], mom[3]);
                     hadronic[0]+=mom[0];    
                     hadronic[1]+=mom[1];    
                     hadronic[2]+=mom[2];    
                     hadronic[3]+=mom[3];    
-                }
+                //}
             }//end hadronic system    
         }//end for
 
@@ -251,8 +251,7 @@ void Pred_Compare::processEvent( LCEvent * evt ) {
                 double pred_e_pos[3];
                 double pred_p_pos[3];
 
-                cout << "REAL ELECTRON: " << real_e[0] << " " << real_e[1] << " " << real_e[2] << endl;
-                cout << "PRED ELECTRON: " << pred_e[0] << " " << pred_e[1] << " " << pred_e[2] << endl;
+
 
                 //set z-positions as beamcal face
                 real_e_pos[2] = scipp_ilc::_BeamCal_zmin;
@@ -283,7 +282,7 @@ void Pred_Compare::processEvent( LCEvent * evt ) {
                 int pe_hit = scipp_ilc::get_hitStatus(pred_e_pos[0], pred_p_pos[1]);
                 int pp_hit = scipp_ilc::get_hitStatus(pred_p_pos[0], pred_p_pos[1]);
 
-                /*
+                
                 //eWpB 
                 if(re_hit!=3 && re_hit!=4){real = 1;}
                 else{real = 2;}
@@ -294,8 +293,12 @@ void Pred_Compare::processEvent( LCEvent * evt ) {
                 else if(pred == 1 && real == 2){hm++;}
                 else if(pred == 2 && real == 1){mh++;}
                 else if(pred == 2 && real == 2){mm++;}
-                */
                 
+                cout << "REAL ELECTRON: " << real_e[0] << " " << real_e[1] << " " << real_e[2] << endl;
+                cout << "PRED ELECTRON: " << pred_e[0] << " " << pred_e[1] << " " << pred_e[2] << endl;
+
+                
+                /*
                 //eBpW 
                 if(rp_hit!=3 && rp_hit!=4){real = 1;}
                 else{real = 2;}
@@ -307,6 +310,9 @@ void Pred_Compare::processEvent( LCEvent * evt ) {
                 else if(pred == 2 && real == 1){mh++;}
                 else{mm++;}
 
+                cout << "REAL POSITRON: " << real_p[0] << " " << real_p[1] << " " << real_p[2] << endl;
+                cout << "PRED POSITRON: " << pred_p[0] << " " << pred_p[1] << " " << pred_p[2] << endl;
+                */
                 real = 0;
                 pred = 0;
             }

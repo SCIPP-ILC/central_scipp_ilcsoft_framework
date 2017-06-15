@@ -16,7 +16,7 @@
  * June 6, 2017
  */
 
-#include "Tester.h"
+#include "Undeflected.h"
 #include "scipp_ilc_utilities.h"
 #include <iostream>
 #include <cmath>
@@ -39,12 +39,12 @@ using namespace marlin;
 using namespace std;
 using namespace scipp_ilc;
 
-Tester Tester;
+Undeflected Undeflected;
 
 static TFile* _rootfile;
-static TH1D* _diff;
+static TH2D* _pos;
 
-Tester::Tester() : Processor("Tester") {
+Undeflected::Undeflected() : Processor("Undeflected") {
     // modify processor description
     _description = "Protype Processor" ;
 
@@ -56,11 +56,11 @@ Tester::Tester() : Processor("Tester") {
 
 
 
-void Tester::init() { 
+void Undeflected::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
     _rootfile = new TFile("WW_ang.root","RECREATE");
-    _diff = new TH1D("Angular Difference Between Truth and Prediction Vectors, eBpW", "diff", 6000, 0.0, M_PI);
+    _pos = new TH2D("Undeflected Position", "pos", 600, -150.0, 150.0, 600, -150.0, 150.0);    
     
     // usually a good idea to
     //printParameters() ;
@@ -71,13 +71,13 @@ void Tester::init() {
 
 
 
-void Tester::processRunHeader( LCRunHeader* run) { 
+void Undeflected::processRunHeader( LCRunHeader* run) { 
 //    _nRun++ ;
 } 
 
 
 
-void Tester::processEvent( LCEvent * evt ) { 
+void Undeflected::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
     // usually the working horse ...
     double tot[]={0, 0};
@@ -168,6 +168,15 @@ void Tester::processEvent( LCEvent * evt ) {
                         double mag = sqrt(pow(mom_e[0], 2)+pow(mom_e[1], 2)+pow(mom_e[2], 2));
                         theta_e = asin(pT_e/mag);
                     }//end deflection
+                    else{
+                        scipp_ilc::transform_to_lab(mom_e[0], mom_e[3], mom_e[0], mom_e[3]);    
+                        double pos[3];
+                        pos[2] = scipp_ilc::_BeamCal_zmin;
+                        pos[0] = mom_e[0]*pos[2]/mom_e[2];
+                        pos[1] = mom_e[1]*pos[2]/mom_e[2];
+                        pos[0] = pos[0] - pos[2]*scipp_ilc::_transform;
+                        _pos->Fill(pos[0], pos[1]);                       
+                    }
             }//end beam electron
               
             //find beam positron
@@ -218,56 +227,22 @@ void Tester::processEvent( LCEvent * evt ) {
         hadronic[1]+=pseudo_y;
 
 
-        //make electronic true mag
-        double magT = sqrt(pow(electronic[0], 2)+pow(electronic[1], 2)+pow(electronic[2], 2));
-        
-        cout << "REAL: [" << electronic[0] << ", " << electronic[1] << ", " << electronic[2] << "]" << endl; 
-
-        if(hit>0){
-            //create prediction vectors
-            pred_e[0] = -hadronic[0];       
-            pred_e[1] = -hadronic[1];       
-            pred_p[0] = -hadronic[0];       
-            pred_p[1] = -hadronic[1];       
-
-            
-            double alpha = 500 - hadronic[3] - hadronic[2];
-            double beta = 500 - hadronic[3] + hadronic[2];
-            
-
-            //if WB
-           /* pred_e[2] = (pow(pT_e, 2)-pow(alpha, 2))/(-2*alpha);
-            double mag = sqrt(pow(pred_e[0], 2)+pow(pred_e[1], 2)+pow(pred_e[2], 2)); 
-            double dot = pred_e[0]*electronic[0] + pred_e[1]*electronic[1] + pred_e[2]*electronic[2];
-            cout << "PRED: [" << pred_p[0] << ", " << pred_p[1] << ", " << pred_p[2] << "]" << endl; 
-            */
-            //if BW
-            pred_p[2] = (pow(pT_e, 2)-pow(beta, 2))/(2*beta);
-            double mag = sqrt(pow(pred_p[0], 2)+pow(pred_p[1], 2)+pow(pred_p[2], 2));
-            double dot = pred_p[0]*electronic[0] + pred_p[1]*electronic[1] + pred_p[2]*electronic[2];
-            cout << "PRED: [" << pred_e[0] << ", " << pred_e[1] << ", " << pred_e[2] << "]" << endl; 
-
-            diff = acos(dot/(magT*mag));
-            if(diff > 0.000001){_tot++;}
-            cout << "ANGLE BETWEEN : " << diff << endl; 
-            _diff->Fill(diff);
-
-
-        }
     }//end collection
+
+
 
     _nEvt ++ ;
 }
 
 
 
-void Tester::check( LCEvent * evt ) { 
+void Undeflected::check( LCEvent * evt ) { 
     // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
 
 
 
-void Tester::end(){ 
+void Undeflected::end(){ 
     cout << _tot << endl;
     _rootfile->Write();
 }
