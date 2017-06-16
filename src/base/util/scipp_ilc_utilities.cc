@@ -85,9 +85,9 @@ namespace scipp_ilc {
    // 2 - outside Beamcal radius
    // 3 - outgoing beampipe hole
    // 4 - incoming beampipe hole
-   int get_hitStatus(double x, double y){
+   int get_hitStatus(double x, double y, double z){
 	double rad = sqrt(pow(x, 2)+pow(y, 2));
-	double x_shift = x -  _BeamCal_zmin*tan(_crossing_angle);
+	double x_shift = x - _BeamCal_zmin*tan(_crossing_angle);
 	double rad_shift = sqrt(pow(x_shift, 2)+pow(y, 2));
 	//check if outside Beamcal radius
 	if(rad>140){return 2;}

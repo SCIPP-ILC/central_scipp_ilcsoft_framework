@@ -89,6 +89,7 @@ void Pred_Compare::processEvent( LCEvent * evt ) {
 
     //vector<MyParticle*> particles;
     vector<MCParticle*> final_system;
+    vector<MCParticle*> had;
     int stat, id =0;
     bool scatter;
 
@@ -177,6 +178,7 @@ void Pred_Compare::processEvent( LCEvent * evt ) {
 
             //HADRONIC SYSTEM
             else{
+                had.push_back(particle);
                 mom[0]=particle->getMomentum()[0];    
                 mom[1]=particle->getMomentum()[1];    
                 mom[2]=particle->getMomentum()[2];
@@ -185,15 +187,11 @@ void Pred_Compare::processEvent( LCEvent * evt ) {
                 double tmag = sqrt(pow(mom[0], 2)+pow(mom[1], 2));
                 mag+=tmag;
                 
-                double hyp = sqrt(pow(mom[0], 2)+pow(mom[1], 2)+pow(mom[2], 2));
-                double cos = mom[2]/hyp;
-                //if(cos<0.9){
-                    //scipp_ilc::transform_to_lab(mom[0], mom[3], mom[0], mom[3]);
-                    hadronic[0]+=mom[0];    
-                    hadronic[1]+=mom[1];    
-                    hadronic[2]+=mom[2];    
-                    hadronic[3]+=mom[3];    
-                //}
+                //scipp_ilc::transform_to_lab(mom[0], mom[3], mom[0], mom[3]);
+                hadronic[0]+=mom[0];    
+                hadronic[1]+=mom[1];    
+                hadronic[2]+=mom[2];    
+                hadronic[3]+=mom[3];    
             }//end hadronic system    
         }//end for
 
@@ -213,8 +211,26 @@ void Pred_Compare::processEvent( LCEvent * evt ) {
             double p_mag = sqrt(pow(pseudo_x, 2)+pow(pseudo_y, 2));
             mag+=p_mag;
 
+            hadronic[0]=0;
+            hadronic[1]=0;
 
-            cout << "HADRONIC: " << hadronic[0] << " " << hadronic[1] << endl;
+            //refill hadronic system with cuts and balancing particle
+            for(MCParticle* particle : had){
+                mom[0]=particle->getMomentum()[0];    
+                mom[1]=particle->getMomentum()[1];    
+                mom[2]=particle->getMomentum()[2];
+                mom[3]=particle->getEnergy();
+
+                double hyp = sqrt(pow(mom[0], 2)+pow(mom[1], 2)+pow(mom[2], 2));
+                double cos = mom[2]/hyp;
+                if(abs(cos)<0.5){
+                    //scipp_ilc::transform_to_lab(mom[0], mom[3], mom[0], mom[3]);
+                    hadronic[0]+=mom[0];    
+                    hadronic[1]+=mom[1];    
+                    hadronic[2]+=mom[2];    
+                    hadronic[3]+=mom[3];    
+                }
+            }
 
             //add balancing particle to hadronic system
             hadronic[0]+=pseudo_x;
@@ -254,10 +270,10 @@ void Pred_Compare::processEvent( LCEvent * evt ) {
 
 
                 //set z-positions as beamcal face
-                real_e_pos[2] = scipp_ilc::_BeamCal_zmin;
-                real_p_pos[2] = -scipp_ilc::_BeamCal_zmin;
-                pred_e_pos[2] = scipp_ilc::_BeamCal_zmin;
-                pred_p_pos[2] = -scipp_ilc::_BeamCal_zmin;
+                real_e_pos[2] = 3265;
+                real_p_pos[2] = -3265;
+                pred_e_pos[2] = 3265;
+                pred_p_pos[2] = -3265;
 
                 //extrapolate transverse positions from mom vector
                 real_e_pos[0] = real_e[0]*real_e_pos[2]/real_e[2];
@@ -269,20 +285,22 @@ void Pred_Compare::processEvent( LCEvent * evt ) {
                 pred_e_pos[1] = pred_e[1]*pred_e_pos[2]/pred_e[2];
                 pred_p_pos[0] = pred_p[0]*pred_p_pos[2]/pred_p[2];
                 pred_p_pos[1] = pred_p[1]*pred_p_pos[2]/pred_p[2];
-            
+           
+                 
                 //transform to BeamCal frame
-                real_e_pos[0] = real_e_pos[0] - abs(real_e_pos[2]*scipp_ilc::_transform);
-                real_p_pos[0] = real_p_pos[0] - abs(real_p_pos[2]*scipp_ilc::_transform);
-                pred_e_pos[0] = pred_e_pos[0] - abs(pred_e_pos[2]*scipp_ilc::_transform);
-                pred_p_pos[0] = pred_p_pos[0] - abs(pred_p_pos[2]*scipp_ilc::_transform);
+                real_e_pos[0] = real_e_pos[0] - real_e_pos[2]*0.007;
+                real_p_pos[0] = real_p_pos[0] + real_p_pos[2]*0.007;
+                pred_e_pos[0] = pred_e_pos[0] - pred_e_pos[2]*0.007;
+                pred_p_pos[0] = pred_p_pos[0] + pred_p_pos[2]*0.007;
+                
 
                 //get hit status
-                int re_hit = scipp_ilc::get_hitStatus(real_e_pos[0], real_p_pos[1]);
-                int rp_hit = scipp_ilc::get_hitStatus(real_p_pos[0], real_p_pos[1]);
-                int pe_hit = scipp_ilc::get_hitStatus(pred_e_pos[0], pred_p_pos[1]);
-                int pp_hit = scipp_ilc::get_hitStatus(pred_p_pos[0], pred_p_pos[1]);
+                int re_hit = scipp_ilc::get_hitStatus(real_e_pos[0], real_e_pos[1], real_e_pos[2]);
+                int rp_hit = scipp_ilc::get_hitStatus(real_p_pos[0], real_p_pos[1], real_p_pos[2]);
+                int pe_hit = scipp_ilc::get_hitStatus(pred_e_pos[0], pred_e_pos[1], pred_e_pos[2]);
+                int pp_hit = scipp_ilc::get_hitStatus(pred_p_pos[0], pred_p_pos[1], pred_p_pos[2]);
 
-                
+               /* 
                 //eWpB 
                 if(re_hit!=3 && re_hit!=4){real = 1;}
                 else{real = 2;}
@@ -294,11 +312,11 @@ void Pred_Compare::processEvent( LCEvent * evt ) {
                 else if(pred == 2 && real == 1){mh++;}
                 else if(pred == 2 && real == 2){mm++;}
                 
-                cout << "REAL ELECTRON: " << real_e[0] << " " << real_e[1] << " " << real_e[2] << endl;
-                cout << "PRED ELECTRON: " << pred_e[0] << " " << pred_e[1] << " " << pred_e[2] << endl;
 
-                
-                /*
+                cout << "REAL ELECTRON: " << real_e_pos[0] << " " << real_e_pos[1] << " " << real_e_pos[2] << endl;
+                cout << "PRED ELECTRON: " << pred_e_pos[0] << " " << pred_e_pos[1] << " " << pred_e_pos[2] << endl;
+             
+             */
                 //eBpW 
                 if(rp_hit!=3 && rp_hit!=4){real = 1;}
                 else{real = 2;}
@@ -308,11 +326,11 @@ void Pred_Compare::processEvent( LCEvent * evt ) {
                 if(pred == 1 && real == 1){hh++;}
                 else if(pred == 1 && real == 2){hm++;}
                 else if(pred == 2 && real == 1){mh++;}
-                else{mm++;}
+                else if(pred ==2 && real == 2){mm++;}
 
-                cout << "REAL POSITRON: " << real_p[0] << " " << real_p[1] << " " << real_p[2] << endl;
-                cout << "PRED POSITRON: " << pred_p[0] << " " << pred_p[1] << " " << pred_p[2] << endl;
-                */
+                cout << "REAL POSITRON: " << real_p_pos[0] << " " << real_p_pos[1] << " " << real_p_pos[2] << endl;
+                cout << "PRED POSITRON: " << pred_p_pos[0] << " " << pred_p_pos[1] << " " << pred_p_pos[2] << endl;
+                
                 real = 0;
                 pred = 0;
             }

@@ -59,8 +59,8 @@ Undeflected::Undeflected() : Processor("Undeflected") {
 void Undeflected::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("WW_ang.root","RECREATE");
-    _pos = new TH2D("Undeflected Position", "pos", 600, -150.0, 150.0, 600, -150.0, 150.0);    
+    _rootfile = new TFile("BB_pos.root","RECREATE");
+    _pos = new TH2D("pos", "Undeflected Beam Particle Position", 600, -150.0, 150.0, 600, -150.0, 150.0);    
     
     // usually a good idea to
     //printParameters() ;
@@ -123,8 +123,8 @@ void Undeflected::processEvent( LCEvent * evt ) {
                 //identify highest e/p energies
                 if(id==11){E_e = (E_e < hit->getEnergy()) ? hit->getEnergy() : E_e;}
                 if(id==-11){E_p = (E_p < hit->getEnergy()) ? hit->getEnergy() : E_p;}
-                cout << "Particle " << hitIndex << " with ID: " << id;
-                cout << " status: " << stat;
+                //cout << "Particle " << hitIndex << " with ID: " << id;
+                //cout << " status: " << stat;
 
                 double mom[4];
                 mom[0] = hit->getMomentum()[0]; 
@@ -135,7 +135,7 @@ void Undeflected::processEvent( LCEvent * evt ) {
                 //x and y mom sums for V
                 tot[0]+=mom[0];
                 tot[1]+=mom[1];    
-                cout << " momentum [" << mom[0] << ", " << mom[1] << ", " << mom[2] << "] with energy: " << mom[3] << endl;
+                //cout << " momentum [" << mom[0] << ", " << mom[1] << ", " << mom[2] << "] with energy: " << mom[3] << endl;
 
             }//end final state
         }//end for
@@ -171,11 +171,12 @@ void Undeflected::processEvent( LCEvent * evt ) {
                     else{
                         scipp_ilc::transform_to_lab(mom_e[0], mom_e[3], mom_e[0], mom_e[3]);    
                         double pos[3];
-                        pos[2] = scipp_ilc::_BeamCal_zmin;
+                        pos[2] = 3265;
                         pos[0] = mom_e[0]*pos[2]/mom_e[2];
                         pos[1] = mom_e[1]*pos[2]/mom_e[2];
-                        pos[0] = pos[0] - pos[2]*scipp_ilc::_transform;
+                        pos[0] = pos[0] - pos[2]*0.007;
                         _pos->Fill(pos[0], pos[1]);                       
+                        if(abs(pos[0])>0 || abs(pos[1])>0){_tot++; cout << "ELECTRON" << endl; cout << "X: " << pos[0] << endl; cout << "Y: " << pos[1] << endl;}
                     }
             }//end beam electron
               
@@ -197,6 +198,17 @@ void Undeflected::processEvent( LCEvent * evt ) {
                         double mag = sqrt(pow(mom_p[0], 2)+pow(mom_p[1], 2)+pow(mom_p[2], 2));
                         theta_p = asin(pT_p/mag);
                     }//end delfection
+                    else{
+                        scipp_ilc::transform_to_lab(mom_p[0], mom_p[3], mom_p[0], mom_p[3]);    
+                        double pos[3];
+                        pos[2] = -3265;
+                        pos[0] = mom_p[0]*pos[2]/mom_p[2];
+                        pos[1] = mom_p[1]*pos[2]/mom_p[2];
+                        pos[0] = pos[0] + pos[2]*0.007;
+                        _pos->Fill(pos[0], pos[1]);                       
+                        if(abs(pos[0])>0 || abs(pos[1])>0){_tot++; cout << "POSITRON" << endl; cout << "X: " << pos[0] << endl; cout << "Y: " << pos[1] << endl;}
+                    
+                    }
             }//end beam positron    
             
             else{

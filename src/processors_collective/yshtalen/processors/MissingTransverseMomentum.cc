@@ -341,12 +341,12 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
 
 /**************************   DETERMINE HIT STATUS   **********************************/
             //determine prediction and high energy vector hit status
-            int hit_scatter = scipp_ilc::get_hitStatus(scatter_pos_x, scatter_pos_y);
-            int hit_high = scipp_ilc::get_hitStatus(high_pos_x, high_pos_y);
+            //int hit_scatter = scipp_ilc::get_hitStatus(scatter_pos_x, scatter_pos_y);
+            //int hit_high = scipp_ilc::get_hitStatus(high_pos_x, high_pos_y);
 
             //determine vector hit status
             //exclude events outside the Beamcal
-            if(hit_scatter!=2&&hit_high!=2){
+           /* if(hit_scatter!=2&&hit_high!=2){
                 _eventMax++;
                 if(hit_scatter==hit_high){
                     _correct++;
@@ -369,7 +369,7 @@ void MissingTransverseMomentum::processEvent( LCEvent * evt ) {
             cout << endl;
             cout << "Prediction Vector: [" << scatter_vec[0] << ", " << scatter_vec[1] << ", " << scatter_vec[2] << "]"  << endl;
             cout << "High Energy Vector: [" << high_vec[0] << ", " << high_vec[1] << ", " << high_vec[2] << "]"  << endl;
-                
+ */               
         }
     }
     _nEvt ++ ;

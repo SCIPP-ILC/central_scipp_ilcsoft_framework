@@ -9,5 +9,5 @@ namespace scipp_ilc {
 
     void transform_to_lab(double pX, double E, double& pX_new, double& E_new);
 
-    int get_hitStatus(double x, double y);
+    int get_hitStatus(double x, double y, double z);
 }
