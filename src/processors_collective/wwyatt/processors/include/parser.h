@@ -61,9 +61,9 @@ class parser : public Processor {
   Family biggerTree(Family,Family);
 
   void addToTree(Family*, Community* ,Family*);
-  Community* nTrees(LCEvent*, bool=false);
+  Community* getTrees(LCEvent*, bool=false);
   Family* getAssociates(MCParticle*);
-  unsigned int countBhabhas(LCCollection*, Community*);
+  unsigned int countBhabhas(Community*);
  protected:
 
   /** Input collection name.

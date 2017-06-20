@@ -47,6 +47,8 @@ static int nBhabha=0;
 static int nBase=0;
 static int nTwoPhoton=0;
 static int nCombo=0;
+static int unknown=0;
+static TH1F* _bin;
 
 parser::parser() : Processor("parser") {
     // modify processor description
@@ -62,6 +64,7 @@ void parser::init() {
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
     _rootfile = new TFile("parser.root","RECREATE");
     _nEvt = 0 ;
+    _bin = new TH1F("bin", "Poisson Distributin of Bhabhas in Overlay", 12, 0, 12);
     cout << "Sorting each event into independent families (trees) of the given SLCIO file." << endl;
 }
 
@@ -81,11 +84,15 @@ void printParticle(MCParticle *p){
   cout << "]" << endl;
 }
 
+/*unsigned int countEvt(Community* trees, string key){
+
+  }*/
+//static bool v = false;
 //Returns number of bhabha events.
-unsigned int parser::countBhabhas(LCCollection* col, Community* trees){
+unsigned int parser::countBhabhas(Community* trees){
   //It says there are 30 items in trees but only loops through one...
   //Probably something wrong with this pointer syntax.
-  bool v=true; //Verbose Mode
+  bool v=false; //Verbose Mode
   int tmp =0;
   unsigned int bhabhas=0;
   if(v)cout << endl << "###### This Event has " << trees->size() << " trees #################" << endl;
@@ -102,9 +109,10 @@ unsigned int parser::countBhabhas(LCCollection* col, Community* trees){
       if ( id != 11 && id != -11 && id != 22){
 	bhabha=false;
       }
+      if (id == 11 || id == -11) ++nPositronsElectrons;
     }
-    if(bhabha &&nPositronsElectrons == 2){
-      //      if(v)cout << "This tree had only bhabha particles  particles." << endl;
+    if(bhabha && nPositronsElectrons >= 2){
+      if(v)cout << "This tree had only bhabha particles  particles." << endl;
       ++bhabhas;
     }
   }
@@ -113,19 +121,34 @@ unsigned int parser::countBhabhas(LCCollection* col, Community* trees){
   return bhabhas;
 }
 
+
+
+//Will loop through and display all the data about all the paticles in the collection.
+void printAllEvents(LCCollection* col){
+  cout << endl << endl << "---------------- New Event, # of particles -> " << col->getNumberOfElements()  << " -----------" << endl;
+  for (int i = 0 ; i < col->getNumberOfElements() ; ++i){
+    MCParticle* hit = dynamic_cast<MCParticle*>(col->getElementAt(i));
+    printParticle(hit);
+  }
+}
+
+//Bruce - Add energy of fianl state particles to verify if the particles are the same.
 void parser::processEvent( LCEvent * evt ) { 
     LCCollection* col = evt->getCollection( _colName );
     int stat, id =0;
     if( col != NULL ){
+      //    printAllEvents(col);
         int nElements = col->getNumberOfElements();
-	Community* trees = nTrees(evt);
-        cout << "###### Elements: " << nElements << " ######" << endl;
-	unsigned int bhabhas = countBhabhas(col,trees);
-	if(nElements == 4) ++nBase;
+	Community* trees = getTrees(evt);
+	//        cout << "###### Elements: " << nElements << " ######" << endl;
+	unsigned int bhabhas = countBhabhas(trees);
+	_bin->Fill(bhabhas);
+	if(nElements == 4 && bhabhas == 0) ++nBase;
 	else if(bhabhas > 0){
-	  if(bhabhas >= trees->size()-1) ++nBhabha;
+	  if(bhabhas == trees->size()-1) ++nBhabha;
 	  else  ++nCombo;
-	}else ++nTwoPhoton;
+	}else if(nElements > 4 && bhabhas == 0)++nTwoPhoton;
+	else ++unknown;
     }
 }
 
@@ -137,76 +160,22 @@ void parser::check( LCEvent * evt ) {
 
 
 void parser::end(){ 
-  cout << "Number of empty events: " << nBase << endl;
+  cout << "Number of Empty events: " << nBase << endl;
   cout << "Number of Bhabha events: " << nBhabha << endl;
   cout << "Number of Two Photon events: " << nTwoPhoton << endl;
   cout << "Number of Two Photon & Bhabha events: " << nCombo << endl;
+  cout << "Number of Uknown events: " << unknown << endl;
   _rootfile->Write();
 }
 
 
-/*bool parser::containsParticle(MCParticle* obj, parser::Family* list){
-  for(auto hit: *list){
-    if(hit->getPDG() == obj->getPDG()&&
-       sameMomentum(hit->getMomentum(),obj->getMomentum())&&
-       hit->getGeneratorStatus() == obj->getGeneratorStatus()&&
-       sameTree(hit->getParents(), obj->getParents())&&
-       sameTree(hit->getDaughters(), obj->getDaughters())){
-      return true;
-    }else{
-      return false;
-    }
-  }
-  return false;
-}
-bool parser::containsParticles(parser::Family*base, parser::Family* list){
-  for(auto hit: *base){
-    if(!containsParticle(hit, list)){
-      return false;
-    }
-  }
-  return true;
-}
-bool isFamily(MCParticle* base, parser::Family*list){
-  for(auto kin: *list){
-    parser::Family daughters=kin->getDaughters();
-    parser::Family parents=kin->getParents();
-    parser::Family* potentialKin= new parser::Family;
-    potentialKin->insert(potentialKin->end(), daughters.begin(), daughters.end());
-    potentialKin->insert(potentialKin->end(), parents.begin(), parents.end());
-    potentialKin->push_back(kin);
-    if(containsParticle(base, potentialKin)){
-      return true;
-    }
-  }
-  return false;
-}
-bool isRelated(parser::Family* A, parser::Family* B){
-  for(auto a:*A){
-    if(isFamily(a, B)){
-      return true;
-    }
-  }
-  return false;
-}
-
-void parser::addToTree(parser::Family* associate, parser::Community* trees, parser::Family*all){
-  if(!containsParticles(associate, all)){
-    for(auto tree: *trees){
-      if(isRelated(associate, tree)){
-	tree->insert(tree->end(),associate->begin(),associate->end());
-	return;
-      }
-    }
-    trees->push_back(associate);
-    all->insert(all->end(),associate->begin(),associate->end());
-  }
-  }*/
 
 //Returns true if the particle arrays are in the same order and have the correct mometum and PDG for each particle.
 bool parser::sameTree(const parser::Family *A, const parser::Family *B){
   return sameTree(*A, *B);
 }
+
+//Logic to see if the trees are the same.
 bool parser::sameTree(const parser::Family &A, const parser::Family &B){
   unsigned int similarParticles=0;
   if(A.size()!=B.size())return false;
@@ -272,6 +241,8 @@ parser::Family* parser::removeDuplicateParticles(parser::Family* input){
   }
   return output;
 }
+
+//Removes Particles that have already been checked
 parser::Family* parser::removeTraversed(parser::Family* input, parser::Family* compare){
   parser::Family* output = new parser::Family;
   for(auto hit: *input){
@@ -284,6 +255,7 @@ parser::Family* parser::removeTraversed(parser::Family* input, parser::Family* c
   return output;
 }
 
+//Returns true if the Particle is in the Family 
 bool parser::inFamily(MCParticle* particle, parser::Family* fam){
   for(auto hit: *fam){
     if(particle==hit) return true;
@@ -291,6 +263,7 @@ bool parser::inFamily(MCParticle* particle, parser::Family* fam){
   return false;
 }
 
+//Returns a vector of the parents and children of the given particle.
 parser::Family* parser::getAssociates(MCParticle* particle){
   parser::Family parents = particle->getParents();
   parser::Family children=particle->getDaughters();
@@ -314,14 +287,8 @@ parser::Family* parser::traverse(MCParticle* particle, parser::Family* ref){
   return output;
 }
 
-//Returns the bigger tree.
-parser::Family parser::biggerTree(parser::Family tree, parser::Family amp){
-  if(tree.size()>amp.size())return tree;
-  else return amp;
-}
-
-
-parser::Community* parser::nTrees(LCEvent *evt, bool v){
+//Returns a vector of vectors, each child vector is a list of all assiciated particles.
+parser::Community* parser::getTrees(LCEvent *evt, bool v){
   parser::Community* trees = new parser::Community;
   int numTrees = 0;
   LCCollection* col = evt->getCollection( _colName ) ;

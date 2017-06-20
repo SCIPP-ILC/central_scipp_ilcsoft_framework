@@ -54,13 +54,16 @@ class parser : public Processor {
   Community* removeDuplicateTrees(Community*);
   Family* removeDuplicateParticles(Family*);
   enum class Direction {children, parents};
-  Family* traverseDirection(MCParticle*, Direction);
-  Family* traverse(MCParticle*);
+
+  Family* removeTraversed(Family*, Family*);
+  Family* traverse(MCParticle*, Family* =NULL);
+  bool inFamily(MCParticle*, Family*);
   Family biggerTree(Family,Family);
 
   void addToTree(Family*, Community* ,Family*);
-  Community* nTrees(LCEvent*, bool=false);
-  int countBhabhas(LCCollection*, Community*);
+  Community* getTrees(LCEvent*, bool=false);
+  Family* getAssociates(MCParticle*);
+  unsigned int countBhabhas(LCCollection*, Community*);
  protected:
 
   /** Input collection name.
