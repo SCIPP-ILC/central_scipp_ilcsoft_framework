@@ -68,11 +68,8 @@ void parser::init() {
     cout << "Sorting each event into independent families (trees) of the given SLCIO file." << endl;
 }
 
-void parser::processRunHeader( LCRunHeader* run) { 
-//    _nRun++ ;
-} 
 
-void printParticle(MCParticle *p){
+void parser::printParticle(MCParticle *p){
   cout << "id("<< p->getPDG() << ") Energy("<< p->getEnergy() << ") state(" << p->getGeneratorStatus() << ") Parents:Children(" << p->getParents().size() << ":"<< p->getDaughters().size() <<")[";
   for(auto a: p->getParents()){
     cout<<a->getPDG()<<",";
@@ -83,6 +80,20 @@ void printParticle(MCParticle *p){
   }
   cout << "]" << endl;
 }
+
+//Will loop through and display all the data about all the paticles in the collection.
+void parser::printAllEvents(LCCollection* col){
+  cout << endl << endl << "---------------- New Event, # of particles -> " << col->getNumberOfElements()  << " -----------" << endl;
+  for (int i = 0 ; i < col->getNumberOfElements() ; ++i){
+    MCParticle* hit = dynamic_cast<MCParticle*>(col->getElementAt(i));
+    printParticle(hit);
+  }
+}
+
+void parser::processRunHeader( LCRunHeader* run) { 
+//    _nRun++ ;
+} 
+
 
 /*unsigned int countEvt(Community* trees, string key){
 
@@ -103,7 +114,7 @@ unsigned int parser::countBhabhas(Community* trees){
     unsigned int nPositronsElectrons=0;
     for(const auto hit: *tree){
       if(v){
-	printParticle(hit);
+	parser::printParticle(hit);
       }
       int id = hit->getPDG();
       if ( id != 11 && id != -11 && id != 22){
@@ -122,15 +133,6 @@ unsigned int parser::countBhabhas(Community* trees){
 }
 
 
-
-//Will loop through and display all the data about all the paticles in the collection.
-void printAllEvents(LCCollection* col){
-  cout << endl << endl << "---------------- New Event, # of particles -> " << col->getNumberOfElements()  << " -----------" << endl;
-  for (int i = 0 ; i < col->getNumberOfElements() ; ++i){
-    MCParticle* hit = dynamic_cast<MCParticle*>(col->getElementAt(i));
-    printParticle(hit);
-  }
-}
 
 //Bruce - Add energy of fianl state particles to verify if the particles are the same.
 void parser::processEvent( LCEvent * evt ) { 

@@ -248,7 +248,7 @@ void Tester::processEvent( LCEvent * evt ) {
             cout << "PRED: [" << pred_e[0] << ", " << pred_e[1] << ", " << pred_e[2] << "]" << endl; 
 
             diff = acos(dot/(magT*mag));
-            if(diff > 0.000001){_tot++;}
+            if(diff > 0.0001){_tot++;}
             cout << "ANGLE BETWEEN : " << diff << endl; 
             _diff->Fill(diff);
 

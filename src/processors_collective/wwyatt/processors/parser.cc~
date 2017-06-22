@@ -47,6 +47,8 @@ static int nBhabha=0;
 static int nBase=0;
 static int nTwoPhoton=0;
 static int nCombo=0;
+static int unknown=0;
+static TH1F* _bin;
 
 parser::parser() : Processor("parser") {
     // modify processor description
@@ -62,14 +64,12 @@ void parser::init() {
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
     _rootfile = new TFile("parser.root","RECREATE");
     _nEvt = 0 ;
+    _bin = new TH1F("bin", "Poisson Distributin of Bhabhas in Overlay", 12, 0, 12);
     cout << "Sorting each event into independent families (trees) of the given SLCIO file." << endl;
 }
 
-void parser::processRunHeader( LCRunHeader* run) { 
-//    _nRun++ ;
-} 
 
-void printParticle(MCParticle *p){
+void parser::printParticle(MCParticle *p){
   cout << "id("<< p->getPDG() << ") Energy("<< p->getEnergy() << ") state(" << p->getGeneratorStatus() << ") Parents:Children(" << p->getParents().size() << ":"<< p->getDaughters().size() <<")[";
   for(auto a: p->getParents()){
     cout<<a->getPDG()<<",";
@@ -81,11 +81,29 @@ void printParticle(MCParticle *p){
   cout << "]" << endl;
 }
 
+//Will loop through and display all the data about all the paticles in the collection.
+void parser::printAllEvents(LCCollection* col){
+  cout << endl << endl << "---------------- New Event, # of particles -> " << col->getNumberOfElements()  << " -----------" << endl;
+  for (int i = 0 ; i < col->getNumberOfElements() ; ++i){
+    MCParticle* hit = dynamic_cast<MCParticle*>(col->getElementAt(i));
+    printParticle(hit);
+  }
+}
+
+void parser::processRunHeader( LCRunHeader* run) { 
+//    _nRun++ ;
+} 
+
+
+/*unsigned int countEvt(Community* trees, string key){
+
+  }*/
+//static bool v = false;
 //Returns number of bhabha events.
-unsigned int parser::countBhabhas(LCCollection* col, Community* trees){
+unsigned int parser::countBhabhas(Community* trees){
   //It says there are 30 items in trees but only loops through one...
   //Probably something wrong with this pointer syntax.
-  bool v=true; //Verbose Mode
+  bool v=false; //Verbose Mode
   int tmp =0;
   unsigned int bhabhas=0;
   if(v)cout << endl << "###### This Event has " << trees->size() << " trees #################" << endl;
@@ -96,14 +114,15 @@ unsigned int parser::countBhabhas(LCCollection* col, Community* trees){
     unsigned int nPositronsElectrons=0;
     for(const auto hit: *tree){
       if(v){
-	printParticle(hit);
+	parser::printParticle(hit);
       }
       int id = hit->getPDG();
       if ( id != 11 && id != -11 && id != 22){
 	bhabha=false;
       }
+      if (id == 11 || id == -11) ++nPositronsElectrons;
     }
-    if(bhabha &&nPositronsElectrons == 2){
+    if(bhabha && nPositronsElectrons >= 2){
       if(v)cout << "This tree had only bhabha particles  particles." << endl;
       ++bhabhas;
     }
@@ -113,30 +132,25 @@ unsigned int parser::countBhabhas(LCCollection* col, Community* trees){
   return bhabhas;
 }
 
-//Will loop through and display all the data about all the paticles in the collection.
-void printAllEvents(LCCollection* col){
-  cout << endl << endl << "---------------- New Event, # of particles -> " << col->getNumberOfElements()  << " -----------" << endl;
-  for (int i = 0 ; i < col->getNumberOfElements() ; ++i){
-    MCParticle* hit = dynamic_cast<MCParticle*>(col->getElementAt(i));
-    printParticle(hit);
-  }
-}
+
 
 //Bruce - Add energy of fianl state particles to verify if the particles are the same.
 void parser::processEvent( LCEvent * evt ) { 
     LCCollection* col = evt->getCollection( _colName );
     int stat, id =0;
     if( col != NULL ){
-      printAllEvents(col);
+      //    printAllEvents(col);
         int nElements = col->getNumberOfElements();
 	Community* trees = getTrees(evt);
-        cout << "###### Elements: " << nElements << " ######" << endl;
-	unsigned int bhabhas = countBhabhas(col,trees);
-	if(nElements == 4) ++nBase;
+	//        cout << "###### Elements: " << nElements << " ######" << endl;
+	unsigned int bhabhas = countBhabhas(trees);
+	_bin->Fill(bhabhas);
+	if(nElements == 4 && bhabhas == 0) ++nBase;
 	else if(bhabhas > 0){
-	  if(bhabhas >= trees->size()-1) ++nBhabha;
+	  if(bhabhas == trees->size()-1) ++nBhabha;
 	  else  ++nCombo;
-	}else ++nTwoPhoton;
+	}else if(nElements > 4 && bhabhas == 0)++nTwoPhoton;
+	else ++unknown;
     }
 }
 
@@ -148,10 +162,11 @@ void parser::check( LCEvent * evt ) {
 
 
 void parser::end(){ 
-  cout << "Number of empty events: " << nBase << endl;
+  cout << "Number of Empty events: " << nBase << endl;
   cout << "Number of Bhabha events: " << nBhabha << endl;
   cout << "Number of Two Photon events: " << nTwoPhoton << endl;
   cout << "Number of Two Photon & Bhabha events: " << nCombo << endl;
+  cout << "Number of Uknown events: " << unknown << endl;
   _rootfile->Write();
 }
 

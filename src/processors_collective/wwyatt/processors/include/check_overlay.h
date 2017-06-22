@@ -1,5 +1,5 @@
-#ifndef parser_h
-#define parser_h 1
+#ifndef check_h
+#define check_h
 
 #include "marlin/Processor.h"
 
@@ -10,26 +10,21 @@
 #include "scipp_ilc_utilities.h"
 #include <TFile.h>
 #include <TH2D.h>
-
+#include "parser.h"
 using namespace std;
 using namespace lcio ;
 using namespace marlin ;
 
-
 //Normal Processor Header
-class parser : public Processor {
+class check_overlay : public Processor {
 
  public:
   typedef vector<vector<MCParticle*>*> Community;
   typedef vector<MCParticle*> Family;
-  static void printParticle(MCParticle *p);
-  static void printAllEvents(LCCollection* col);
+  virtual Processor*  newProcessor() { return new check_overlay ; }
 
 
-  virtual Processor*  newProcessor() { return new parser ; }
-
-
-  parser() ;
+  check_overlay() ;
 
   /** Called at the begin of the job before anything is read.
    * Use to initialize the processor, e.g. book histograms.

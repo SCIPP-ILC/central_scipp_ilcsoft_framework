@@ -1,0 +1,1 @@
+TCanvas c; c->SetLogy();TFile f("check_overlay.root"); energy->Draw();
