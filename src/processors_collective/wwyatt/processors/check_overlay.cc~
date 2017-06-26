@@ -33,7 +33,6 @@
 #include <algorithm>
 // ----- include for verbosity dependend logging ---------
 #include "marlin/VerbosityLevels.h"
-#include "parser.h"
 
 using namespace lcio;
 using namespace marlin;
@@ -73,6 +72,7 @@ void check_overlay::processEvent( LCEvent * evt ) {
     LCCollection* col = evt->getCollection( _colName );
     int stat, id =0;
     double tEnergy = 0;
+    bool v=false;
     if( col != NULL ){
       //    printAllEvents(col);
         int nElements = col->getNumberOfElements();
@@ -80,7 +80,7 @@ void check_overlay::processEvent( LCEvent * evt ) {
 	  MCParticle* hit = dynamic_cast<MCParticle*>(col->getElementAt(i));
 	  if(hit->getGeneratorStatus()==1)tEnergy+=hit->getEnergy();
 	}
-	if(tEnergy==0.0){
+	if(v && tEnergy<=10.0){
 	  parser::printAllEvents(col);
 	}
 	_energy->Fill(tEnergy);
