@@ -108,6 +108,7 @@ void check_overlay::processEvent( LCEvent * evt ) {
 	_energy6->Fill(tEnergy);
 	_energy7->Fill(tEnergy);
 	_energy8->Fill(tEnergy);
+	switch 
     }    
 }
 
