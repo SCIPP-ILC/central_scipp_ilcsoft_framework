@@ -118,4 +118,5 @@ void EnergyFinder::check( LCEvent * evt ) {
 
 void EnergyFinder::end(){ 
     _rootfile->Write();
-}
+:q!
+
