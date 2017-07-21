@@ -54,7 +54,7 @@ plot_signal plot_signal;
 
 static TFile* _rootfile;
 static TProfile* _radeff;
-static TProfile* _radhits;
+static TH1F* _radhits;
 static int _detected_num = 0;
 
 
@@ -83,7 +83,8 @@ void plot_signal::init() {
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
     _rootfile = new TFile(_root_file_name.c_str(),"RECREATE");
     _radeff = new TProfile("radeff","Radial Efficiency",14*2,0.0,140.0,0.0,1.0);
-    _radhits = new TProfile("radhits","Radial Hits",190,0.0,190.0,0.0,1.0);
+    //    _radhits = new TH1F("radhits","Radial Hits",300,0.0,190.0,0.0,1.0);
+    _radhits = new TH1F("radhits","Radial Hits",190,0,140);
     //    _t1 = Clock::now();
     //Load up all the bgd events, and initialize the reconstruction algorithm.
     //    scipp_ilc::beamcal_recon_C::initialize_beamcal_reconstructor(_beamcal_geometry_file_name, _background_event_list, _num_bgd_events_to_read);
@@ -104,7 +105,7 @@ void plot_signal::processEvent( LCEvent* signal_event ) {
     //Make sure we are using an electron that actually hits the Positive BeamCal
     MCParticle* electron = NULL;
     bool detectable_electron = scipp_ilc::get_detectable_signal_event(signal_event,electron);
-    cout << "Signal Event: " << signal_event << endl;
+    //    cout << "Signal Event: " << signal_event << endl;
 
     if ( not detectable_electron ) return;
     //Get the radius at which the signal electron hit
@@ -126,7 +127,8 @@ void plot_signal::processEvent( LCEvent* signal_event ) {
     _radhits->Fill(radius,detectable_electron); //bools and ints are basically interchangeable...
     //    _detected_num += detected;
     _detected_num += detectable_electron;
-    //    cout << "signal_event: " << signal_event << endl;
+    //    cout << "signal event: " << signal_event << endl;
+    //    cout << "detectale electron: " << detectable_electron << endl;
     cout << "radius: " << radius << endl;
     cout << "Event Number: " << _nEvt++ << endl;
 }

@@ -70,6 +70,9 @@ static TProfile2D* _hitmap_bgd;
 static TProfile2D* _hitmap_zeros;
 static TProfile2D* _test_slice;
 
+static TH1F* _rad1hits;
+static TH1F* _rad2hits;
+
 static TH2F* _hlego;
 static TH2F* _hlego_zeros;
 static TH2F* _hlego_inefficiency;
@@ -166,6 +169,26 @@ void BeamCalRecon_xy::init() {
     _test_slice = new TProfile2D("hitmap_slice","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     //    _c2 = new TCanvas("c2","c2",300,300);
     _c1 = new TCanvas("c1","c1",600,400);
+
+
+    _rad1hits = new TH1F("rad1hits","Radial Hits",190,0,140);
+    _rad2hits = new TH1F("rad2hits","Radial Hits",190,0,140);
+
+    _rad1hits->GetXaxis()->SetTitle("Radius (mm)");
+    _rad1hits->GetYaxis()->SetTitle("e Count");
+    _rad1hits->GetXaxis()->CenterTitle();
+    _rad1hits->GetYaxis()->CenterTitle();
+    _rad1hits->GetXaxis()->SetTitleOffset(1.0);
+    _rad1hits->GetYaxis()->SetTitleOffset(1.0);
+
+    _rad2hits->GetXaxis()->SetTitle("Radius (mm)");
+    _rad2hits->GetYaxis()->SetTitle("e Count");
+    _rad2hits->GetXaxis()->CenterTitle();
+    _rad2hits->GetYaxis()->CenterTitle();
+    _rad2hits->GetXaxis()->SetTitleOffset(1.0);
+    _rad2hits->GetYaxis()->SetTitleOffset(1.0);
+
+
 
 
     Double_t theta[8];
@@ -322,7 +345,7 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
 
     double radius,phi;
     scipp_ilc::cartesian_to_polar(end_x,end_y,radius,phi);
-
+    _rad1hits->Fill(radius,detectable_electron);
 
     //Perform the reconstrunction algorithm, determine if the algorithm
     //detected the electron.
@@ -330,6 +353,7 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     signal_cluster = scipp_ilc::beamcal_recon_xy::reconstruct_beamcal_event(signal_event);
     bool detected = signal_cluster->exceeds_sigma_cut;
 
+    _rad2hits->Fill(radius,detected);
     //      cout << "******************************************************************" << endl;
     //      cout << "detected:  " << detected<< "        x-y: "<< endx << "\t" <<endy << endl;
     //      cout << "******************************************************************" << endl;
