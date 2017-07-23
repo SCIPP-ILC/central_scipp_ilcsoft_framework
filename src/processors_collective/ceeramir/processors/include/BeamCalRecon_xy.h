@@ -36,8 +36,9 @@ class BeamCalRecon_xy : public Processor {
         BeamCalRecon_xy() ;
 
 	// Used to edit the LEGO plots
-	virtual void RootPlot(TH2F* graph);
+	virtual void PlotTH2F(TH2F* graph);
 
+	virtual void PlotTH1F(TH1F* graph);
         /** Called at the begin of the job before anything is read.
          * Use to initialize the processor, e.g. book histograms.
          */

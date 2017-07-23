@@ -15,9 +15,9 @@
 #include "IMPL/LCRunHeaderImpl.h"
 
 
-#include "simple_list_geometry.h"
-#include "beamcal_scanner.h"
-#include "beamcal_reconstructor.h"
+#include "list_geometry.h"
+#include "test_beamcal_scanner.h"
+#include "test_beamcal_reconstructor.h"
 
 #include "scipp_ilc_globals.h"
 
@@ -25,7 +25,7 @@
 using namespace std;
 
 namespace scipp_ilc {
-    namespace beamcal_recon {
+    namespace beamcal_recon_test {
 
 
 /*
@@ -100,6 +100,8 @@ namespace scipp_ilc {
          *
          */
         static void pixelate_beamcal(lcio::LCEvent* event, pixel_map* new_pixels) {
+	    cout << "Layers extension...\n";
+
             double dim = _cellsize / ( _spreadfactor );
             double Ediv = (_spreadfactor * _spreadfactor);
 

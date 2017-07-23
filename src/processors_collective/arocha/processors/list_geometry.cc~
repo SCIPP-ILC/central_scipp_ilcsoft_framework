@@ -14,7 +14,7 @@
 using namespace std;
 
 namespace scipp_ilc {
-    namespace beamcal_recon_test {
+    namespace beamcal_recon {
         //static int _LastRing;
         //static float _sector_offset;
         //static float sectorMultiplier;

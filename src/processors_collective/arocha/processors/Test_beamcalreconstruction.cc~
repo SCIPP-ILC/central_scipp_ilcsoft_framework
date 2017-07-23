@@ -98,8 +98,8 @@ void Test_beamcalreconstruction::processEvent( LCEvent* signal_event ) {
 
     //Perform the reconstrunction algorithm, determine if the algorithm
     //detected the electron.
-    scipp_ilc::beamcal_recon_test::beamcal_cluster* signal_cluster;
-    signal_cluster = scipp_ilc::beamcal_recon_test::reconstruct_beamcal_event(signal_event);
+    scipp_ilc::beamcal_recon::beamcal_cluster* signal_cluster;
+    signal_cluster = scipp_ilc::beamcal_recon::reconstruct_beamcal_event(signal_event);
     bool detected = signal_cluster->exceeds_sigma_cut;
 
 
