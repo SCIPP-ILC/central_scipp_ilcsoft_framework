@@ -40,7 +40,9 @@ EnergyFinder EnergyFinder;
 
 static TFile* _rootfile;
 static TH2F* _hitmap;
-
+static TH1D* __energy_e;
+static TH1D* _energy_p;
+static TH2D* _energy_rad
 
 EnergyFinder::EnergyFinder() : Processor("EnergyFinder") {
     // modify processor description
@@ -59,6 +61,8 @@ void EnergyFinder::init() {
 
     _rootfile = new TFile(_root_file_name.c_str(),"RECREATE");
     _hitmap = new TH2F("hitmap","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
+    _energy_e = new TH1D("_energy_e","Electron Energies",125,0.0,250.0);
+   // _energy_p = new TH1D("_energy_p","Positron Energies",125,0.0,250.0);
 
     // usually a good idea to
     //printParameters() ;
@@ -83,6 +87,8 @@ void EnergyFinder::processEvent( LCEvent * evt ) {
     LCCollection* col = evt->getCollection( _colName ) ;
 
     // this will only be entered if the collection is available
+    const double* e_MaxEnerg = 0.0;
+   // const double* p_MaxEnerg = 0.0;
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
 
@@ -99,6 +105,20 @@ void EnergyFinder::processEvent( LCEvent * evt ) {
            //_hitmap->Fill(pos[0],pos[1]);
 	   //Instead, you can use the getEnergy() or getMomentum() functions. 
            const double* mom = particle->getMomentum();
+	   const double* energ = particle->getEnergy();
+	   const double* ID = getPDG
+
+	cout << "Energy: " << energ  << endl;
+	cout << "Momentum2 " << mom << endl;
+
+
+	
+	//if( ID == 11) {
+	  // _energy_e->Fill(energy_e);
+	    // if(_energy_e>e_MaxEnerg){
+		//e_MaxEnerg = _energy_e;
+//}
+//}
 	   //And let's go ahead and print the momentum just to make sure this is working. Notice that once I define a momentum array (as I did above),
 	   //I can refer to each component of this array using index notation (i.e. mom[0] is the x-momentum)
 	   cout << "Momentum: [" << mom[0] << ", " << mom[1] << ", " << mom[2] << "]" << endl; 	
@@ -118,5 +138,5 @@ void EnergyFinder::check( LCEvent * evt ) {
 
 void EnergyFinder::end(){ 
     _rootfile->Write();
-:q!
+}
 

@@ -126,7 +126,7 @@ void BeamCalRecon_xy::RootPlotTitle(stringstream s1, string ){
  */
 
 
-void BeamCalRecon_xy::RootPlot(TH2F* graph){                              // This function edits a root plot passed from init
+void BeamCalRecon_xy::PlotTH2F(TH2F* graph){                              // This function edits a root plot passed from init
 
   graph->GetXaxis()->SetTitle("X axis (mm)");
   graph->GetYaxis()->SetTitle("Y axis (mm)");
@@ -235,7 +235,7 @@ void BeamCalRecon_xy::init() {
     s1 << "LEGO 1s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
     const char* LEGOtitle = s1.str().c_str();
     _hlego = new TH2F("hlego", LEGOtitle ,LEGObins ,-150,150,LEGObins,-150,150);
-    RootPlot(_hlego);
+    PlotTH2F(_hlego);
     // ------ end LEGO GRAPH ------
 
     // ------ POLAR GRAPH ------
@@ -243,7 +243,7 @@ void BeamCalRecon_xy::init() {
     s1 << "LEGO 1s,"<< _num_bgd_events_to_read << bgd_events << LEGObins << "bin";
     const char* LEGOtitle2 = s1.str().c_str();
     _hlego_pol1 = new TH2F("hlego_pol1", LEGOtitle2 ,POLARbins ,-150,150,POLARbins,-150,150);
-    RootPlot(_hlego_pol1);
+    PlotTH2F(_hlego_pol1);
     // ------ end POLAR GRAPH ------
 
     // ------ LEGO non-hits GRAPH ------
@@ -251,7 +251,7 @@ void BeamCalRecon_xy::init() {
     s1 << "LEGO 0s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
     const char* LEGOtitleZeros = s1.str().c_str();
     _hlego_zeros = new TH2F("hlego_0s", LEGOtitleZeros, LEGObins,-150,150,LEGObins,-150,150);
-    RootPlot(_hlego_zeros);
+    PlotTH2F(_hlego_zeros);
     // ------ end LEGO non-hits GRAPH ------
 
 
@@ -261,14 +261,14 @@ void BeamCalRecon_xy::init() {
     const char* LEGOtitleInefficiency = s1.str().c_str();
     _hlego_inefficiency = new TH2F("hlego_inefficiency", LEGOtitleInefficiency, LEGObins,-150,150,LEGObins,-150,150);
     //    _hlego_inefficiency_var = new TH2F("hlego_inefficiency_var", LEGOTitleInefficiency, 67, _var_edges, 67, _var_edges);
-    RootPlot(_hlego_inefficiency);
+    PlotTH2F(_hlego_inefficiency);
 
     s1.str("");
     s1 << "LEGO , test"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
     const char* LEGOTestTitle = s1.str().c_str();
     _hlego_test = new TH2F("hlego_test", LEGOTestTitle ,LEGObins,-150,150,LEGObins,-150,150);
     //    _hlego_test_var = new TH2F("hlego_test_var", LEGOTestTitle, 67, _var_edges, 67, _var_edges);
-    RootPlot(_hlego_test);
+    PlotTH2F(_hlego_test);
     // ------ end LEGO inefficiency GRAPH ------
 
 

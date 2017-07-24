@@ -158,13 +158,10 @@ void BeamCalRecon_xy::PlotTH2F(TH2F* graph){                              // Thi
 }
 
 void BeamCalRecon_xy::PlotTH1F(TH1F* graph){                              // This function edits a root plot passed from init 
-
   graph->GetXaxis()->SetTitle("Radius (mm)");
   graph->GetYaxis()->SetTitle("e Count");
-
   graph->GetXaxis()->CenterTitle();
   graph->GetYaxis()->CenterTitle();
-
   graph->GetXaxis()->SetTitleOffset(1.0);
   graph->GetYaxis()->SetTitleOffset(1.0);
 
@@ -180,7 +177,6 @@ void BeamCalRecon_xy::init() {
     _test_slice = new TProfile2D("hitmap_slice","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     //    _c2 = new TCanvas("c2","c2",300,300);
     _c1 = new TCanvas("c1","c1",600,400);
-
 
     _rad1hits = new TH1F("rad1hits","Radial Hits",190,0,140);
     _rad2hits = new TH1F("rad2hits","Radial Hits",190,0,140);
