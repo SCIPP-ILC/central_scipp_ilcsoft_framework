@@ -67,6 +67,7 @@ class BeamCalRecon_xy : public Processor {
 
         int _nRun ;
         int _nEvt ;
+	double _max_radius;
 } ;
 
 #endif

@@ -69,7 +69,9 @@ static int _test_num = 0;
 static TProfile2D* _hitmap_bgd;
 static TProfile2D* _hitmap_zeros;
 static TProfile2D* _test_slice;
+static TProfile2D* _hitmap_signal_electrons;
 
+static TH1F* _rad0hits;
 static TH1F* _rad1hits;
 static TH1F* _rad2hits;
 
@@ -175,12 +177,16 @@ void BeamCalRecon_xy::init() {
     _hitmap_bgd = new TProfile2D("hitmap_bgd","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _hitmap_zeros = new TProfile2D("hitmap_zeros","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _test_slice = new TProfile2D("hitmap_slice","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
+    _hitmap_signal_electrons = new TProfile2D("hitmap_es","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
+
     //    _c2 = new TCanvas("c2","c2",300,300);
     _c1 = new TCanvas("c1","c1",600,400);
 
+    _rad0hits = new TH1F("rad0hits","Radial Hits",150,0,300);
     _rad1hits = new TH1F("rad1hits","Radial Hits",190,0,140);
     _rad2hits = new TH1F("rad2hits","Radial Hits",190,0,140);
 
+    PlotTH1F(_rad0hits);
     PlotTH1F(_rad1hits);
     PlotTH1F(_rad2hits);
 
@@ -309,6 +315,7 @@ void BeamCalRecon_xy::init() {
     //Load up all the bgd events, and initialize the reconstruction algorithm.
     scipp_ilc::beamcal_recon_xy::initialize_beamcal_reconstructor(_beamcal_geometry_file_name, _background_event_list, _num_bgd_events_to_read);
 
+    _max_radius = 0.0;
     _nRun = 0 ;
     _nEvt = 0 ;
 }
@@ -325,8 +332,23 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     //  _hitmap_bgd->Fill
 
     MCParticle* electron = NULL;
-
     bool detectable_electron = scipp_ilc::get_detectable_signal_event(signal_event,electron);
+    
+    double electron_energy_t = electron->getEnergy();
+    const double* endpoint_t = electron->getEndpoint();
+    double endx_t = (endpoint_t[0] - 0.007*endpoint_t[2]);
+    double endy_t = endpoint_t[1];
+    
+    //    cout << "electron energy: " <<  electron_energy_t << endl;
+    //    cout << "electron position, x:" << endx_t << ", y:" << endy_t << endl;
+    double radius_t,phi_t;
+    scipp_ilc::cartesian_to_polar(endx_t,endy_t,radius_t,phi_t);
+    _rad0hits->Fill(radius_t,1);
+
+    if(radius_t > _max_radius){
+      _max_radius = radius_t;
+    }
+
     if ( not detectable_electron ) return;
 
     double electron_energy = electron->getEnergy();
@@ -435,7 +457,8 @@ void BeamCalRecon_xy::end(){
   */
     cout << "\ndetected: " << _detected_num << endl;
     cout << "\n in \'slice\' of beamcal: " << _test_num << endl;
-
+    cout << "max radius: " << _max_radius << endl;
+    
     // ------ clock end ------
     //    _t2 = Clock::now();
     //    cout << "*******************this is the end***********************" << endl;
