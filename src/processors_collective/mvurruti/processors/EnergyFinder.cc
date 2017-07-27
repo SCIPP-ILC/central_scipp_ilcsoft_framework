@@ -40,9 +40,9 @@ EnergyFinder EnergyFinder;
 
 static TFile* _rootfile;
 static TH2F* _hitmap;
-static TH1D* __energy_e;
+static TH1D* _energy_e;
 static TH1D* _energy_p;
-static TH2D* _energy_rad
+static TH2D* _energy_rad;
 
 EnergyFinder::EnergyFinder() : Processor("EnergyFinder") {
     // modify processor description
@@ -53,8 +53,6 @@ EnergyFinder::EnergyFinder() : Processor("EnergyFinder") {
 
     registerProcessorParameter( "RootOutputName" , "output file"  , _root_file_name , std::string("output.root") );
 }
-
-
 
 void EnergyFinder::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
@@ -74,6 +72,10 @@ void EnergyFinder::init() {
 
 
 
+
+
+
+
 void EnergyFinder::processRunHeader( LCRunHeader* run) { 
 //    _nRun++ ;
 } 
@@ -87,7 +89,7 @@ void EnergyFinder::processEvent( LCEvent * evt ) {
     LCCollection* col = evt->getCollection( _colName ) ;
 
     // this will only be entered if the collection is available
-    const double* e_MaxEnerg = 0.0;
+    double e_MaxEnerg = 0.0;
    // const double* p_MaxEnerg = 0.0;
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
@@ -105,8 +107,8 @@ void EnergyFinder::processEvent( LCEvent * evt ) {
            //_hitmap->Fill(pos[0],pos[1]);
 	   //Instead, you can use the getEnergy() or getMomentum() functions. 
            const double* mom = particle->getMomentum();
-	   const double* energ = particle->getEnergy();
-	   const double* ID = getPDG
+	    double energ = particle->getEnergy();
+	    double ID = particle->getPDG();
 
 	cout << "Energy: " << energ  << endl;
 	cout << "Momentum2 " << mom << endl;
@@ -139,4 +141,3 @@ void EnergyFinder::check( LCEvent * evt ) {
 void EnergyFinder::end(){ 
     _rootfile->Write();
 }
-

@@ -64,10 +64,13 @@ class BeamCalRecon_xy : public Processor {
         std::string _background_event_list;
         int _num_bgd_events_to_read;
         std::string _root_file_name;
+	
+	bool _test_bool;
 
         int _nRun ;
         int _nEvt ;
 	double _max_radius;
+
 } ;
 
 #endif

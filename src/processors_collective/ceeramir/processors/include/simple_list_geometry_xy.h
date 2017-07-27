@@ -16,6 +16,9 @@ namespace scipp_ilc {
         extern int _LastRing;
         extern std::unordered_map<int,surrounding_ids*>* _pixel_graph;
 
+	//	extern const bool _polar_coord_ID;
+	extern bool _polar_coord_ID;
+
         int getID(double x, double y);
         void get_pixel_center(int ID, double& x, double& y);
         void initialize_geometry(std::string geom_file);

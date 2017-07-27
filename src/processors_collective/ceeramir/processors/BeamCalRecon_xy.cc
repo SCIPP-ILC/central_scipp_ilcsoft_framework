@@ -64,11 +64,14 @@ static TFile* _rootfile;
 static TProfile* _radeff;
 static int _detected_num = 0;
 static int _test_num = 0;
+
+
 //static TH2F* _hitmap_bgd;
 //static TH2D* _hitmap_bgd;
 static TProfile2D* _hitmap_bgd;
 static TProfile2D* _hitmap_zeros;
 static TProfile2D* _test_slice;
+static TProfile2D* _hitmap_signal_electrons;
 
 static TH1F* _rad0hits;
 static TH1F* _rad1hits;
@@ -106,6 +109,14 @@ static unordered_map<pair<float,float>,double>* _zeros_map;
 //auto _t1 = Clock::now();
 //auto _t2 = Clock::now();
 
+
+//const bool _polar_coord_ID = true;
+
+//const bool scipp_ilc::simple_list_geometry_xy::_polar_coord_ID = true;
+//scipp_ilc::beamcal_recon_xy::
+
+bool _test_bool;
+bool _polar_coord_ID;
 
 BeamCalRecon_xy::BeamCalRecon_xy() : Processor("BeamCalRecon_xy") {
     // modify processor description
@@ -176,6 +187,8 @@ void BeamCalRecon_xy::init() {
     _hitmap_bgd = new TProfile2D("hitmap_bgd","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _hitmap_zeros = new TProfile2D("hitmap_zeros","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
     _test_slice = new TProfile2D("hitmap_slice","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
+    _hitmap_signal_electrons = new TProfile2D("hitmap_es","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
+
     //    _c2 = new TCanvas("c2","c2",300,300);
     _c1 = new TCanvas("c1","c1",600,400);
 
@@ -310,6 +323,7 @@ void BeamCalRecon_xy::init() {
     //    _t1 = Clock::now();
 
     //Load up all the bgd events, and initialize the reconstruction algorithm.
+
     scipp_ilc::beamcal_recon_xy::initialize_beamcal_reconstructor(_beamcal_geometry_file_name, _background_event_list, _num_bgd_events_to_read);
 
     _max_radius = 0.0;
@@ -327,7 +341,10 @@ void BeamCalRecon_xy::processRunHeader( LCRunHeader* run) {
 void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     //Make sure we are using an electron that actually hits the Positive BeamCal
     //  _hitmap_bgd->Fill
+  _polar_coord_ID = true;
+  _test_bool = true;
 
+  cout << " BeamCal Recon test_bool: " << _test_bool << endl;
     MCParticle* electron = NULL;
     bool detectable_electron = scipp_ilc::get_detectable_signal_event(signal_event,electron);
     
@@ -341,6 +358,7 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     double radius_t,phi_t;
     scipp_ilc::cartesian_to_polar(endx_t,endy_t,radius_t,phi_t);
     _rad0hits->Fill(radius_t,1);
+    _hitmap_signal_electrons->Fill(endx_t,endy_t,1);
 
     if(radius_t > _max_radius){
       _max_radius = radius_t;

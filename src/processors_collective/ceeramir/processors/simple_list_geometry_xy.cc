@@ -11,9 +11,10 @@
 
 #include "polar_coords.h"
 #include "include/simple_list_geometry_xy.h"
+#include "include/BeamCalRecon_xy.h"
 
 using namespace std;
-
+extern bool _test_bool;
 namespace scipp_ilc {
     namespace beamcal_recon_xy {
         //static int _LastRing;
@@ -22,6 +23,7 @@ namespace scipp_ilc {
         //static float* _ring_to_radius_table;
         //static short* SectorCountTable;
 
+      //      const bool _polar_coord_ID = true;
       int _LastRing = 56;
       static float _sector_offset = 0.05;
       static float _ring_to_radius_table[] = {3.5, 7.0, 10.5, 14.0, 17.5,
@@ -163,9 +165,13 @@ namespace scipp_ilc {
          * given cartesian coordinates.
          */
         int getID(double x, double y) {
-	  bool polar_coords = true;
+	  cout << "test: " << _test_bool << endl;
+	  bool _polar_coords = true;
+	  //	  if(!_polar_coord_ID){
+	  //	    cout << "******** um *******" <<endl;
+	  //	  }
 
-	  if(polar_coords){
+	  if(_polar_coords){
 
 	    double r,phi;
 	    scipp_ilc::cartesian_to_polar(x,y,r,phi);

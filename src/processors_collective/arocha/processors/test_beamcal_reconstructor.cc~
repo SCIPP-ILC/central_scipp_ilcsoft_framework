@@ -100,11 +100,13 @@ namespace scipp_ilc {
          *
          */
         static void pixelate_beamcal(lcio::LCEvent* event, pixel_map* new_pixels) {
+	    cout << "Layers extension...\n";
+
             double dim = _cellsize / ( _spreadfactor );
             double Ediv = (_spreadfactor * _spreadfactor);
 
             unsigned int layer_min = 9;
-            unsigned int layer_max = 39;
+            unsigned int layer_max = 29;
 
             lcio::LCCollection* col = event->getCollection("BeamCalHits") ;
             if( col != NULL ){
