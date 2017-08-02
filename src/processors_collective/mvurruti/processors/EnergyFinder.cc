@@ -29,7 +29,7 @@
 // ----- include for verbosity dependend logging ---------
 #include "marlin/VerbosityLevels.h"
 
-
+#include "polar_coords.h"
 
 using namespace lcio;
 using namespace marlin;
@@ -59,9 +59,9 @@ void EnergyFinder::init() {
 
     _rootfile = new TFile(_root_file_name.c_str(),"RECREATE");
     _hitmap = new TH2F("hitmap","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);
-    _energy_e = new TH1D("_energy_e","Electron Energies",125,0.0,250.0);
-    _energy_p = new TH1D("_energy_p","Positron Energies",125,0.0,250.0);
-    _energy_rad = new TH2D("energy_rad","Energy versus Radius",125,0.0,250.0,125,0.0,250.0);
+    _energy_e = new TH1D("_energy_e","Electron Energies",125,0.0,260.0);
+    _energy_p = new TH1D("_energy_p","Positron Energies",125,0.0,260.0);
+    _energy_rad = new TH2D("energy_rad","Energy versus Radius",125,0.0,2.6,125,0.0,260.0);
 
     // usually a good idea to
     //printParameters() ;
@@ -111,10 +111,9 @@ void EnergyFinder::processEvent( LCEvent * evt ) {
            const double* mom = particle->getMomentum();
 	    double energ = particle->getEnergy();
 	    double ID = particle->getPDG();
-	    double rad = sqrt(pow(mom[0],2) + pow(mom[1],2));
-
-	cout << "Energy: " << energ  << endl;
-	//cout << "Momentum2 " << mom << endl;
+	//    double rad = sqrt(pow(mom[0],2) + pow(mom[1],2));
+	    double radius,phi;
+	    scipp_ilc::cartesian_to_polar(mom[0],mom[1],radius,phi);
 
 
 	
@@ -131,13 +130,26 @@ void EnergyFinder::processEvent( LCEvent * evt ) {
 }
 }
 	
-	_energy_rad->Fill(energ,rad);
+	_energy_rad->Fill(radius,energ);
 
 
 	   //And let's go ahead and print the momentum just to make sure this is working. Notice that once I define a momentum array (as I did above),
 	   //I can refer to each component of this array using index notation (i.e. mom[0] is the x-momentum)
-	   cout << "Momentum: [" << mom[0] << ", " << mom[1] << ", " << mom[2] << "]" << endl; 	
-        } 
+	
+
+	 if(hitIndex%10) {	
+		
+		cout << "Energy: " << energ << endl;  
+
+		cout << "Momentum: [" << mom[0] << ", " << mom[1] << ", " << mom[2] << "]" << endl; 	
+       
+	}
+
+
+
+
+
+	 } 
     }
 cout << "Finished Event " << _nEvt << endl;
     _nEvt ++ ;

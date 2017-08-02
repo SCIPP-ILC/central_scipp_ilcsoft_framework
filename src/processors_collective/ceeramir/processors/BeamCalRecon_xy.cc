@@ -344,7 +344,8 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
   _polar_coord_ID = true;
   _test_bool = true;
 
-  cout << " BeamCal Recon test_bool: " << _test_bool << endl;
+  //  cout << " BeamCal Recon test_bool: " << _test_bool << endl;
+
     MCParticle* electron = NULL;
     bool detectable_electron = scipp_ilc::get_detectable_signal_event(signal_event,electron);
     

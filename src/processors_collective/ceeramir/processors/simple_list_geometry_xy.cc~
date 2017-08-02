@@ -14,7 +14,7 @@
 #include "include/BeamCalRecon_xy.h"
 
 using namespace std;
-
+extern bool _test_bool;
 namespace scipp_ilc {
     namespace beamcal_recon_xy {
         //static int _LastRing;

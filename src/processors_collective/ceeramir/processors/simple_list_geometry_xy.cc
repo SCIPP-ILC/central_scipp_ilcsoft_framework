@@ -165,7 +165,9 @@ namespace scipp_ilc {
          * given cartesian coordinates.
          */
         int getID(double x, double y) {
-	  cout << "test: " << _test_bool << endl;
+	  //	  cout << "test: " << _test_bool << endl;
+
+
 	  bool _polar_coords = true;
 	  //	  if(!_polar_coord_ID){
 	  //	    cout << "******** um *******" <<endl;
