@@ -73,16 +73,16 @@ static TProfile2D* _hitmap_zeros;
 static TProfile2D* _test_slice;
 static TProfile2D* _hitmap_signal_electrons;
 
-static TH1F* _rad0hits;
-static TH1F* _rad1hits;
-static TH1F* _rad2hits;
+static TH1F* _1DRadHitsSigE_wCut;
+static TH1F* _1DRadHitsSigE_wBGD;
+static TH1F* _1DRadHitsSigE_wDiv;
 
 static TH2F* _hlego;
 static TH2F* _hlego_zeros;
 static TH2F* _hlego_inefficiency;
 static TH2F* _hlego_test;
 
-static TH2I* _h2;
+//static TH2I* _h2;
 static TH2F* _hlego_pol1;
 static TH2F* _hlego_pol2;
 static TH2F* _hlego_pol3;
@@ -192,14 +192,13 @@ void BeamCalRecon_xy::init() {
     //    _c2 = new TCanvas("c2","c2",300,300);
     _c1 = new TCanvas("c1","c1",600,400);
 
-    _rad0hits = new TH1F("rad0hits","Radial Hits",150,0,300);
-    _rad1hits = new TH1F("rad1hits","Radial Hits",190,0,140);
-    _rad2hits = new TH1F("rad2hits","Radial Hits",190,0,140);
+    _1DRadHitsSigE_wCut = new TH1F("radHitsWCut","Radial eHits",150,0,300);
+    _1DRadHitsSigE_wBGD = new TH1F("radHitsWBgd","Radial eHits",150,0,300);
+    _1DRadHitsSigE_wDiv = new TH1F("radHitsWDiv","Radial eHits",150,0,300);
 
-    PlotTH1F(_rad0hits);
-    PlotTH1F(_rad1hits);
-    PlotTH1F(_rad2hits);
-
+    PlotTH1F(_1DRadHitsSigE_wCut);
+    PlotTH1F(_1DRadHitsSigE_wBGD);
+    PlotTH1F(_1DRadHitsSigE_wDiv);
 
     Double_t theta[8];
     Double_t radius[8];
@@ -343,50 +342,35 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     //  _hitmap_bgd->Fill
   _polar_coord_ID = true;
   _test_bool = true;
-
   //  cout << " BeamCal Recon test_bool: " << _test_bool << endl;
 
     MCParticle* electron = NULL;
     bool detectable_electron = scipp_ilc::get_detectable_signal_event(signal_event,electron);
-    
-    double electron_energy_t = electron->getEnergy();
-    const double* endpoint_t = electron->getEndpoint();
-    double endx_t = (endpoint_t[0] - 0.007*endpoint_t[2]);
-    double endy_t = endpoint_t[1];
-    
-    //    cout << "electron energy: " <<  electron_energy_t << endl;
-    //    cout << "electron position, x:" << endx_t << ", y:" << endy_t << endl;
-    double radius_t,phi_t;
-    scipp_ilc::cartesian_to_polar(endx_t,endy_t,radius_t,phi_t);
-    _rad0hits->Fill(radius_t,1);
-    _hitmap_signal_electrons->Fill(endx_t,endy_t,1);
-
-    if(radius_t > _max_radius){
-      _max_radius = radius_t;
-    }
-
     if ( not detectable_electron ) return;
 
     double electron_energy = electron->getEnergy();
-
     //Get the radius at which the signal electron hit
     const double* endpoint = electron->getEndpoint();
     double end_x = (endpoint[0] - 0.007*endpoint[2]);
     double end_y = endpoint[1];
     double endx = end_x;
     double endy = end_y;
-
     double radius,phi;
     scipp_ilc::cartesian_to_polar(end_x,end_y,radius,phi);
-    _rad1hits->Fill(radius,detectable_electron);
+
+    //2D hitmap with ring at about 60mm
+    _hitmap_signal_electrons->Fill(endx,endy,1);
+    _1DRadHitsSigE_wCut->Fill(radius,detectable_electron);
+    if(radius > _max_radius){
+      _max_radius = radius;
+    }
 
     //Perform the reconstrunction algorithm, determine if the algorithm
     //detected the electron.
     scipp_ilc::beamcal_recon_xy::beamcal_cluster* signal_cluster;
     signal_cluster = scipp_ilc::beamcal_recon_xy::reconstruct_beamcal_event(signal_event);
     bool detected = signal_cluster->exceeds_sigma_cut;
-
-    _rad2hits->Fill(radius,detected);
+    _1DRadHitsSigE_wBGD->Fill(radius,detected);
     //      cout << "******************************************************************" << endl;
     //      cout << "detected:  " << detected<< "        x-y: "<< endx << "\t" <<endy << endl;
     //      cout << "******************************************************************" << endl;
