@@ -1,0 +1,24 @@
+import plot
+import sys
+
+
+hitmiss_files = [
+    "hitmiss_cm/aa.root",
+    "hitmiss_cm/a.root",
+    "hitmiss_cm/z.root",
+    "hitmiss_lab/z.root",
+    "hitmiss_lab/a.root",
+    "hitmiss_lab/aa.root",
+    ]
+names = [
+    ("hh", 3),
+    ("hm", 2),
+    ("mm", 4),
+    ]
+names = [
+    ("mm", 4),
+    ("hm", 2),
+    ("hh", 3),
+    ]
+
+filenames = plot.scatterPlots(hitmiss_files, names)

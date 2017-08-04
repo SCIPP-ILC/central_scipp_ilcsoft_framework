@@ -22,6 +22,7 @@
 #include <sstream>
 #include <unordered_map>
 #include <cmath>
+#include <vector>
 
 #include "BeamCalRecon_xy.h"
 #include "scipp_ilc_utilities.h"
@@ -57,17 +58,17 @@ using namespace lcio;
 using namespace marlin;
 using namespace std;
 
-
 BeamCalRecon_xy BeamCalRecon_xy;
 
 static TFile* _rootfile;
 static TProfile* _radeff;
 static int _detected_num = 0;
 static int _test_num = 0;
+static int _LEGObins;
+static int _POLARbins;
+static int _1DRadBin;
 
-
-//static TH2F* _hitmap_bgd;
-//static TH2D* _hitmap_bgd;
+//static TH2F* _hitmap_bgd; //static TH2D* _hitmap_bgd;
 static TProfile2D* _hitmap_bgd;
 static TProfile2D* _hitmap_zeros;
 static TProfile2D* _test_slice;
@@ -84,13 +85,8 @@ static TH2F* _hlego_test;
 
 //static TH2I* _h2;
 static TH2F* _hlego_pol1;
-static TH2F* _hlego_pol2;
-static TH2F* _hlego_pol3;
-static TH2F* _hlego_pol4;
-
-
 static TH2D* _hcol1;
-
+static TH2F* _hcol1f;
 //static TGraphPolar* _hlegoo;
 
 //static TH2F* _hlego_var;
@@ -105,18 +101,27 @@ static unordered_map<pair<float,float>,double>* _all_map;
 static unordered_map<pair<float,float>,double>* _zeros_map;
 //vector<pair<float,float>> bgd_plot_xy;
 
+//std::vector<pair<float,float>>* _radius_theta_wCut;
+//std::vector<pair<float,float>>* _radius_theta_wBgd;
+std::vector<int>* _radius_theta_wCut;
+std::vector<int>* _radius_theta_wBgd;
+int _arr_width = 8;
+int _arr_height = 8;
+int _RadTheta_wCut[8][8]={0};
+int _RadTheta_wBgd[8][8]={0};
+double rad_array [8]={20.0,38.50,57.0,75.5,94.0,112.50,131.0,150.0};
+double phi_array  [8]={45.0,90.0,135.0,180.0,225.0,270.0,315.0,360.0};
+double _min_radius = 100.0;
 
 //auto _t1 = Clock::now();
 //auto _t2 = Clock::now();
 
-
 //const bool _polar_coord_ID = true;
-
 //const bool scipp_ilc::simple_list_geometry_xy::_polar_coord_ID = true;
 //scipp_ilc::beamcal_recon_xy::
-
 bool _test_bool;
 bool _polar_coord_ID;
+
 
 BeamCalRecon_xy::BeamCalRecon_xy() : Processor("BeamCalRecon_xy") {
     // modify processor description
@@ -131,15 +136,7 @@ BeamCalRecon_xy::BeamCalRecon_xy() : Processor("BeamCalRecon_xy") {
 }
 
 
-/*
-void BeamCalRecon_xy::RootPlotTitle(stringstream s1, string ){
-    s1.str("");
-}
- */
-
-
-void BeamCalRecon_xy::PlotTH2F(TH2F* graph){                              // This function edits a root plot passed from init
-
+void BeamCalRecon_xy::PlotTH2F(TH2F* graph, stringstream& stream, string title, int bins){       // This function edits a root plot passed from init
   graph->GetXaxis()->SetTitle("X axis (mm)");
   graph->GetYaxis()->SetTitle("Y axis (mm)");
   graph->GetZaxis()->SetTitle("Efficiency");
@@ -151,8 +148,13 @@ void BeamCalRecon_xy::PlotTH2F(TH2F* graph){                              // Thi
   graph->GetXaxis()->SetTitleOffset(1.4);
   graph->GetYaxis()->SetTitleOffset(1.6);
 
-  //  _c1->SetStatX(0.15);
+  stream.str("");
+  /*    s1 <<  "LEGO 1s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";  */
+  stream << title << _num_bgd_events_to_read << "evts," << bins << "bin" ;
+  const char* ExpTitle = stream.str().c_str();
+  graph->SetTitle(ExpTitle);
 
+  //  _c1->SetStatX(0.15);
   //  graph->SetTheta(90);
   /* 
      gStyle->SetOptStat(1111111);            // Set stat options
@@ -161,7 +163,6 @@ void BeamCalRecon_xy::PlotTH2F(TH2F* graph){                              // Thi
      gStyle->SetStatW(0.4);                  // Set width of stat-box (fraction of pad size)
      gStyle->SetStatH(0.2);                  // Set height of stat-box (fraction of pad size)
   */
-
   //  graph->SetPhi(60);
   //  TPaveStats *st = (TPaveStats*)graph->FindObject("stats");
   //  st->SetX1NDC(0.0);
@@ -169,7 +170,8 @@ void BeamCalRecon_xy::PlotTH2F(TH2F* graph){                              // Thi
   //    gStyle->SetOptStat(0);
 }
 
-void BeamCalRecon_xy::PlotTH1F(TH1F* graph){                              // This function edits a root plot passed from init 
+
+void BeamCalRecon_xy::PlotTH1F(TH1F* graph, stringstream& stream, string title){                // This function edits a root plot passed from init 
   graph->GetXaxis()->SetTitle("Radius (mm)");
   graph->GetYaxis()->SetTitle("e Count");
   graph->GetXaxis()->CenterTitle();
@@ -177,7 +179,47 @@ void BeamCalRecon_xy::PlotTH1F(TH1F* graph){                              // Thi
   graph->GetXaxis()->SetTitleOffset(1.0);
   graph->GetYaxis()->SetTitleOffset(1.0);
 
+  stream.str("");
+  stream << title << _num_bgd_events_to_read <<"bgd evts"<< "," << _1DRadBin << "bin";
+  const char* ExpTitle = stream.str().c_str();
+  graph->SetTitle(ExpTitle);
 }
+
+
+void BeamCalRecon_xy::FillRadiusThetaTable(bool truth_value, double radius, double phi_in_radian){
+  int one_or_zero = 0;
+  if(truth_value){
+    one_or_zero = 1;
+  }
+
+  //  cout << "printing one: " << one_or_zero << endl;
+  double phi = phi_in_radian * 180.0 / M_PI;
+  
+  int rad_index = 0;
+  int phi_index = 0;
+  bool rad_bool = true;
+  bool phi_bool = true;
+  
+  for ( int i = 0; i <= 7; i++ ){
+    //    cout << "i = "
+    if(rad_bool && (radius <= rad_array[i])){
+      rad_bool = false;
+      rad_index = i;
+    }
+    if(phi_bool && (phi <= phi_array[i] )){
+      phi_bool = false;
+      phi_index = i;
+    }
+  }
+
+  //  cout << "before: " << _RadTheta_wCut[rad_index][phi_index];
+  _RadTheta_wCut[rad_index][phi_index]+=1;
+  //  cout << "\t after" <<   _RadTheta_wCut[rad_index][phi_index] << endl;
+  _RadTheta_wBgd[rad_index][phi_index]+=one_or_zero;
+
+
+}
+
 
 void BeamCalRecon_xy::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
@@ -192,13 +234,19 @@ void BeamCalRecon_xy::init() {
     //    _c2 = new TCanvas("c2","c2",300,300);
     _c1 = new TCanvas("c1","c1",600,400);
 
-    _1DRadHitsSigE_wCut = new TH1F("radHitsWCut","Radial eHits",150,0,300);
-    _1DRadHitsSigE_wBGD = new TH1F("radHitsWBgd","Radial eHits",150,0,300);
-    _1DRadHitsSigE_wDiv = new TH1F("radHitsWDiv","Radial eHits",150,0,300);
+    _1DRadBin = 150;
+    //    _1DRadHitsSigE_wCut = new TH1F("radHitsWCut","Radial eHits",150,0,300);
+    _1DRadHitsSigE_wCut = new TH1F("radHitsWCut","",150,0,300);
+    _1DRadHitsSigE_wBGD = new TH1F("radHitsWBgd","",150,0,300);
+    _1DRadHitsSigE_wDiv = new TH1F("radHitsWDiv","",150,0,300);
 
-    PlotTH1F(_1DRadHitsSigE_wCut);
-    PlotTH1F(_1DRadHitsSigE_wBGD);
-    PlotTH1F(_1DRadHitsSigE_wDiv);
+
+    std::stringstream s1;
+
+    PlotTH1F(_1DRadHitsSigE_wCut,s1,"eHit v rad (wCut),");
+    PlotTH1F(_1DRadHitsSigE_wBGD,s1,"eHit v rad (wBgd),");
+    PlotTH1F(_1DRadHitsSigE_wDiv,s1,"eHit v rad (wDiv),");
+
 
     Double_t theta[8];
     Double_t radius[8];
@@ -207,122 +255,87 @@ void BeamCalRecon_xy::init() {
 
     /*
     _hlegoo = new TgraphPolar(8, theta, radius, e_theta, e_radius);
-
     _hlegoo->SetMarkerStyle(20);
     _hlegoo->SetMarkerSize(20);
     _hlegoo->SetMarkerColor(20);
     _hlegoo->SetLineColor(20);
     _hlegoo->SetLineWidth(20);
-
     _h2 = new TH1I("h2","Gaus",100,-5,5);
     _h2->GetXaxis()->SetTitle("Standard deviation #sigma");
     _h2->GetYaxis()->SetTitle("dN/d#sigma");
-
     */
 
-    int LEGObins = 60;
-    int POLARbins = 40;
+    _LEGObins = 60;
+    _POLARbins = 40;
+
     const Int_t NBINS = 68;
     //    static float edges[] = { -199.50, -189.57, -181.02, -172.60,
-    Double_t _var_edges[NBINS + 1] = { -199.50, -189.57, -181.02, -172.60,
+    Double_t _var_edges[NBINS + 1] = { 
+                           -199.50,    -189.57,    -181.02,    -172.60,
 			   -164.32,    -156.17,    -148.16,    -140.30,    -132.57,
 			   -125.00,    -117.58,    -110.30,    -103.19,    -96.23,
-			   -89.44,    -82.82,    -76.37,    -70.09,    -64.00,
-			   -58.09,    -52.38,    -46.87,    -41.57,    -36.48,
-			   -31.62,    -27.00,    -22.63,    -18.52,    -14.70,
-			   -11.18,    -8.00,    -5.20,    -2.83,    -1.00,
-			   0.00,    1.00,    2.83,    5.20,    8.00,
-			   11.18,    14.70,    18.52,    22.63,    27.00,
-			   31.62,    36.48,    41.57,    46.87,    52.38,
-			   58.09,    64.00,    70.09,    76.37,    82.82,
-			   89.44,    96.23,    103.19,    110.30,    117.58,
-			   125.00,    132.57,    140.30,    148.16,    156.17,
-			   164.32, 172.60, 181.02, 189.57, 199.50};
-
-    std::stringstream s1;
-    string bgd_events = "bgd,";    
-
-    // ------ LEGO hits GRAPH ------
-    s1 << "LEGO 1s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
-    const char* LEGOtitle = s1.str().c_str();
-    _hlego = new TH2F("hlego", LEGOtitle ,LEGObins ,-150,150,LEGObins,-150,150);
-    PlotTH2F(_hlego);
-    // ------ end LEGO GRAPH ------
-
-    // ------ POLAR GRAPH ------
-    s1.str("");
-    s1 << "LEGO 1s,"<< _num_bgd_events_to_read << bgd_events << LEGObins << "bin";
-    const char* LEGOtitle2 = s1.str().c_str();
-    _hlego_pol1 = new TH2F("hlego_pol1", LEGOtitle2 ,POLARbins ,-150,150,POLARbins,-150,150);
-    PlotTH2F(_hlego_pol1);
-    // ------ end POLAR GRAPH ------
-
-    // ------ LEGO non-hits GRAPH ------
-    s1.str("");
-    s1 << "LEGO 0s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
-    const char* LEGOtitleZeros = s1.str().c_str();
-    _hlego_zeros = new TH2F("hlego_0s", LEGOtitleZeros, LEGObins,-150,150,LEGObins,-150,150);
-    PlotTH2F(_hlego_zeros);
-    // ------ end LEGO non-hits GRAPH ------
+			   -89.44,     -82.82,     -76.37,     -70.09,     -64.00,
+			   -58.09,     -52.38,     -46.87,     -41.57,     -36.48,
+			   -31.62,     -27.00,     -22.63,     -18.52,     -14.70,
+			   -11.18,     -8.00,      -5.20,      -2.83,      -1.00,
+			   0.00,        1.00,       2.83,       5.20,       8.00,
+			   11.18,       14.70,      18.52,      22.63,      27.00,
+			   31.62,       36.48,      41.57,      46.87,      52.38,
+			   58.09,       64.00,      70.09,      76.37,      82.82,
+			   89.44,       96.23,      103.19,     110.30,     117.58,
+			   125.00,      132.57,     140.30,     148.16,     156.17,
+    			   164.32,      172.60,     181.02,     189.57,     199.50};
 
 
-    // ------ LEGO inefficiency GRAPH ------
-    s1.str("");
-    s1 << "LEGO,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
-    const char* LEGOtitleInefficiency = s1.str().c_str();
-    _hlego_inefficiency = new TH2F("hlego_inefficiency", LEGOtitleInefficiency, LEGObins,-150,150,LEGObins,-150,150);
-    //    _hlego_inefficiency_var = new TH2F("hlego_inefficiency_var", LEGOTitleInefficiency, 67, _var_edges, 67, _var_edges);
-    PlotTH2F(_hlego_inefficiency);
+    //    string bgd_events = "bgd,";
 
-    s1.str("");
-    s1 << "LEGO , test"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
-    const char* LEGOTestTitle = s1.str().c_str();
-    _hlego_test = new TH2F("hlego_test", LEGOTestTitle ,LEGObins,-150,150,LEGObins,-150,150);
-    //    _hlego_test_var = new TH2F("hlego_test_var", LEGOTestTitle, 67, _var_edges, 67, _var_edges);
-    PlotTH2F(_hlego_test);
-    // ------ end LEGO inefficiency GRAPH ------
+    _hlego = new TH2F("hlego", "" ,_LEGObins ,-150,150,_LEGObins,-150,150);    // ------ LEGO hits GRAPH ------
+    _hlego_zeros = new TH2F("hlego_0s", "", _LEGObins,-150,150,_LEGObins,-150,150);
+    _hlego_inefficiency = new TH2F("hlego_inefficiency", "", _LEGObins,-150,150,_LEGObins,-150,150);
+    _hlego_test = new TH2F("hlego_test", "",_LEGObins,-150,150,_LEGObins,-150,150);
+    _hlego_pol1 = new TH2F("hlego_pol1", "" ,_POLARbins ,-150,150,_POLARbins,-150,150);
+    // _hlego_var & _hlego_zeros are an x-y grid whose bins increase with x or y values
+    // the problem is that at low-x high-y I get rectangles, also at low-y high-x
+    //    _hlego_var = new TH2F("hlego_var", "", 67, _var_edges, 67, _var_edges);
+    //    _hlego_zeros_var = new TH2F("hlego_0s_var", LEGOtitlezVar, 67, _var_edges, 67, _var_edges);
 
+    PlotTH2F(_hlego,s1,"LEGO 1s,",_LEGObins);
+    PlotTH2F(_hlego_zeros,s1,"LEGO 0s,",_LEGObins);    // ------ LEGO non-hits GRAPH ------
+    PlotTH2F(_hlego_inefficiency,s1,"LEGO ineff,",_LEGObins);
+    PlotTH2F(_hlego_test,s1,"LEGO test,",_LEGObins);
+    PlotTH2F(_hlego_pol1,s1,"LEGO1sPol,",_POLARbins);
+    //    PlotTH2F(_hlego_var,s1,"LEGO 1sVar,",67);
+    //    PlotTH2F(_hlego_zeros_var,s1,"LEGO 0sVar,",67);
 
-    /*
-      // ------ Variable binning ------
-    s1.str("");
-    s1 << "LEGO 1s, var"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
-    const char* LEGOtitleVar = s1.str().c_str();
-    _hlego_var = new TH2F("hlego_var", LEGOtitleVar, 67, _var_edges, 67, _var_edges);
-
-    s1.str("");
-    s1 << "LEGO 0s, var"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";
-    const char* LEGOtitlezVar = s1.str().c_str();
-    _hlego_zeros_var = new TH2F("hlego_0s_var", LEGOtitlezVar, 67, _var_edges, 67, _var_edges);
-     */
 
 
     //*********************************************************************************
+    // here I'm trying to plot in polar
     //    TCanvas *c1 = new TCanvas("c1","c1",600,400);
     //    TH2F *_hcol1 = new TH2F("hcol1","Option COLor combined with POL",40,-4,4,40,-4,4);
-    _hcol1 = new TH2D("hcol1","Option COLor combined with POL",40,-150,150,40,-150,150);
+    //_hcol1 = new TH2D("hcol1","Option COLor combined with POL",40,-4,4,40,-4,4);
+    //    _hcol1 = new TH2D("hcol1","Option COLor combined with POL",40,-150,150,40,-150,150);
+    _hcol1 = new TH2D("hcol1","Option COLor combined with POL",1,-150,150,1,-150,150);
+
+    //    _hcol1f = new TH2F("hcol1f","Option COLor combined with POL",40,-150,150,40,-150,150);
+    _hcol1f = new TH2F("hcol1f","Option COLor combined with POL",1,-150,150,1,-150,150);
+    //will not work    _hcol1f = new TH2F("hcol1f","Option COLor combined with POL",40,0.0,2.0*M_PI,40,0.0,150);
 
     Float_t px, py;
     //    for (Int_t i = 0; i < 25000; i++) {
     //      gRandom->Rannor(px,py);
-
     //    }
     //    gStyle->SetPalette(kBird);
-
     //*********************************************************************************
-
-    //    hcol1->Fill(px,py);
-    //    hcol1->Draw("COLZPOL");
-
+    //   _ hcol1->Fill(px,py);
+    //   _ hcol1->Draw("COLZPOL");
 
     TLegend *legend = new TLegend(0.05,0.05,0.06,0.1);
 
 
-    // ------ clock start ------
-    //    _t1 = Clock::now();
+    //    _t1 = Clock::now();    // ------ clock start ------
 
     //Load up all the bgd events, and initialize the reconstruction algorithm.
-
     scipp_ilc::beamcal_recon_xy::initialize_beamcal_reconstructor(_beamcal_geometry_file_name, _background_event_list, _num_bgd_events_to_read);
 
     _max_radius = 0.0;
@@ -334,7 +347,7 @@ void BeamCalRecon_xy::init() {
 
 void BeamCalRecon_xy::processRunHeader( LCRunHeader* run) { 
 //    _nRun++ ;
-} 
+}
 
 
 void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
@@ -348,21 +361,24 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     bool detectable_electron = scipp_ilc::get_detectable_signal_event(signal_event,electron);
     if ( not detectable_electron ) return;
 
+    //Get the energy at which the signal electron hit
     double electron_energy = electron->getEnergy();
     //Get the radius at which the signal electron hit
     const double* endpoint = electron->getEndpoint();
-    double end_x = (endpoint[0] - 0.007*endpoint[2]);
-    double end_y = endpoint[1];
-    double endx = end_x;
-    double endy = end_y;
+    double endx = (endpoint[0] - 0.007*endpoint[2]);
+    double endy = endpoint[1];
     double radius,phi;
-    scipp_ilc::cartesian_to_polar(end_x,end_y,radius,phi);
+    scipp_ilc::cartesian_to_polar(endx,endy,radius,phi);
 
+    
     //2D hitmap with ring at about 60mm
     _hitmap_signal_electrons->Fill(endx,endy,1);
-    _1DRadHitsSigE_wCut(radius,detectable_electron);
+    _1DRadHitsSigE_wCut->Fill(radius,detectable_electron);
     if(radius > _max_radius){
       _max_radius = radius;
+    }
+    if(radius < _min_radius){
+      _min_radius = radius;
     }
 
     //Perform the reconstrunction algorithm, determine if the algorithm
@@ -371,9 +387,15 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     signal_cluster = scipp_ilc::beamcal_recon_xy::reconstruct_beamcal_event(signal_event);
     bool detected = signal_cluster->exceeds_sigma_cut;
     _1DRadHitsSigE_wBGD->Fill(radius,detected);
-    //      cout << "******************************************************************" << endl;
-    //      cout << "detected:  " << detected<< "        x-y: "<< endx << "\t" <<endy << endl;
-    //      cout << "******************************************************************" << endl;
+
+
+    //make function to write this
+    //    FillRadiusThetaTable(_radius_theta_wCut, detected);
+    //    FillRadiusThetaTable(_radius_theta_wBgd, detected);
+    FillRadiusThetaTable(detected, radius, phi);
+
+    //    vector<pair<float,float>>* _radius_theta_wCut;
+    //    vector<pair<float,float>>* _radius_theta_wBgd;
 
 
     // ------ set up map ------
@@ -391,6 +413,12 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     Float_t px,py;
     px = endx;
     py =endy;
+
+    Float_t px_phi, py_radius;
+    //    px_phi = phi * 180.0 / M_PI;
+    px_phi = phi;
+    py_radius = radius;
+
     //	int ID = scipp_ilc::beamcal_recon_xy::getID(end_x,end_y);
     //	int ID = scipp_ilc::simple_list_geometry_xy::getID(end_x,end_y);
     // ------  map  ------
@@ -408,7 +436,16 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
       _hitmap_bgd->Fill(endx,endy,detected);    //      _hitmap_bgd->Fill(endx,endy);
       _hlego->Fill(endx,endy,detected);
       _hlego_pol1->Fill(px,py);
-      _hcol1->Fill((float_t(px)),(float_t(py)));
+      //      _hcol1->Fill((float_t(px)),(float_t(py)));
+      _hcol1->Fill((float_t(py_radius)),(float_t(px_phi)));
+      _hcol1f->Fill((float_t(px_phi)),(float_t(py_radius)));
+      
+      //      cout << "Phi: "<< px_phi << ",\t Radius: " << py_radius << endl;
+
+      /*      px_phi = 30.0;
+      py_radius = 70.0;
+      _hcol1f->Fill((float_t(px_phi)),(float_t(py_radius)));*/
+
       //      _h2->Fill(electron_energy);
       //      _hlego_var->Fill(endx,endy,detected);
     }else{                                      //Graph of not detected
@@ -427,7 +464,6 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     //    }
     //    (*_all_map)[ID]+= (detected || !detected);
 
-    //    gStyle->SetPalette(kBird);
     _hlego->SetFillColor(kYellow);
     _nEvt++;
     if(_nEvt%100==0){
@@ -441,7 +477,7 @@ void BeamCalRecon_xy::check( LCEvent * evt ){
 }
 
 
-void BeamCalRecon_xy::end(){ 
+void BeamCalRecon_xy::end(){
   // ------ ------
   //  for(auto bit:*_zeros_map){
   //    pair<float,float> ID = bit.first;
@@ -455,10 +491,87 @@ void BeamCalRecon_xy::end(){
   _hlego_test->Add(_hlego);
   _hlego_inefficiency->Divide(_hlego_test);
   */
+
     cout << "\ndetected: " << _detected_num << endl;
     cout << "\n in \'slice\' of beamcal: " << _test_num << endl;
     cout << "max radius: " << _max_radius << endl;
-    
+    cout << "min radius: " << _min_radius << endl;
+
+    cout << "Radius Theta w/ Cut " << _radius_theta_wCut << endl;
+    cout << "Radius Theta w/ Bgd " << _radius_theta_wBgd << endl;
+
+    cout << "2D array \t 7,7: " << _RadTheta_wCut[7][7] << endl;
+
+    double arrr[8][8]={0.0};
+    cout << "2D array " <<  "0,0: " << arrr[0][0] << "\t 5,5: " << arrr[5][5] << endl;
+
+    //    cout << "All map " << _all_map << endl;
+    //    cout << "zeros map " << _zeros_map << endl;
+
+    int ar[9]{1,2,3,4,5,6,7,8,9};
+    cout << "ar " << *ar << endl; //prints the first element of ar
+
+
+    int height = _arr_height;
+    int width = _arr_width;
+
+
+    cout << "\nrad v theta w Cut" << endl;
+    for(int i = 0; i < height; i++){
+      if(i==0){
+	cout << "\t  ";
+	for(int row = 0; row < width; row++){
+	  if(row ==0){
+	    cout << "\t";
+	  }
+	  cout  << phi_array[row] << " ";
+	}
+	cout << endl;
+      }
+      cout << "[" << rad_array[i] << "]: \t" ;
+        for(int j = 0; j < width; j++){
+	  cout << _RadTheta_wCut[i][j] << " " ;
+	  if((i==0)||((i+1)==width)){
+	    cout << "  ";
+	  }
+	}
+	cout << endl;
+    }
+
+
+
+
+    cout << "\nrad v theta w Bgd" << endl;
+    for (int i = 0; i < height; ++i){
+      cout << "[" << i << "]: " ;
+        for (int j = 0; j < width; ++j){
+	    cout << _RadTheta_wBgd[i][j] << " ";
+	}
+	cout << endl;
+    }
+    cout << "**" << endl;
+    for(int i = 0; i < height; i++){
+      if(i==0){
+        cout << "\t  ";
+        for(int row = 0; row < width; row++){
+          if(row ==0){
+            cout << "\t";
+          }
+          cout  << phi_array[row] << " ";
+        }
+        cout << endl;
+      }
+      cout << "[" << rad_array[i] << "]: \t" ;
+      for(int j = 0; j < width; j++){
+	cout << _RadTheta_wBgd[i][j] << " " ;
+	if((i==0)||((i+1)==width)){
+	  cout << "  ";
+	}
+      }
+      cout << endl;
+    }
+
+
     // ------ clock end ------
     //    _t2 = Clock::now();
     //    cout << "*******************this is the end***********************" << endl;

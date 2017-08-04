@@ -5,6 +5,7 @@
 #include "lcio.h"
 #include <string>
 #include <TH2.h>
+#include <vector>
 
 using namespace lcio ;
 using namespace marlin ;
@@ -36,9 +37,12 @@ class BeamCalRecon_xy : public Processor {
         BeamCalRecon_xy() ;
 
 	// Used to edit the LEGO plots
-	virtual void PlotTH2F(TH2F* graph);
+        virtual void PlotTH2F(TH2F* graph, std::stringstream& stream, std::string title, int bins);
+	virtual void PlotTH1F(TH1F* graph, std::stringstream& stream, std::string title);
 
-	virtual void PlotTH1F(TH1F* graph);
+	//	virtual void FillRadiusThetaTable(vector<pair<float,float>>& thisTable, bool one);
+	//	virtual void FillRadiusThetaTable(std::vector& thisTable, bool one);
+
         /** Called at the begin of the job before anything is read.
          * Use to initialize the processor, e.g. book histograms.
          */
@@ -64,6 +68,8 @@ class BeamCalRecon_xy : public Processor {
         std::string _background_event_list;
         int _num_bgd_events_to_read;
         std::string _root_file_name;
+	
+	bool _test_bool;
 
         int _nRun ;
         int _nEvt ;

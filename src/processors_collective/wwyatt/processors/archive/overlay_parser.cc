@@ -1,0 +1,338 @@
+#undef _GLIBCXX_USE_CXX11_ABI
+#define _GLIBCXX_USE_CXX11_ABI 0
+/* 
+ * Ok, so I like C++11. Unfortunately,
+ * Marlin is built with ansi C, so the processor
+ * constructor freaks out about the string that is
+ * passed to it as an argument. The above two lines
+ * fix that issue, allowing our code to be compatible
+ * with ansi C class declarations.
+ * Big thanks to Daniel Bittman for helping me fix this.
+ */
+
+/*
+ * author Christopher Milke
+ * April 5, 2016
+ */
+
+#include "parser.h"
+#include "scipp_ilc_utilities.h"
+#include <iostream>
+
+#include <EVENT/LCCollection.h>
+#include <EVENT/SimCalorimeterHit.h>
+#include <EVENT/MCParticle.h>
+
+#include <TFile.h>
+#include <TH2D.h>
+
+#include <cmath>
+#include <vector>
+#include <map>
+#include <algorithm>
+#include <algorithm>
+// ----- include for verbosity dependend logging ---------
+#include "marlin/VerbosityLevels.h"
+
+
+using namespace lcio;
+using namespace marlin;
+using namespace std;
+
+
+parser parser;
+
+static TFile* _rootfile;
+static int nBhabha=0;
+static int nBase=0;
+static int nTwoPhoton=0;
+static int nCombo=0;
+static int unknown=0;
+static TH1F* _bin;
+
+parser::parser() : Processor("parser") {
+    // modify processor description
+    _description = "Protype Processor" ;
+
+    // register steering parameters: name, description, class-variable, default value
+    registerInputCollection( LCIO::MCPARTICLE, "CollectionName" , "Name of the MCParticle collection"  , _colName , std::string("MCParticle") );
+    
+    registerProcessorParameter( "RootOutputName" , "output file"  , _root_file_name , std::string("output.root") );
+}
+
+void parser::init() { 
+    streamlog_out(DEBUG) << "   init called  " << std::endl ;
+    _rootfile = new TFile("parser.root","RECREATE");
+    _nEvt = 0 ;
+    _bin = new TH1F("bin", "Poisson Distributin of Bhabhas in Overlay", 12, 0, 12);
+    cout << "Sorting each event into independent families (trees) of the given SLCIO file." << endl;
+}
+
+
+void parser::printParticle(MCParticle *p){
+  cout << "id("<< p->getPDG() << ") Energy("<< p->getEnergy() << ") state(" << p->getGeneratorStatus() << ") Parents:Children(" << p->getParents().size() << ":"<< p->getDaughters().size() <<")[";
+  for(auto a: p->getParents()){
+    cout<<a->getPDG()<<",";
+  }
+  cout << "][";
+  for(auto a: p->getDaughters()){
+    cout<<a->getPDG()<<",";
+  }
+  cout << "]" << endl;
+}
+
+//Will loop through and display all the data about all the paticles in the collection.
+void parser::printAllEvents(LCCollection* col){
+  cout << endl << endl << "---------------- New Event, # of particles -> " << col->getNumberOfElements()  << " -----------" << endl;
+  for (int i = 0 ; i < col->getNumberOfElements() ; ++i){
+    MCParticle* hit = dynamic_cast<MCParticle*>(col->getElementAt(i));
+    printParticle(hit);
+  }
+}
+
+void parser::processRunHeader( LCRunHeader* run) { 
+//    _nRun++ ;
+} 
+
+
+/*unsigned int countEvt(Community* trees, string key){
+
+  }*/
+//static bool v = false;
+//Returns number of bhabha events.
+unsigned int parser::countBhabhas(Community* trees){
+  //It says there are 30 items in trees but only loops through one...
+  //Probably something wrong with this pointer syntax.
+  bool v=false; //Verbose Mode
+  int tmp =0;
+  unsigned int bhabhas=0;
+  if(v)cout << endl << "###### This Event has " << trees->size() << " trees #################" << endl;
+  for(const auto tree: *trees){
+    if(v)cout<< endl << "##### The following tree has " << tree->size() << " particles."<< endl;    
+    tmp += tree->size();
+    bool bhabha=true;
+    unsigned int nPositronsElectrons=0;
+    for(const auto hit: *tree){
+      if(v){
+	parser::printParticle(hit);
+      }
+      int id = hit->getPDG();
+      if ( id != 11 && id != -11 && id != 22){
+	bhabha=false;
+      }
+      if (id == 11 || id == -11) ++nPositronsElectrons;
+    }
+    if(bhabha && nPositronsElectrons >= 2){
+      if(v)cout << "This tree had only bhabha particles  particles." << endl;
+      ++bhabhas;
+    }
+  }
+  //  if(v) cout << "There are " << bhabhas << " many bhabhas." << endl;
+  // if(v) cout << "I count " << tmp << " particles." << endl;
+  return bhabhas;
+}
+
+
+
+//Bruce - Add energy of fianl state particles to verify if the particles are the same.
+void parser::processEvent( LCEvent * evt ) { 
+    LCCollection* col = evt->getCollection( _colName );
+    int stat, id =0;
+    if( col != NULL ){
+      //    printAllEvents(col);
+        int nElements = col->getNumberOfElements();
+	Community* trees = getTrees(evt);
+	//        cout << "###### Elements: " << nElements << " ######" << endl;
+	unsigned int bhabhas = countBhabhas(trees);
+	_bin->Fill(bhabhas);
+	if(nElements == 4 && bhabhas == 0) ++nBase;
+	else if(bhabhas > 0){
+	  if(bhabhas == trees->size()-1) ++nBhabha;
+	  else  ++nCombo;
+	}else if(nElements > 4 && bhabhas == 0)++nTwoPhoton;
+	else ++unknown;
+    }
+}
+
+
+void parser::check( LCEvent * evt ) { 
+    // nothing to check here - could be used to fill checkplots in reconstruction processor
+}
+
+
+
+void parser::end(){ 
+  cout << "Number of Empty events: " << nBase << endl;
+  cout << "Number of Bhabha events: " << nBhabha << endl;
+  cout << "Number of Two Photon events: " << nTwoPhoton << endl;
+  cout << "Number of Two Photon & Bhabha events: " << nCombo << endl;
+  cout << "Number of Uknown events: " << unknown << endl;
+  _rootfile->Write();
+}
+
+
+
+//Returns true if the particle arrays are in the same order and have the correct mometum and PDG for each particle.
+bool parser::sameTree(const parser::Family *A, const parser::Family *B){
+  return sameTree(*A, *B);
+}
+
+//Logic to see if the trees are the same.
+bool parser::sameTree(const parser::Family &A, const parser::Family &B){
+  unsigned int similarParticles=0;
+  if(A.size()!=B.size())return false;
+  for(auto a: A){
+    for(auto b: B){
+      if(sameParticle(a,b, false)){
+	++similarParticles;
+	break;
+      }
+    }
+  }
+  bool t=2*similarParticles==A.size()+B.size();
+  cout << "is? " << t << " . " << endl;
+  return 2*similarParticles==A.size()+B.size();
+}
+
+
+//Returns true is the x,y,z momemtums are the same for the two given particles.
+bool parser::sameMomentum(const double* A,const double* B){
+  return A[0]==B[0]&&A[1]==B[1]&&A[2]==B[2];
+}
+
+//Returns True if they are the same particle;
+bool parser::sameParticle(const MCParticle* A,const MCParticle* B, bool checkParents){
+  /*
+   * Test 0: Same reference
+   * Test 1: Compare PGD, GenStat and Momentum
+   * Test 2: Compare Parent's and Children's PGD and Momentum
+   */
+  if(A==B)return true; //Test 0
+  if(A->getPDG() == B->getPDG()&&
+     sameMomentum(A->getMomentum(),B->getMomentum())&&
+     A->getGeneratorStatus() == B->getGeneratorStatus()){
+    if(checkParents){
+      if(sameTree(A->getParents(), B->getParents())&&
+	 sameTree(A->getDaughters(), B->getDaughters()))
+	return true;     //Passed Test 1 : Passed Test 2
+      else return false; //Passed Test 1 : Failed Test 2
+    }else return true;   //Passed Test 1 : Skip   Test 2
+  }else return false;    //Failed Test 1 : Skip   Test 2
+}
+
+//Returns an array of trees, and will remove duplicate trees.
+parser::Community* parser::removeDuplicateTrees(parser::Community* input){
+  parser::Community* output=new parser::Community;
+  for (auto tree: *input){
+    bool add=true;
+    for (auto amp: *output){
+      if(sameTree(amp,tree))add=false;
+    }
+    if(add)output->push_back(tree);
+  }
+  return output;
+}
+
+//Retuns a tree without duplicate paritcles.
+parser::Family* parser::removeDuplicateParticles(parser::Family* input){
+  parser::Family* output = new parser::Family;
+  for (auto particle: *input){
+    bool add=true;
+    for (auto hit: *output)if(sameParticle(particle, hit))add=false;
+    if(add)output->push_back(particle);
+  }
+  return output;
+}
+
+//Removes Particles that have already been checked
+parser::Family* parser::removeTraversed(parser::Family* input, parser::Family* compare){
+  parser::Family* output = new parser::Family;
+  for(auto hit: *input){
+    bool copy = false;
+    for(auto cmp: *compare){
+      if(hit == cmp) copy = true;
+    }
+    if(!copy) output->push_back(hit);
+  }
+  return output;
+}
+
+//Returns true if the Particle is in the Family 
+bool parser::inFamily(MCParticle* particle, parser::Family* fam){
+  for(auto hit: *fam){
+    if(particle==hit) return true;
+  }
+  return false;
+}
+
+//Returns a vector of the parents and children of the given particle.
+parser::Family* parser::getAssociates(MCParticle* particle){
+  parser::Family parents = particle->getParents();
+  parser::Family children=particle->getDaughters();
+  parser::Family* next = new parser::Family;
+  for(auto hit: parents)next->push_back(hit);
+  for(auto hit: children)next->push_back(hit);
+  return next;
+}
+
+//Returns all paritcles recusivley related to all  parents and children.
+parser::Family* parser::traverse(MCParticle* particle, parser::Family* ref){
+  parser::Family* output;
+  if(ref==NULL)output=new parser::Family;
+  else output=ref;
+  if(!inFamily(particle, output))output->push_back(particle);
+  Family* next = getAssociates(particle);
+  next = removeTraversed(next, output);
+  for(auto node: *next){
+    traverse(node,output);
+  }
+  return output;
+}
+
+//Returns a vector of vectors, each child vector is a list of all assiciated particles.
+parser::Community* parser::getTrees(LCEvent *evt, bool v){
+  parser::Community* trees = new parser::Community;
+  int numTrees = 0;
+  LCCollection* col = evt->getCollection( _colName ) ;
+  int id, stat;
+  if( col != NULL ){
+    int nElements = col->getNumberOfElements();
+    Family* history = new Family;
+    for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
+      MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex));
+      if (hit->getGeneratorStatus()!=1 || inFamily(hit, history)) continue;
+      Family* tmp = traverse(hit);
+      trees->push_back(tmp);
+      history->insert(history->begin(), tmp->begin(), tmp->end());
+    }
+    return trees;
+  }
+  return trees;
+}
+
+/*
+
+  if(!containsParticle(obj, all) && !containsParticle(obj,all)){
+    //Not in tree
+    all->push_back(obj);
+    all->push_back(associate);
+    parser::Family* arr = new parser::Family;
+    arr->push_back(obj);
+    arr->push_back(associate);
+    trees=push_back(arr);
+  }else{
+    for(auto tree: *trees){
+      bool i = containsParticle(obj, tree);
+      bool j = containsParticle(associate, tree);
+      if(i && j){
+	return;
+      }else if(i){
+	all->push_back(obj);
+	tree->push_back(obj);
+      }else{
+	all->push_back(associate);
+	tree->push_back(associate);
+      }
+    }
+  }
+*/

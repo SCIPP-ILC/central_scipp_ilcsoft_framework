@@ -105,7 +105,7 @@ namespace scipp_ilc {
             double dim = _cellsize / ( _spreadfactor );
             double Ediv = (_spreadfactor * _spreadfactor);
 
-            unsigned int layer_min = 10;
+            unsigned int layer_min = 14;
             unsigned int layer_max = 29;
 
             lcio::LCCollection* col = event->getCollection("BeamCalHits") ;
