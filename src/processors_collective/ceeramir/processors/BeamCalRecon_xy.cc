@@ -105,11 +105,14 @@ static unordered_map<pair<float,float>,double>* _zeros_map;
 //std::vector<pair<float,float>>* _radius_theta_wBgd;
 std::vector<int>* _radius_theta_wCut;
 std::vector<int>* _radius_theta_wBgd;
-int _arr_width = 8;
-int _arr_height = 8;
-int _RadTheta_wCut[8][8]={0};
-int _RadTheta_wBgd[8][8]={0};
-double rad_array [8]={20.0,38.50,57.0,75.5,94.0,112.50,131.0,150.0};
+const int _arr_width = 8;
+const int _arr_height = 11;
+int _RadTheta_wCut[8][11]={0};
+int _RadTheta_wBgd[8][11]={0};
+//double rad_array [8]={20.0,38.50,57.0,75.5,94.0,112.50,131.0,150.0};
+//double rad_array [_arr_height]={20.0,38.50,57.0,75.5,94.0,112.50,131.0,150.0};
+//double rad_array [11]={20.0,32.50,45.0,57.5,70.0,82.5,95.0,107.5,120.0,132.5,150.0};
+double rad_array [11]={20.0,32.50,45.0,57.5,70.0,82.5,95.0,107.5,120.0,132.5,150.0};
 double phi_array  [8]={45.0,90.0,135.0,180.0,225.0,270.0,315.0,360.0};
 double _min_radius = 100.0;
 
@@ -137,87 +140,82 @@ BeamCalRecon_xy::BeamCalRecon_xy() : Processor("BeamCalRecon_xy") {
 
 
 void BeamCalRecon_xy::PlotTH2F(TH2F* graph, stringstream& stream, string title, int bins){       // This function edits a root plot passed from init
-  graph->GetXaxis()->SetTitle("X axis (mm)");
-  graph->GetYaxis()->SetTitle("Y axis (mm)");
-  graph->GetZaxis()->SetTitle("Efficiency");
+    graph->GetXaxis()->SetTitle("X axis (mm)");
+    graph->GetYaxis()->SetTitle("Y axis (mm)");
+    graph->GetZaxis()->SetTitle("Efficiency");
 
-  graph->GetXaxis()->CenterTitle();
-  graph->GetYaxis()->CenterTitle();
-  graph->GetZaxis()->CenterTitle();
+    graph->GetXaxis()->CenterTitle();
+    graph->GetYaxis()->CenterTitle();
+    graph->GetZaxis()->CenterTitle();
 
-  graph->GetXaxis()->SetTitleOffset(1.4);
-  graph->GetYaxis()->SetTitleOffset(1.6);
+    graph->GetXaxis()->SetTitleOffset(1.4);
+    graph->GetYaxis()->SetTitleOffset(1.6);
 
-  stream.str("");
-  /*    s1 <<  "LEGO 1s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";  */
-  stream << title << _num_bgd_events_to_read << "evts," << bins << "bin" ;
-  const char* ExpTitle = stream.str().c_str();
-  graph->SetTitle(ExpTitle);
+    stream.str("");
+    /*    s1 <<  "LEGO 1s,"<< _num_bgd_events_to_read << "events," << LEGObins << "bin";  */
+    stream << title << _num_bgd_events_to_read << "evts," << bins << "bin" ;
+    const char* ExpTitle = stream.str().c_str();
+    graph->SetTitle(ExpTitle);
 
-  //  _c1->SetStatX(0.15);
-  //  graph->SetTheta(90);
-  /* 
-     gStyle->SetOptStat(1111111);            // Set stat options
-     gStyle->SetStatY(0.9);                  // Set y-position (fraction of pad size)
-     gStyle->SetStatX(0.9);                  // Set x-position (fraction of pad size)
-     gStyle->SetStatW(0.4);                  // Set width of stat-box (fraction of pad size)
-     gStyle->SetStatH(0.2);                  // Set height of stat-box (fraction of pad size)
-  */
-  //  graph->SetPhi(60);
-  //  TPaveStats *st = (TPaveStats*)graph->FindObject("stats");
-  //  st->SetX1NDC(0.0);
-  //  st->SetX2NDC(0.0);
-  //    gStyle->SetOptStat(0);
+    //  _c1->SetStatX(0.15);
+    //  graph->SetTheta(90);
+    /* 
+       gStyle->SetOptStat(1111111);            // Set stat options
+       gStyle->SetStatY(0.9);                  // Set y-position (fraction of pad size)
+       gStyle->SetStatX(0.9);                  // Set x-position (fraction of pad size)
+       gStyle->SetStatW(0.4);                  // Set width of stat-box (fraction of pad size)
+       gStyle->SetStatH(0.2);                  // Set height of stat-box (fraction of pad size)
+    */
+    //  graph->SetPhi(60);
+    //  TPaveStats *st = (TPaveStats*)graph->FindObject("stats");
+    //  st->SetX1NDC(0.0);
+    //  st->SetX2NDC(0.0);
+    //    gStyle->SetOptStat(0);
 }
 
 
 void BeamCalRecon_xy::PlotTH1F(TH1F* graph, stringstream& stream, string title){                // This function edits a root plot passed from init 
-  graph->GetXaxis()->SetTitle("Radius (mm)");
-  graph->GetYaxis()->SetTitle("e Count");
-  graph->GetXaxis()->CenterTitle();
-  graph->GetYaxis()->CenterTitle();
-  graph->GetXaxis()->SetTitleOffset(1.0);
-  graph->GetYaxis()->SetTitleOffset(1.0);
+    graph->GetXaxis()->SetTitle("Radius (mm)");
+    graph->GetYaxis()->SetTitle("e Count");
+    graph->GetXaxis()->CenterTitle();
+    graph->GetYaxis()->CenterTitle();
+    graph->GetXaxis()->SetTitleOffset(1.0);
+    graph->GetYaxis()->SetTitleOffset(1.0);
 
-  stream.str("");
-  stream << title << _num_bgd_events_to_read <<"bgd evts"<< "," << _1DRadBin << "bin";
-  const char* ExpTitle = stream.str().c_str();
-  graph->SetTitle(ExpTitle);
+    stream.str("");
+    stream << title << _num_bgd_events_to_read <<"bgd evts"<< "," << _1DRadBin << "bin";
+    const char* ExpTitle = stream.str().c_str();
+    graph->SetTitle(ExpTitle);
 }
 
 
 void BeamCalRecon_xy::FillRadiusThetaTable(bool truth_value, double radius, double phi_in_radian){
-  int one_or_zero = 0;
-  if(truth_value){
-    one_or_zero = 1;
-  }
-
-  //  cout << "printing one: " << one_or_zero << endl;
-  double phi = phi_in_radian * 180.0 / M_PI;
-  
-  int rad_index = 0;
-  int phi_index = 0;
-  bool rad_bool = true;
-  bool phi_bool = true;
-  
-  for ( int i = 0; i <= 7; i++ ){
-    //    cout << "i = "
-    if(rad_bool && (radius <= rad_array[i])){
-      rad_bool = false;
-      rad_index = i;
+    int one_or_zero = 0;
+    if(truth_value){
+        one_or_zero = 1;
     }
-    if(phi_bool && (phi <= phi_array[i] )){
-      phi_bool = false;
-      phi_index = i;
+    //  cout << "printing one: " << one_or_zero << endl;
+    double phi = phi_in_radian * 180.0 / M_PI;  
+    int rad_index = 0;
+    int phi_index = 0;
+    bool rad_bool = true;
+    bool phi_bool = true;
+
+    for ( int i = 0; (i < _arr_height)||(i < _arr_width); i++ ){
+        //    cout << "i = "
+        if(rad_bool && (radius <= rad_array[i]) && (i < _arr_height)){
+	    rad_bool = false;
+	    rad_index = i;
+	}
+	if(phi_bool && (phi < phi_array[i]) && (i < _arr_width)){
+	    phi_bool = false;
+	    phi_index = i;
+	}
     }
-  }
-
-  //  cout << "before: " << _RadTheta_wCut[rad_index][phi_index];
-  _RadTheta_wCut[rad_index][phi_index]+=1;
-  //  cout << "\t after" <<   _RadTheta_wCut[rad_index][phi_index] << endl;
-  _RadTheta_wBgd[rad_index][phi_index]+=one_or_zero;
-
-
+    //  cout << "before: " << _RadTheta_wCut[rad_index][phi_index];
+    _RadTheta_wCut[rad_index][phi_index]+=1;
+    //  cout << "\t after" <<   _RadTheta_wCut[rad_index][phi_index] << endl;
+    _RadTheta_wBgd[rad_index][phi_index]+=one_or_zero;
 }
 
 
@@ -346,16 +344,16 @@ void BeamCalRecon_xy::init() {
 
 
 void BeamCalRecon_xy::processRunHeader( LCRunHeader* run) { 
-//    _nRun++ ;
+    //    _nRun++ ;
 }
 
 
 void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     //Make sure we are using an electron that actually hits the Positive BeamCal
     //  _hitmap_bgd->Fill
-  _polar_coord_ID = true;
-  _test_bool = true;
-  //  cout << " BeamCal Recon test_bool: " << _test_bool << endl;
+    _polar_coord_ID = true;
+    _test_bool = true;
+    //  cout << " BeamCal Recon test_bool: " << _test_bool << endl;
 
     MCParticle* electron = NULL;
     bool detectable_electron = scipp_ilc::get_detectable_signal_event(signal_event,electron);
@@ -375,10 +373,10 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     _hitmap_signal_electrons->Fill(endx,endy,1);
     _1DRadHitsSigE_wCut->Fill(radius,detectable_electron);
     if(radius > _max_radius){
-      _max_radius = radius;
+        _max_radius = radius;
     }
     if(radius < _min_radius){
-      _min_radius = radius;
+        _min_radius = radius;
     }
 
     //Perform the reconstrunction algorithm, determine if the algorithm
@@ -429,35 +427,35 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     _detected_num += detected;
 
     if(detected && endx > 0 && endy < 0){       //Graph of slice of beamcal
-      _test_num += detected;
-      _test_slice->Fill(endx,endy,detected);
+        _test_num += detected;
+	_test_slice->Fill(endx,endy,detected);
     }
     if(detected){                               //Graph of detected
-      _hitmap_bgd->Fill(endx,endy,detected);    //      _hitmap_bgd->Fill(endx,endy);
-      _hlego->Fill(endx,endy,detected);
-      _hlego_pol1->Fill(px,py);
-      //      _hcol1->Fill((float_t(px)),(float_t(py)));
-      _hcol1->Fill((float_t(py_radius)),(float_t(px_phi)));
-      _hcol1f->Fill((float_t(px_phi)),(float_t(py_radius)));
+        _hitmap_bgd->Fill(endx,endy,detected);    //      _hitmap_bgd->Fill(endx,endy);
+	_hlego->Fill(endx,endy,detected);
+	_hlego_pol1->Fill(px,py);
+	//      _hcol1->Fill((float_t(px)),(float_t(py)));
+	_hcol1->Fill((float_t(py_radius)),(float_t(px_phi)));
+	_hcol1f->Fill((float_t(px_phi)),(float_t(py_radius)));
       
-      //      cout << "Phi: "<< px_phi << ",\t Radius: " << py_radius << endl;
+	//      cout << "Phi: "<< px_phi << ",\t Radius: " << py_radius << endl;
 
-      /*      px_phi = 30.0;
-      py_radius = 70.0;
-      _hcol1f->Fill((float_t(px_phi)),(float_t(py_radius)));*/
+	/*      px_phi = 30.0;
+		py_radius = 70.0;
+		_hcol1f->Fill((float_t(px_phi)),(float_t(py_radius)));*/
 
-      //      _h2->Fill(electron_energy);
-      //      _hlego_var->Fill(endx,endy,detected);
+	//      _h2->Fill(electron_energy);
+	//      _hlego_var->Fill(endx,endy,detected);
     }else{                                      //Graph of not detected
-      _hitmap_zeros->Fill(endx,endy,true);
-      _hlego_zeros->Fill(endx,endy,true);
-      //      _hlego_zeros_var->Fill(endx,endy,true);
+        _hitmap_zeros->Fill(endx,endy,true);
+	_hlego_zeros->Fill(endx,endy,true);
+	//      _hlego_zeros_var->Fill(endx,endy,true);
       
-      //      if((_zeros_map)[pos]>=1.0){
-      //	(_zeros_map)[pos]+= 1.0;
-      //      }else{
-      //	(_zeros_map)[pos] = 1.0;
-      //      }
+	//      if((_zeros_map)[pos]>=1.0){
+	//	(_zeros_map)[pos]+= 1.0;
+	//      }else{
+	//	(_zeros_map)[pos] = 1.0;
+	//      }
     }
     //    if(!detected){                              //Print out xy-coords of not detected
     //      cout << "detected:  " << detected<< "        x-y: "<< endx << "\t" <<endy << endl;
@@ -466,8 +464,8 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
 
     _hlego->SetFillColor(kYellow);
     _nEvt++;
-    if(_nEvt%100==0){
-      cout << _nEvt << endl;
+    if(_nEvt%1000==0){
+        cout << _nEvt << endl;
     }
 }
 
@@ -478,88 +476,74 @@ void BeamCalRecon_xy::check( LCEvent * evt ){
 
 
 void BeamCalRecon_xy::end(){
-  // ------ ------
-  //  for(auto bit:*_zeros_map){
-  //    pair<float,float> ID = bit.first;
-  //    double bit_hit = bit.second;
-  //    double all_hit = *_all_map[ID];
-  //  _hlego_inefficiency->Fill(ID.first,ID.second,bit_hit/all_hit)
-  //  }
+    // ------ ------
+    //  for(auto bit:*_zeros_map){
+    //    pair<float,float> ID = bit.first;
+    //    double bit_hit = bit.second;
+    //    double all_hit = *_all_map[ID];
+    //  _hlego_inefficiency->Fill(ID.first,ID.second,bit_hit/all_hit)
+    //  }
 
-  _hlego_inefficiency->Add(_hlego_zeros);
-  /*  _hlego_test->Add(_hlego_zeros);
-  _hlego_test->Add(_hlego);
-  _hlego_inefficiency->Divide(_hlego_test);
-  */
+    _hlego_inefficiency->Add(_hlego_zeros);
+    /*  _hlego_test->Add(_hlego_zeros);
+	_hlego_test->Add(_hlego);
+	_hlego_inefficiency->Divide(_hlego_test);
+    */
 
     cout << "\ndetected: " << _detected_num << endl;
     cout << "\n in \'slice\' of beamcal: " << _test_num << endl;
     cout << "max radius: " << _max_radius << endl;
     cout << "min radius: " << _min_radius << endl;
-
-    cout << "Radius Theta w/ Cut " << _radius_theta_wCut << endl;
-    cout << "Radius Theta w/ Bgd " << _radius_theta_wBgd << endl;
-
-    cout << "2D array \t 7,7: " << _RadTheta_wCut[7][7] << endl;
-
-    double arrr[8][8]={0.0};
-    cout << "2D array " <<  "0,0: " << arrr[0][0] << "\t 5,5: " << arrr[5][5] << endl;
-
     //    cout << "All map " << _all_map << endl;
     //    cout << "zeros map " << _zeros_map << endl;
-
-    int ar[9]{1,2,3,4,5,6,7,8,9};
-    cout << "ar " << *ar << endl; //prints the first element of ar
 
 
     int height = _arr_height;
     int width = _arr_width;
-
-
-    cout << "\nrad v theta w Cut" << endl;
+    cout << "\nradius vs. theta w/ Cut" << endl;
     for(int i = 0; i < height; i++){
-      if(i==0){
-	cout << "\t  ";
-	for(int row = 0; row < width; row++){
-	  if(row ==0){
-	    cout << "\t";
-	  }
-	  cout  << phi_array[row] << " ";
+        if(i==0){
+	    cout << "\t  ";
+	    for(int row = 0; row < width; row++){
+	        if(row==0){
+		  cout << "\t";
+		}
+		cout << phi_array[row] << " ";
+	    }
+	    cout << endl;
 	}
-	cout << endl;
-      }
-      cout << "[" << rad_array[i] << "]: \t" ;
+	cout << "[" << rad_array[i] << "]: \t" ;
         for(int j = 0; j < width; j++){
-	  cout << _RadTheta_wCut[i][j] << " " ;
-	  if((i==0)||((i+1)==width)){
-	    cout << "  ";
-	  }
+	    cout << _RadTheta_wCut[i][j] << " " ;
+	    if((i==0)||((i+1)==width)){
+	        cout << "  ";
+	    }
 	}
 	cout << endl;
     }
-
-    cout << "\nrad v theta w Bgd" << endl;
+    /*
+    cout << "\nradius vs. theta w/ Bgd" << endl;
     for(int i = 0; i < height; i++){
-      if(i==0){
-        cout << "\t  ";
-        for(int row = 0; row < width; row++){
-          if(row ==0){
-            cout << "\t";
-          }
-          cout  << phi_array[row] << " ";
-        }
-        cout << endl;
-      }
-      cout << "[" << rad_array[i] << "]: \t" ;
-      for(int j = 0; j < width; j++){
-	cout << _RadTheta_wBgd[i][j] << " " ;
-	if((i==0)||((i+1)==width)){
-	  cout << "  ";
+        if(i==0){
+	    cout << "\t  ";
+	    for(int row = 0; row < width; row++){
+	        if(row ==0){
+		  cout << "\t";
+		}
+		cout  << phi_array[row] << " ";
+	    }
+	    cout << endl;
 	}
-      }
-      cout << endl;
+	cout << "[" << rad_array[i] << "]: \t" ;
+	for(int j = 0; j < width; j++){
+	    cout << _RadTheta_wBgd[i][j] << " " ;
+	    if((i==0)||((i+1)==width)){
+	        cout << "  ";
+	    }
+	}
+	cout << endl;
     }
-
+    */
 
     // ------ clock end ------
     //    _t2 = Clock::now();
