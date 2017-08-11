@@ -464,7 +464,7 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
 
     _hlego->SetFillColor(kYellow);
     _nEvt++;
-    if(_nEvt%100==0){
+    if(_nEvt%1000==0){
         cout << _nEvt << endl;
     }
 }

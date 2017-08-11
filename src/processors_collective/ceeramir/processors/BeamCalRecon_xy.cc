@@ -514,7 +514,7 @@ void BeamCalRecon_xy::end(){
 	}
 	cout << "[" << rad_array[i] << "]: \t" ;
         for(int j = 0; j < width; j++){
-	    cout << _RadTheta_wCut[i][j] << " " ;
+	    cout << _RadTheta_wCut[j][i] << " " ;
 	    if((i==0)||((i+1)==width)){
 	        cout << "  ";
 	    }
