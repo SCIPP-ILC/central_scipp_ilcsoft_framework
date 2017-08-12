@@ -202,7 +202,6 @@ void BeamCalRecon_xy::FillRadiusThetaTable(bool truth_value, double radius, doub
     bool phi_bool = true;
 
     for ( int i = 0; (i < _arr_height)||(i < _arr_width); i++ ){
-        //    cout << "i = "
         if(rad_bool && (radius <= rad_array[i]) && (i < _arr_height)){
 	    rad_bool = false;
 	    rad_index = i;
@@ -212,10 +211,21 @@ void BeamCalRecon_xy::FillRadiusThetaTable(bool truth_value, double radius, doub
 	    phi_index = i;
 	}
     }
+
+    /*    cout << "\n rad index: " << rad_index << ", \t phi index: " << phi_index << endl;
+    cout << "rad theta w/ cut: " << _RadTheta_wCut[rad_index][phi_index] << endl;
+    cout << "rad theta w/ bgd: " << _RadTheta_wBgd[rad_index][phi_index] << endl;
+    cout << "\n";
+*/    
     //  cout << "before: " << _RadTheta_wCut[rad_index][phi_index];
     _RadTheta_wCut[rad_index][phi_index]+=1;
     //  cout << "\t after" <<   _RadTheta_wCut[rad_index][phi_index] << endl;
     _RadTheta_wBgd[rad_index][phi_index]+=one_or_zero;
+
+    if(rad_index==0){
+      cout << "rad index: " << rad_index << ", \t " << "phi index: " << phi_index << endl;
+    }
+
 }
 
 
@@ -501,7 +511,17 @@ void BeamCalRecon_xy::end(){
     int height = _arr_height;
     int width = _arr_width;
     cout << "\nradius vs. theta w/ Cut" << endl;
-    for(int i = 0; i < height; i++){
+
+    /*    for(int i = 0; i < height; i++){
+      for(int j = 0; j < width; j++){
+	cout << _RadTheta_wCut[j][i] << " " ;
+	if((i==0)||((i+1)==height)){
+	  cout << "  ";
+	}
+      }
+      cout << endl;                                                                                                  
+      } */  
+    /*    for(int i = 0; i < height; i++){
         if(i==0){
 	    cout << "\t  ";
 	    for(int row = 0; row < width; row++){
@@ -521,6 +541,7 @@ void BeamCalRecon_xy::end(){
 	}
 	cout << endl;
     }
+    */
     /*
     cout << "\nradius vs. theta w/ Bgd" << endl;
     for(int i = 0; i < height; i++){
