@@ -73,7 +73,7 @@ namespace scipp_ilc {
 
         /*
          * Calculates the significance of a cluster made up of the IDs in ID_list. Every new cluster
-         * requires a new average and standard deviation be calculated, by finding the the energy sum
+         * requires a new average and standard deviation be calculated, by finding the energy sum
          * of the cluster pixles in every pixel map in the database.
          */
         float get_significance(vector<int>* ID_list, pixel_map* pixels, float& energy, double& average_background) {

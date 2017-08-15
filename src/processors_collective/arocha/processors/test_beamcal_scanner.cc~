@@ -13,7 +13,7 @@ using namespace std;
 
 
 namespace scipp_ilc {
-    namespace beamcal_recon {
+    namespace beamcal_recon_test {
 
 
 
