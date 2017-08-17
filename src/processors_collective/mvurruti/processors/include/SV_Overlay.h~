@@ -64,9 +64,11 @@ class SV_Overlay : public Processor {
         */
         std::string _colName ;
         std::string _root_file_name;
+
         int _nRun ;
         int _nEvt ;
 };
+
 #endif
 
 

@@ -41,7 +41,7 @@ SV_Overlay SV_Overlay;
 static TFile* _rootfile;
 static TH1D* _S;
 static TH1D* _V;
-static TH1D* _M
+static TH1D* _M;
 static bool v = false;
 
 
@@ -49,110 +49,105 @@ static bool v = false;
 void print (string input="") ;
 
 SV_Overlay::SV_Overlay() : Processor("SV_Overlay") {
-	// modify processor description
-	_description = "Protype Processor" ;
+  // modify processor description
+  _description = "Protype Processor" ;
 
-	// register steering parameters: name, description, class-variable, default value
-	registerInputCollection( LCIO::MCPARTICLE, "CollectionName" , "Name of the MCParticle collection"  , _colName , std::string("MCParticle") );
-
-	registerProcessorParameter( "RootOutputName" , "output file"  , _root_file_name , std::string("output.root") );
+  // register steering parameters: name, description, class-variable, default value
+  registerInputCollection( LCIO::MCPARTICLE, "CollectionName" , "Name of the MCParticle collection"  , _colName , std::string("MCParticle") );
+  registerProcessorParameter( "RootOutputName" , "output file"  , _root_file_name , std::string("output.root") );
 }
 
 
 
 void SV_Overlay::init() { 
-	streamlog_out(DEBUG) << "   init called  " << std::endl ;
+  streamlog_out(DEBUG) << "   init called  " << std::endl ;
+  _rootfile = new TFile("SV_Overlay.root","RECREATE");
+  _S = new TH1D("S", "That S thing whose name I forgot", 200, 0.0, 20.0);
+  _V = new TH1D("V", "That V thing whose name I also forgot", 200, 0.0, 20.0); 
+  _M = new TH1D("M", "That M thing whose name I also forgot", 200, 0.0, 20.0); 
 
-	_rootfile = new TFile("SV_Overlay.root","RECREATE");
-	_S = new TH1D("S", "That S thing whose name I forgot", 200, 0.0, 20.0);
-	_V = new TH1D("V", "That V thing whose name I also forgot", 200, 0.0, 20.0); 
-	_M = new TH1D("M", "That M thing whose name I also forgot", 200, 0.0, 20.0); 
 
-	// usually a good idea to
-	//printParameters() ;
-	_nEvt = 0 ;
+  // usually a good idea to
+  //printParameters() ;
+  _nEvt = 0 ;
 
-	cout << "Anything to let me know " << endl;
+  cout << "Anything to let me know " << endl;
 
 }
 
 
 
 void SV_Overlay::processRunHeader( LCRunHeader* run) { 
-	//    _nRun++ ;
+  //    _nRun++ ;
 } 
 
 
 
 void SV_Overlay::processEvent( LCEvent * evt ) { 
-	// this gets called for every event 
-	// usually the working horse ...
-	LCCollection* col = evt->getCollection( _colName ) ;
+  // this gets called for every event 
+  // usually the working horse ...
+  LCCollection* col = evt->getCollection( _colName ) ;
 
-	double tot_mom[]={0, 0};
-	double S=0,V=0,M=0; 
-	double stat;
-	// this will only be entered if the collection is available
-	if( col != NULL ){
-		int nElements = col->getNumberOfElements()  ;
-		print();
-		print();
-		print("=====EVENT: " + to_string( _nEvt ) + " ===== " );
-		vector<MCParticle*> system;
+  double tot_mom[]={0, 0};
+  double S=0,V=0,M=0; 
+  double stat;
+  // this will only be entered if the collection is available
+  if( col != NULL ){
+    int nElements = col->getNumberOfElements()  ;
+    print();
+    print();
+    print("=====EVENT: " + to_string( _nEvt ) + " ===== " );
+    vector<MCParticle*> system;
 
-		for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
-			MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
-
-
-			stat = hit->getGeneratorStatus();
-			if(stat==1){ 
+    for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
+      MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
 
 
-				double mom[2];
-				mom[0] = hit->getMomentum()[0]; 
-				mom[1] = hit->getMomentum()[1];
+      stat = hit->getGeneratorStatus();
+      if(stat==1){ 
 
-				double mag = sqrt(pow(mom[0], 2)+pow(mom[1], 2));
-				S+=mag;
 
-				M+=hit->getMass();
+	double mom[3] = {0};
+	mom[0] = hit->getMomentum()[0];
+	mom[1] = hit->getMomentum()[1];
+	mom[2] = hit->getMomentum()[2];
 				
-				tot_mom[0]+=mom[0];
-				tot_mom[1]+=mom[1];
+	double mag = sqrt(pow(mom[0], 2)+pow(mom[1], 2));
+	S+=mag;
+
+	M+=sqrt(pow(hit->getEnergy(), 2)-pow(mom[0], 2) -pow(mom[1], 2) -pow(mom[2], 2));
+		 tot_mom[0]+=mom[0];
+		 tot_mom[1]+=mom[1];
 
 
-			}//end final state
-		}//end for
-		//for(MCParticle* particle : system)
+		 }//end final state
+      }//end for
+      //for(MCParticle* particle : system)
+
+      V=sqrt(pow(tot_mom[0], 2)+pow(tot_mom[1], 2));
 
 
+      _S->Fill(S); 
 
-		V=sqrt(pow(tot_mom[0], 2)+pow(tot_mom[1], 2));
+      _V->Fill(V);
+      _M->Fill(M);
+    }
 
-
-		_S->Fill(S); 
-
-		_V->Fill(V);
-
-		_M->Fill(M);
-	}
-
-	_nEvt ++ ;
-}
-
-
-
-void SV_Overlay::check( LCEvent * evt ) { 
-	// nothing to check here - could be used to fill checkplots in reconstruction processor
-}
+    _nEvt ++ ;
+  }
 
 
 
-void SV_Overlay::end(){ 
-	_rootfile->Write();
-}
+  void SV_Overlay::check( LCEvent * evt ) { 
+    // nothing to check here - could be used to fill checkplots in reconstruction processor
+  }
 
-void print (string input) {
-  if (v) cout << input << endl;
-}
 
+
+  void SV_Overlay::end(){ 
+    _rootfile->Write();
+  }
+
+  void print (string input) {
+    if (v) cout << input << endl;
+  }

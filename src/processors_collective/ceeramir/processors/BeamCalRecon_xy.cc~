@@ -105,8 +105,12 @@ static unordered_map<pair<float,float>,double>* _zeros_map;
 //std::vector<pair<float,float>>* _radius_theta_wBgd;
 std::vector<int>* _radius_theta_wCut;
 std::vector<int>* _radius_theta_wBgd;
-const int _arr_width = 8;
-const int _arr_height = 11;
+
+//const int _arr_width = 8;
+//const int _arr_height = 11;
+static int _arr_width = 8;
+static int _arr_height = 11;
+
 int _RadTheta_wCut[8][11]={0};
 int _RadTheta_wBgd[8][11]={0};
 //double rad_array [8]={20.0,38.50,57.0,75.5,94.0,112.50,131.0,150.0};
@@ -201,31 +205,39 @@ void BeamCalRecon_xy::FillRadiusThetaTable(bool truth_value, double radius, doub
     bool rad_bool = true;
     bool phi_bool = true;
 
+    //comenting out the 'for' loop compiles, otherwise it doesn't
+
+    int a = _arr_height;
+    int b = 5;
+
+    //    cout << "arr height: " << _arr_height << endl;
+    //    cout << "a: " << a << endl;
+
+      //    for ( int i = 0; (i < a); i++ ){
     for ( int i = 0; (i < _arr_height)||(i < _arr_width); i++ ){
         if(rad_bool && (radius <= rad_array[i]) && (i < _arr_height)){
 	    rad_bool = false;
-	    rad_index = i;
-	}
+            rad_index = i;
+      	}
 	if(phi_bool && (phi < phi_array[i]) && (i < _arr_width)){
 	    phi_bool = false;
 	    phi_index = i;
 	}
     }
-
-    /*    cout << "\n rad index: " << rad_index << ", \t phi index: " << phi_index << endl;
-    cout << "rad theta w/ cut: " << _RadTheta_wCut[rad_index][phi_index] << endl;
-    cout << "rad theta w/ bgd: " << _RadTheta_wBgd[rad_index][phi_index] << endl;
-    cout << "\n";
-*/    /*
-    //  cout << "before: " << _RadTheta_wCut[rad_index][phi_index];
-    _RadTheta_wCut[rad_index][phi_index]+=1;
-    //  cout << "\t after" <<   _RadTheta_wCut[rad_index][phi_index] << endl;
-    _RadTheta_wBgd[rad_index][phi_index]+=one_or_zero;
-*/
+      /*    cout << "\n rad index: " << rad_index << ", \t phi index: " << phi_index << endl;
+    cout << "rad theta w/ cut: " << _RadTheta_wCut[phi_index][rad_index] << endl;
+    cout << "rad theta w/ bgd: " << _RadTheta_wBgd[phi_index][rad_index] << endl;
+    cout << "\n";*/    
+    
+    //  cout << "before: " << _RadTheta_wCut[phi_index][rad_index];
+    //  cout << "\t after" <<   _RadTheta_wCut[phi_index][rad_index] << endl;
+    _RadTheta_wCut[phi_index][rad_index]+=1;
+    _RadTheta_wBgd[phi_index][rad_index]+=one_or_zero;
+    /*
     if(rad_index==0){
-      cout << "rad index: " << rad_index << ", \t " << "phi index: " << phi_index << endl;
+      //      cout << "rad index: " << rad_index << ", \t " << "phi index: " << phi_index << endl;
     }
-
+*/
 }
 
 
@@ -510,18 +522,12 @@ void BeamCalRecon_xy::end(){
 
     int height = _arr_height;
     int width = _arr_width;
-    cout << "\nradius vs. theta w/ Cut" << endl;
+    //    FillRadiusThetaTable
+    //    PrintRadiusThetaTable();
+    //    PrintRadiusThetaTable();
 
-    /*    for(int i = 0; i < height; i++){
-      for(int j = 0; j < width; j++){
-	cout << _RadTheta_wCut[j][i] << " " ;
-	if((i==0)||((i+1)==height)){
-	  cout << "  ";
-	}
-      }
-      cout << endl;                                                                                                  
-      } */  
-    /*    for(int i = 0; i < height; i++){
+    cout << "\nradius vs. theta w/ Cut" << endl;
+    for(int i = 0; i < height; i++){
         if(i==0){
 	    cout << "\t  ";
 	    for(int row = 0; row < width; row++){
@@ -541,23 +547,22 @@ void BeamCalRecon_xy::end(){
 	}
 	cout << endl;
     }
-    */
-    /*
+
     cout << "\nradius vs. theta w/ Bgd" << endl;
     for(int i = 0; i < height; i++){
         if(i==0){
 	    cout << "\t  ";
 	    for(int row = 0; row < width; row++){
-	        if(row ==0){
+	        if(row==0){
 		  cout << "\t";
 		}
-		cout  << phi_array[row] << " ";
+		cout << phi_array[row] << " ";
 	    }
 	    cout << endl;
 	}
 	cout << "[" << rad_array[i] << "]: \t" ;
 	for(int j = 0; j < width; j++){
-	    cout << _RadTheta_wBgd[i][j] << " " ;
+	    cout << _RadTheta_wBgd[j][i] << " " ;
 	    if((i==0)||((i+1)==width)){
 	        cout << "  ";
 	    }
