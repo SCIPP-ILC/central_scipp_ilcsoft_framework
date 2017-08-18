@@ -42,6 +42,10 @@ class BeamCalRecon_xy : public Processor {
 
 	//	virtual void FillRadiusThetaTable(vector<pair<float,float>>& thisTable, bool one);
 	virtual void FillRadiusThetaTable(bool one, double radius, double phi_in_radian);
+	//	virtual void PrintRadiusThetaTable();
+	//	virtual void PrintRadiusThetaTable_two(int a[][13]);
+	virtual void PrintRadiusThetaTable_two(int a[int][int]);
+	virtual void PrintRadiusThetaTable(std::string key);
 
         /** Called at the begin of the job before anything is read.
          * Use to initialize the processor, e.g. book histograms.
