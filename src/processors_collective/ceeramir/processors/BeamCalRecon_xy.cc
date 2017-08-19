@@ -221,13 +221,14 @@ void BeamCalRecon_xy::FillRadiusThetaTable(bool truth_value, double radius, doub
     _RadTheta_wBgd[phi_index][rad_index]+=one_or_zero;
 }
 
+/*
 void BeamCalRecon_xy::PrintRadiusThetaTable_two(int a[width][height]){//string table){
   cout << "in print radius theta table two";
   
   cout << "5,5:  " << _RadTheta_wCut[5][5] << endl ;
 
 }
-
+*/
 
 void BeamCalRecon_xy::PrintRadiusThetaTable(string key){//string table){
     if(key=="wBgd"){
@@ -563,7 +564,7 @@ void BeamCalRecon_xy::end(){
     //    cout << "All map " << _all_map << endl;
     //    cout << "zeros map " << _zeros_map << endl;
 
-    PrintRadiusThetaTable_two(_RadTheta_wCut);
+    //    PrintRadiusThetaTable_two(_RadTheta_wCut);
     //    PrintRadiusThetaTable_two(_RadTheta_wBgd);
 
     PrintRadiusThetaTable("wCut");
