@@ -17,6 +17,7 @@
 
 //#include <ctime>    //************************************************************
 #include <iostream>
+#include <iomanip>
 #include <chrono>
 #include <string>
 #include <sstream>
@@ -57,6 +58,7 @@ typedef std::chrono::high_resolution_clock Clock;
 using namespace lcio;
 using namespace marlin;
 using namespace std;
+using std::setw;
 
 BeamCalRecon_xy BeamCalRecon_xy;
 
@@ -232,14 +234,19 @@ void BeamCalRecon_xy::PrintRadiusThetaTable_two(int a[width][height]){//string t
 
 void BeamCalRecon_xy::PrintRadiusThetaTable(string key){//string table){
     if(key=="wBgd"){
-        cout << "\nradius vs. theta w/ Cut" << endl;
+        cout << "\nradius vs. theta w/ Bgd" << endl;
     }
     if(key=="wCut"){
-        cout << "\nradius vs. theta w/ Bgd" << endl;
+        cout << "\nradius vs. theta w/ Cut" << endl;
+    }
+    if(key=="wDiv"){
+      cout << "\nradius vs. theta w/ Division" << endl;
     }
 
     int height = _arr_height;
     int width = _arr_width;
+    double div = 0.0;
+    double one = 1.0;
 
     for(int i = 0; i < height; i++){
         if(i==0){
@@ -248,41 +255,56 @@ void BeamCalRecon_xy::PrintRadiusThetaTable(string key){//string table){
 	        if(row==0){
 		  cout << "\t";
 		}
-		cout << phi_array[row] << " ";
-		if(phi_array[row]<100.0){
-		    cout << " ";
+		if(key!="wDiv"){
+		  cout << setw(3) << phi_array[row] << " " ;
+		//		printf ("%\*d", 3,phi_array[row]);
+		//		cout << phi_array[row] << " ";
+
+		//		if(phi_array[row]<100.0){
+		//		    cout << " ";
+		    //		}
+		}
+		else{
+		  cout << setw(5) << phi_array[row] << " " ;
 		}
 	    }
 	    cout << endl;
 	}
-	cout << "[" << rad_array[i] << "]: \t" ;
+	//	cout << "[" << rad_array[i] << "]: \t" ;
+	cout << "[" << setw(6) << rad_array[i] << "]: \t" ;
+
 	for(int j = 0; j < width; j++){
+	  //	  double div = 0.0;
 	    if(key=="wCut"){
-	        cout << _RadTheta_wCut[j][i] << " " ;
+  	        cout << setw(3) << _RadTheta_wCut[j][i] << " " ;
 	    }
 	    if(key=="wBgd"){
-	        cout << _RadTheta_wBgd[j][i] << " " ;
+  	        cout << setw(3) << _RadTheta_wBgd[j][i] << " " ;
 	    }
-	    if((i==0)||((i+1)==height)){
-	        cout << "  ";
-	    }
-	    else{
-	        if(key=="wCut"){
-		    if(_RadTheta_wCut[j][i]<100.0){
-		        cout << " " ;
-			if(_RadTheta_wCut[j][i]<10.0){
-			  cout << " ";
-			}
-		    }
+	    if(key=="wDiv"){
+	      div = ((double(_RadTheta_wBgd[j][i])) / (double(_RadTheta_wCut[j][i])));
+	      if(div==1.0){
+		cout << setw(5) << "1.0";
+	      }
+	      /*
+	      else{
+		printf ("%4.3f",div);
+	      }*/
+
+	      if(_RadTheta_wCut[j][i]!=0){
+		  div = ((double(_RadTheta_wBgd[j][i])) / (double(_RadTheta_wCut[j][i])));
+		  if(div==1.0){
+		    cout << setw(5) << "1.0";
+		  }
+		  else{
+		  printf ("%4.3f",div);
+		  }
+	        }
+	      else{
+		  cout << setw(5) << "0.0";
 		}
-		if(key=="wBgd"){
-		    if(_RadTheta_wCut[j][i]<100.0){
-		        cout << " " ;
-			if(_RadTheta_wCut[j][i]<10.0){
-			    cout << " ";
-			}
-		    }
-		}
+
+	      cout << " ";
 	    }
 	}
 	cout << endl;
@@ -564,12 +586,12 @@ void BeamCalRecon_xy::end(){
     //    cout << "All map " << _all_map << endl;
     //    cout << "zeros map " << _zeros_map << endl;
 
-    PrintRadiusThetaTable_two(_RadTheta_wCut);
+    //    PrintRadiusThetaTable_two(_RadTheta_wCut);
     //    PrintRadiusThetaTable_two(_RadTheta_wBgd);
 
     PrintRadiusThetaTable("wCut");
     PrintRadiusThetaTable("wBgd");
-
+    PrintRadiusThetaTable("wDiv");
 
     // ------ clock end ------
     //    _t2 = Clock::now();
