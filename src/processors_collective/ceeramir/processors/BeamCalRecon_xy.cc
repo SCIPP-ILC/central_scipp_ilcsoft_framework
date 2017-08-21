@@ -108,20 +108,23 @@ static unordered_map<pair<float,float>,double>* _zeros_map;
 std::vector<int>* _radius_theta_wCut;
 std::vector<int>* _radius_theta_wBgd;
 
+
+// change _arr_width 8->1, _RadTheta_w***[d][-], phi_array, 
 //const int _arr_width = 8;
 //const int _arr_height = 11;
-static int _arr_width = 8;
+static int _arr_width = 1;
 static int _arr_height = 13;
 
-int _RadTheta_wCut[8][13]={0};
-int _RadTheta_wBgd[8][13]={0};
+int _RadTheta_wCut[1][13]={0};
+int _RadTheta_wBgd[1][13]={0};
 //double rad_array [8]={20.0,38.50,57.0,75.5,94.0,112.50,131.0,150.0};
 //double rad_array [_arr_height]={20.0,38.50,57.0,75.5,94.0,112.50,131.0,150.0};
 //double rad_array [11]={20.0,32.50,45.0,57.5,70.0,82.5,95.0,107.5,120.0,132.5,150.0};
 //double rad_array [19]={20.0,26.25,32.50,38.75,45.0,51.25,57.5,63.75,70.0,76.25,82.5,88.75,95.0,101.25,107.5,113.75,120.0,132.5,150.0};
-// y = .975x + 6.25
+// y = 6.25x^(1.22135493) + 20
 double rad_array [13]={20.0,26.25,34.57,43.91,53.98,64.62,75.75,87.30,99.23,111.48,124.05,136.89,150.0};
-double phi_array  [8]={45.0,90.0,135.0,180.0,225.0,270.0,315.0,360.0};
+//double phi_array  [8]={45.0,90.0,135.0,180.0,225.0,270.0,315.0,360.0};
+double phi_array  [1]={360.0};
 double _min_radius = 100.0;
 
 //auto _t1 = Clock::now();
