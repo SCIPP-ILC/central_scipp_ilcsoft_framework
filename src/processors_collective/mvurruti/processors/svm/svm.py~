@@ -20,7 +20,7 @@ c.SetLogy()
 def plot(name): 
     graph = f.Get(name)
     graph.Draw()
-    time.sleep(3)
+    time.sleep(2)
     c.SaveAs("./%s_%s.png"%(prefix,name))
 
 graphs = ["S","V","M"]
