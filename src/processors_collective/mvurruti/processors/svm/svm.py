@@ -2,6 +2,7 @@ import time
 import argparse
 import ROOT
 
+
 parser = argparse.ArgumentParser(description = "plots SVM root files.")
 
 parser.add_argument("filename", metavar = "filename", nargs = "?", help = "input a root file name to plot.")
@@ -19,8 +20,13 @@ c.SetLogy()
 
 def plot(name): 
     graph = f.Get(name)
+    graph.GetYaxis().SetTitle("# of Events")
+    if name == "S" or name == "V":
+        graph.GetXaxis().SetTitle("Momentum (GeV)")
+    if name == "M":
+        graph.GetXaxis().SetTitle("Mass (GeV)")    
     graph.Draw()
-    time.sleep(3)
+    time.sleep(4)
     c.SaveAs("./%s_%s.png"%(prefix,name))
 
 graphs = ["S","V","M"]
