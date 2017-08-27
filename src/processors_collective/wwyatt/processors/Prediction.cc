@@ -41,7 +41,7 @@ Prediction Prediction;
 static TFile* _rootfile;
 static TH2F* _prediction;
 static TH1F* _vector;
-
+static TH1F* _p_theta;
 
 
 Prediction::Prediction() : Processor("Prediction") {
@@ -63,6 +63,7 @@ void Prediction::init() {
     // usually a good idea to
     //printParameters() ;
     _prediction = new TH2F("predict", "Predicted Angle of Scatter, Correct vs Incorrect Kinematics", 1000, 0.0, 0.01, 1000, 0.0, 0.01);
+    _p_theta = new TH1F("p_theta", "Theta between positron and hadronic system", 360, 0, 3.2);
     _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
     _nEvt = 0 ;
 
@@ -112,7 +113,7 @@ void Prediction::processEvent( LCEvent * evt ) {
 	}
       }
     }
-    cout << endl;
+    //cout << endl;
 
     //Checks for scatter in electron or positron.
     for(MCParticle* particle : final_system){
@@ -168,14 +169,18 @@ void Prediction::processEvent( LCEvent * evt ) {
       predict[1] = -hadronic[1];
       double alpha = 500 - hadronic[3] - hadronic[2];
       double beta = 500 - hadronic[3] + hadronic[2];
-            
-      //incorrect prediction
-      predict[2] = -(pow(eT, 2)-pow(alpha, 2))/(2*alpha);
-      //correct prediction
-      predict[3] = (pow(pT, 2)-pow(beta, 2))/(2*beta);
-            
-      double r = sqrt(pow(predict[0], 2)+pow(predict[1], 2));
+      
 
+      //Given positron deflection (eBpW)
+      //incorrect prediction (correct if electron deflection)
+      predict[2] = -(pow(eT, 2)-pow(alpha, 2))/(2*alpha);
+      //correct prediction (correct if positron deflection)
+      predict[3] = (pow(pT, 2)-pow(beta, 2))/(2*beta);
+      
+      //Hadron transverse momentum
+      double r = sqrt(pow(predict[0], 2)+pow(predict[1], 2));
+      
+      
       double mag_g = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[3], 2));
       good_t = asin(r/mag_g);
 
@@ -187,12 +192,15 @@ void Prediction::processEvent( LCEvent * evt ) {
       }
       //cout << "Electronic Vector: [" << electronic[0] << ", " << electronic[1] << ", " << electronic[2] << "]" << endl;
       //cout << "Prediction Vector: [" << predict[0] << ", " << predict[1] << ", " << predict[2] << "]" << endl;
-
+      
+      //idk what this dot product is.
+      //q_x*h_x + q_y*h_y + q_z*p_z (positron deflection dot product)
       double dot = electronic[0]*predict[0] + electronic[1]*predict[1] + electronic[2]*predict[3];
       double e_mag = sqrt(pow(electronic[0], 2)+pow(electronic[1], 2)+pow(electronic[2], 2)); 
       double p_mag = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[3], 2)); 
       theta = acos(dot/(e_mag*p_mag)); 
-      cout << "Prediction Efficiency :" <<  theta << endl;
+      _p_theta->Fill(theta);
+      //cout << "Prediction Efficiency :" <<  theta << endl;
     }
 }
 
