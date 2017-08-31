@@ -63,8 +63,8 @@ void SV_Overlay::init() {
   streamlog_out(DEBUG) << "   init called  " << std::endl ;
   _rootfile = new TFile("SV_Overlay.root","RECREATE");
   _S = new TH1D("S", "Scalar", 200, 40.0, 470.0);
-  _V = new TH1D("V", "Vector", 1000, 2.0, 5.5); 
-  _M = new TH1D("M", "Mass", 1500, 292.5, 295.5); 
+  _V = new TH1D("V", "Vector", 1500, 2.0, 5.1); 
+  _M = new TH1D("M", "Mass", 2000, 293.5, 295.4); 
 
 
   // usually a good idea to

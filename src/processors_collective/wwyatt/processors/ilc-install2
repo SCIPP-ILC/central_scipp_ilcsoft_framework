@@ -1,0 +1,192 @@
+
+You are using less than 1% of your output storage quota
+
+[wwyatt@atlas04 xml]$ grunt
+Scanning dependencies of target scipp_ilcsoft_framework
+[  6%] Building CXX object CMakeFiles/scipp_ilcsoft_framework.dir/src/processors/Prediction.cc.o
+/export/home/wwyatt/ilc_main/scipp_ilcsoft_framework/src/processors/Prediction.cc: In member function ‘virtual void Prediction::processEvent(EVENT::LCEvent*)’:
+/export/home/wwyatt/ilc_main/scipp_ilcsoft_framework/src/processors/Prediction.cc:164:11: warning: ‘mag’ may be used uninitialized in this function [-Wmaybe-uninitialized]
+  mag+=tmag;
+           ^
+[ 13%] Linking CXX shared library lib/libscipp_ilcsoft_framework.so
+[100%] Built target scipp_ilcsoft_framework
+Install the project...
+-- Install configuration: "RelWithDebInfo"
+-- Installing: /export/home/wwyatt/ilc_main/scipp_ilcsoft_framework/lib/libscipp_ilcsoft_framework.so.0.1.0
+-- Up-to-date: /export/home/wwyatt/ilc_main/scipp_ilcsoft_framework/lib/libscipp_ilcsoft_framework.so.0.1
+-- Up-to-date: /export/home/wwyatt/ilc_main/scipp_ilcsoft_framework/lib/libscipp_ilcsoft_framework.so
+-- Set runtime path of "/export/home/wwyatt/ilc_main/scipp_ilcsoft_framework/lib/libscipp_ilcsoft_framework.so.0.1.0" to "/export/home/wwyatt/ilc_main/scipp_ilcsoft_framework/lib:/cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/Marlin/v01-08/lib:/cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/lcio/v02-07/lib:/cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/gear/v01-05/lib:/cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/CLHEP/2.1.4.1/lib:/cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/ilcutil/v01-02-01/lib:/cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/root/5.34.30/lib:/cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/xercesc/3.1.2/lib"
+<!-- Loading shared library : /local-data/wwyatt/scipp_ilcsoft_framework/build/lib/libscipp_ilcsoft_framework.so.0.1.0 (libscipp_ilcsoft_framework.so)-->
+
+ ***********************************************
+ A runtime error occured - (uncaught exception):
+      lcio::IOException: [SIOReader::open()] File(s) not found:  /export/home/wwyatt/input/twophoton_eB.pW.slcio  
+ Marlin will have to be terminated, sorry.
+ ***********************************************
+
+Error in <TFile::TFile>: file BW_predicters_more.root does not exist
+TFile**		BW_predicters_more.root	
+ TFile*		BW_predicters_more.root	
+None
+plotting p_theta 
+Traceback (most recent call last):
+  File "/export/home/wwyatt/lib/ppredict.py", line 18, in <module>
+    plot.SetLineColor(name[1])
+AttributeError: 'TObject' object has no attribute 'SetLineColor'
+[wwyatt@atlas04 xml]$ ls
+[100%] Built target scipp_ilcsoft_framework
+Install the project...
+-- Install configuration: "RelWithDebInfo"
+-- Up-to-date: /export/home/wwyatt/ilc_main/scipp_ilcsoft_framework/lib/libscipp_ilcsoft_framework.so.0.1.0
+-- Up-to-date: /export/home/wwyatt/ilc_main/scipp_ilcsoft_framework/lib/libscipp_ilcsoft_framework.so.0.1
+-- Up-to-date: /export/home/wwyatt/ilc_main/scipp_ilcsoft_framework/lib/libscipp_ilcsoft_framework.so
+<!-- Loading shared library : /local-data/wwyatt/scipp_ilcsoft_framework/build/lib/libscipp_ilcsoft_framework.so.0.1.0 (libscipp_ilcsoft_framework.so)-->
+
+[ VERBOSE "scipp_ilcsoft_processor"] 0
+Error in <TFile::TFile>: file BW_predicters_more.root does not exist
+TFile**		BW_predicters_more.root	
+ TFile*		BW_predicters_more.root	
+None
+plotting p_theta 
+Traceback (most recent call last):
+  File "/export/home/wwyatt/lib/ppredict.py", line 18, in <module>
+    plot.SetLineColor(name[1])
+AttributeError: 'TObject' object has no attribute 'SetLineColor'
+[wwyatt@atlas04 xml]$ ls
+archive  BW_prediction.root  overlay_backup.xml  overlay.xml~	  Prediction.xml
+autogen  first.xml	     overlay.xml	 overlay.xml.log  Prediction.xml~
+[wwyatt@atlas04 xml]$ rm BW_prediction.root 
+[wwyatt@atlas04 xml]$ cd ../
+[wwyatt@atlas04 processors]$ ls
+archive		BW_predicters_more.png	 first.cc  MyParticle.cc  Prediction.cc   xml
+archive_bhabha	BW_predicters_more.root  include   output	  Prediction.cc~
+[wwyatt@atlas04 processors]$ grunt
+[100%] Built target scipp_ilcsoft_framework
+Install the project...
+-- Install configuration: "RelWithDebInfo"
+-- Up-to-date: /export/home/wwyatt/ilc_main/scipp_ilcsoft_framework/lib/libscipp_ilcsoft_framework.so.0.1.0
+-- Up-to-date: /export/home/wwyatt/ilc_main/scipp_ilcsoft_framework/lib/libscipp_ilcsoft_framework.so.0.1
+-- Up-to-date: /export/home/wwyatt/ilc_main/scipp_ilcsoft_framework/lib/libscipp_ilcsoft_framework.so
+<!-- Loading shared library : /local-data/wwyatt/scipp_ilcsoft_framework/build/lib/libscipp_ilcsoft_framework.so.0.1.0 (libscipp_ilcsoft_framework.so)-->
+
+[ VERBOSE "scipp_ilcsoft_processor"] 0
+TFile**		BW_prediction.root	
+ TFile*		BW_prediction.root	
+  KEY: TH2F	predict;1	Predicted Angle of Scatter, Correct vs Incorrect Kinematics
+  KEY: TH1F	p_theta;1	Theta between positron and hadronic system
+  KEY: TH1F	e_theta;1	Theta between positron and hadronic system
+  KEY: TH1F	vector;1	Vector
+None
+plotting p_theta 
+plotting e_theta 
+Info in <TCanvas::Print>: file BW_prediction.png has been created
+Saved.
+[wwyatt@atlas04 processors]$ ilc-cmake
+loading initial cache file /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/ILCSoft.cmake
+-- Check for ILCUTIL (1.2.1)
+-- Check for Marlin (1.8.0)
+-- Check for Marlin_LIBRARIES: Marlin
+-- Check for Marlin_MARLIN_LIBRARY: /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/Marlin/v01-08/lib/libMarlin.so -- ok
+-- Check for ROOT_CONFIG_EXECUTABLE: /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/root/5.34.30/bin/root-config
+-- Check for ROOT (5.34.30)
+-- Check for ROOT_EXECUTABLE: /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/root/5.34.30/bin/root
+-- Check for ROOT_CINT_EXECUTABLE: /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/root/5.34.30/bin/rootcint
+-- Check for ROOT_LIBRARIES: Core;Cint;RIO;Net;Hist;Graf;Graf3d;Gpad;Tree;Rint;Postscript;Matrix;Physics;MathCore;Thread
+-- Check for ROOT_CORE_LIBRARY: /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/root/5.34.30/lib/libCore.so -- ok
+-- Check for ROOT_CINT_LIBRARY: /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/root/5.34.30/lib/libCint.so -- ok
+-- Check for ROOT_RIO_LIBRARY: /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/root/5.34.30/lib/libRIO.so -- ok
+-- Check for ROOT_NET_LIBRARY: /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/root/5.34.30/lib/libNet.so -- ok
+-- Check for ROOT_HIST_LIBRARY: /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/root/5.34.30/lib/libHist.so -- ok
+-- Check for ROOT_GRAF_LIBRARY: /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/root/5.34.30/lib/libGraf.so -- ok
+-- Check for ROOT_GRAF3D_LIBRARY: /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/root/5.34.30/lib/libGraf3d.so -- ok
+-- Check for ROOT_GPAD_LIBRARY: /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/root/5.34.30/lib/libGpad.so -- ok
+-- Check for ROOT_TREE_LIBRARY: /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/root/5.34.30/lib/libTree.so -- ok
+-- Check for ROOT_RINT_LIBRARY: /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/root/5.34.30/lib/libRint.so -- ok
+-- Check for ROOT_POSTSCRIPT_LIBRARY: /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/root/5.34.30/lib/libPostscript.so -- ok
+-- Check for ROOT_MATRIX_LIBRARY: /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/root/5.34.30/lib/libMatrix.so -- ok
+-- Check for ROOT_PHYSICS_LIBRARY: /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/root/5.34.30/lib/libPhysics.so -- ok
+-- Check for ROOT_MATHCORE_LIBRARY: /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/root/5.34.30/lib/libMathCore.so -- ok
+-- Check for ROOT_THREAD_LIBRARY: /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/root/5.34.30/lib/libThread.so -- ok
+-- Check for libdl.so: /usr/lib64/libdl.so
+-- Check for CLHEP (2.1.4.1)
+-- Check for CLHEP_LIBRARIES: CLHEP
+-- Check for CLHEP_CLHEP_LIBRARY: /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/CLHEP/2.1.4.1/lib/libCLHEP.so -- ok
+-- 
+-- -------------------------------------------------------------------------------
+-- Change values with: cmake -D<Variable>=<Value>
+-- CMAKE_INSTALL_PREFIX = /export/home/wwyatt/ilc_main/scipp_ilcsoft_framework
+-- CMAKE_BUILD_TYPE = RelWithDebInfo
+-- BUILD_TESTING = ON
+-- INSTALL_DOC = OFF
+-- CMAKE_PREFIX_PATH =
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/lccd/v01-03;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/Marlin/v01-08;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/MarlinDD4hep/v00-01;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/DDMarlinPandora/v00-03;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/MarlinUtil/v01-11;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/Mokka/mokka-08-05-01;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/MarlinReco/v01-14;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/PandoraAnalysis/v01-02-00;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/PandoraPFANew/v02-05-00;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/MarlinPandora/v02-02-00;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/LCFIVertex/v00-07-01;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/CEDViewer/v01-11;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/Overlay/v00-14;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/FastJetClustering/v00-02;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/MarlinFastJet/v00-02;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/LCTuple/v01-05;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/MarlinKinfit/v00-02;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/MarlinKinfitProcessors/v00-01;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/MarlinTrk/v02-01;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/KiTrack/v01-06;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/KiTrackMarlin/v01-08;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/MarlinTrkProcessors/v02-02;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/ILDPerformance/v00-02;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/Clupatra/v00-13;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/Physsim/v00-02;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/FCalClusterer/v00-02;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/LCFIPlus/v00-07;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/ForwardTracking/v01-09;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/pathfinder/v00-06;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/MarlinTPC/v01-01;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/bbq/v00-01-02;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/Garlic/v3.0.3;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/RAIDA/v01-06-02;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/KalTest/v02-01;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/KalDet/v01-13-02;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/GBL/V01-16-04;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/xercesc/3.1.2;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/heppdt/3.04.01;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/gdml/ilcsoft-v01-17-07;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/lcdd/ilcsoft-v01-17-07;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/slic/ilcsoft-v01-17-07;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/slicPandora/ilcsoft-v01-17-07;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/DD4hep/v00-15;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/lcgeo/v00-07;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/aidaTT/v00-03;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/DDKalTest/v00-03;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/DD4hepExamples/v00-15;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/CED/v01-09-02;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/lcio/v02-07;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/gear/v01-05;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/FastJet/3.1.2;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/root/5.34.30;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/CLHEP/2.1.4.1;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/gsl/1.14;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/QT/4.7.4;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/geant4/10.01;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/CondDBMySQL/CondDBMySQL_ILC-0-9-6;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/cernlib/2006;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/mysql/5.0.45;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/ilcutil/v01-02-01;
+--    /cvmfs/ilc.desy.de/sw/boost/1.58.0;
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/ilcutil/v01-02-01;
+-- CMAKE_MODULE_PATH =
+--    /cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/ilcutil/v01-02-01/cmakemodules;
+--    /var/ilc/scipp/central_scipp_ilcsoft_framework/modules_path;
+-- -------------------------------------------------------------------------------
+-- 
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /export/home/wwyatt/ilc_main/scipp_ilcsoft_framework/build
+[wwyatt@atlas04 processors]$ 

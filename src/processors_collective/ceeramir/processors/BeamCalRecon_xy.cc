@@ -517,6 +517,15 @@ void BeamCalRecon_xy::processEvent( LCEvent* signal_event ) {
     // ------  map  ------
 
 
+    cout  << "endpoint: " << *endpoint ;
+    cout << "\t endpoint[0]: " << endpoint[0] << endl;
+    cout << "\t endpoint[1]: " << endpoint[1] ;
+    cout << "\t endpoint[2]: " << endpoint[2] << endl;
+    double z = endpoint[2];
+
+    double zed = z / sqrt(((endx * endx) + (endy * endy) + (z * z)));
+
+    cout << "Zed: " << zed << endl;
     //Plot our results with respect to the radius of the signal electron.
     _radeff->Fill(radius,detected);             //bools and ints are basically interchangeable...
     _detected_num += detected;

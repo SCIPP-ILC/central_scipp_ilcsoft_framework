@@ -26,6 +26,7 @@
 #include <TFile.h>
 #include <TH2D.h>
 #include <MyParticle.h>
+#include <Will.h>
 // ----- include for verbosity dependend logging ---------
 #include "marlin/VerbosityLevels.h"
 
@@ -35,13 +36,14 @@ using namespace lcio;
 using namespace marlin;
 using namespace std;
 
-
 Prediction Prediction;
 
 static TFile* _rootfile;
 static TH2F* _prediction;
 static TH1F* _vector;
 static TH1F* _p_theta;
+static TH1F* _e_theta;
+
 
 
 Prediction::Prediction() : Processor("Prediction") {
@@ -59,14 +61,14 @@ Prediction::Prediction() : Processor("Prediction") {
 void Prediction::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("BW_predicters_more.root","RECREATE");
+    _rootfile = new TFile("BW_prediction.root","RECREATE");
     // usually a good idea to
     //printParameters() ;
     _prediction = new TH2F("predict", "Predicted Angle of Scatter, Correct vs Incorrect Kinematics", 1000, 0.0, 0.01, 1000, 0.0, 0.01);
-    _p_theta = new TH1F("p_theta", "Theta between positron and hadronic system", 360, 0, 3.2);
+    _p_theta = new TH1F("p_theta", "Theta between positron and hadronic system", 360, 0, 3.5);
+    _e_theta = new TH1F("e_theta", "Theta between positron and hadronic system", 360, 0, 3.5);
     _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
     _nEvt = 0 ;
-
 }
 
 
@@ -84,82 +86,42 @@ void Prediction::processEvent( LCEvent * evt ) {
     vector<MCParticle*> final_system;
     int stat, id =0;
     double tot_mom[]={0, 0};
-    double compEn_e=0, compEn_p=0;
-    double mom[4];
-    double mom_e[4];
-    double mom_p[4];
+    double* mom   = new double[4]();//4vec
+    double* mom_e = new double[4]();
+    double* mom_p = new double[4]();
     double tmom, theta, good_t, bad_t, mag, eT, pT;
     bool scatter;
-    double hadronic[] = {0, 0, 0, 0};
-    double electronic[] = {0, 0, 0, 0};
+    double* hadronic = new double[4]();
+    double* electronic = new double[4]();
 
     int nElements = col->getNumberOfElements();
     scatter = false;
-    for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
-      //cast to MCParticle
-      MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
-      id = particle->getPDG();
-      stat = particle->getGeneratorStatus();
-      //cut on final state
-      if(stat==1){
-	//add to particle vector
-	final_system.push_back(particle); 
-	//find highest energy electron and positron
-	if(id==11){
-	  if(particle->getEnergy() > compEn_e){compEn_e=particle->getEnergy();}    
-	}
-	else if(id==-11){
-	  if(particle->getEnergy() > compEn_p){compEn_p=particle->getEnergy();}    
-	}
-      }
-    }
-    //cout << endl;
-
+ 
+    map<int, double> max=Will::maxEnergy(col, {11, -11}, final_system);
     //Checks for scatter in electron or positron.
     for(MCParticle* particle : final_system){
       id = particle->getPDG();
-      if(particle->getEnergy()==compEn_e){
+      if(particle->getEnergy()==max[11]){
 	//ELECTRON
-	mom_e[0]=particle->getMomentum()[0];    
-	mom_e[1]=particle->getMomentum()[1];    
-	mom_e[2]=particle->getMomentum()[2];
-	mom_e[3]=particle->getEnergy();
-	eT = sqrt(pow(mom_e[0], 2)+pow(mom_e[1], 2));
-
-	if(abs(mom_e[0])!=0||abs(mom_e[1])!=0){
+	mom_e=Will::getVector(particle);
+	eT = Will::getTMag(mom_e);
+	if(eT!=0){
 	  scatter = true;
-	  electronic[0]+=mom_e[0];    
-	  electronic[1]+=mom_e[1];    
-	  electronic[2]+=mom_e[2];    
-	  electronic[3]+=mom_e[3];    
+	  electronic=Will::addVector(electronic,mom_e);
 	}
-      }else if(particle->getEnergy()==compEn_p){
+      }else if(particle->getEnergy()==max[-11]){
 	//POSITRON
-	mom_p[0]=particle->getMomentum()[0];    
-	mom_p[1]=particle->getMomentum()[1];    
-	mom_p[2]=particle->getMomentum()[2];
-	mom_p[3]=particle->getEnergy();
-	pT = sqrt(pow(mom_p[0], 2)+pow(mom_p[1], 2));
-
-	if(abs(mom_p[0])!=0||abs(mom_p[1])!=0){
+	mom_p=Will::getVector(particle);
+	pT = Will::getTMag(mom_p);
+	if(pT!=0){
 	  scatter = true;
-	  electronic[0]+=mom_p[0];    
-	  electronic[1]+=mom_p[1];    
-	  electronic[2]+=mom_p[2];    
-	  electronic[3]+=mom_p[3];    
+	  electronic=Will::addVector(electronic,mom_p);
 	}    
       }else{
 	//HADRONIC
-	mom[0]=particle->getMomentum()[0];    
-	mom[1]=particle->getMomentum()[1];    
-	mom[2]=particle->getMomentum()[2];
-	mom[3]=particle->getEnergy();
-	hadronic[0]+=mom[0];    
-	hadronic[1]+=mom[1];    
-	hadronic[2]+=mom[2];    
-	hadronic[3]+=mom[3];    
-	double tmag = sqrt(pow(mom[0], 2)+pow(mom[1], 2));
-	mag+=tmag;
+	mom=Will::getVector(particle);
+	hadronic=Will::addVector(hadronic, mom);
+	mag+=Will::getTMag(mom);
       }
     }
     if(scatter == true){
@@ -178,8 +140,7 @@ void Prediction::processEvent( LCEvent * evt ) {
       predict[3] = (pow(pT, 2)-pow(beta, 2))/(2*beta);
       
       //Hadron transverse momentum
-      double r = sqrt(pow(predict[0], 2)+pow(predict[1], 2));
-      
+      double r = Will::getTMag(predict);
       
       double mag_g = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[3], 2));
       good_t = asin(r/mag_g);
@@ -190,21 +151,21 @@ void Prediction::processEvent( LCEvent * evt ) {
       if(mag>1.0){
 	_prediction->Fill(bad_t, good_t);
       }
-      //cout << "Electronic Vector: [" << electronic[0] << ", " << electronic[1] << ", " << electronic[2] << "]" << endl;
-      //cout << "Prediction Vector: [" << predict[0] << ", " << predict[1] << ", " << predict[2] << "]" << endl;
-      
-      //idk what this dot product is.
-      //q_x*h_x + q_y*h_y + q_z*p_z (positron deflection dot product)
-      double dot = electronic[0]*predict[0] + electronic[1]*predict[1] + electronic[2]*predict[3];
+
+      double dot_c = electronic[0]*predict[0] + electronic[1]*predict[1] + electronic[2]*predict[3]; //Correct dot
+      double dot_i = electronic[0]*predict[0] + electronic[1]*predict[1] + electronic[2]*predict[2]; //Incorrect dot
       double e_mag = sqrt(pow(electronic[0], 2)+pow(electronic[1], 2)+pow(electronic[2], 2)); 
-      double p_mag = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[3], 2)); 
-      theta = acos(dot/(e_mag*p_mag)); 
-      _p_theta->Fill(theta);
+      double p_mag_c = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[3], 2)); //Correct mag
+      double p_mag_i = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[3], 2)); //Incorrect mag
+
+      double theta_c = acos(dot_c/(e_mag*p_mag_c)); //Correct prediction
+      double theta_i = acos(dot_i/(e_mag*p_mag_i)); //Incorrect prediction
+      _p_theta->Fill(theta_c);
+      _e_theta->Fill(theta_i);
+      //theta = acos(dot/(e_mag*p_mag)); 
       //cout << "Prediction Efficiency :" <<  theta << endl;
     }
 }
-
-
 
 void Prediction::check( LCEvent * evt ) { 
     // nothing to check here - could be used to fill checkplots in reconstruction processor

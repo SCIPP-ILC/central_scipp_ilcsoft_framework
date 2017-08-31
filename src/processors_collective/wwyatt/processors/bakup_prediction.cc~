@@ -26,7 +26,6 @@
 #include <TFile.h>
 #include <TH2D.h>
 #include <MyParticle.h>
-#include <Will.h>
 // ----- include for verbosity dependend logging ---------
 #include "marlin/VerbosityLevels.h"
 
@@ -46,7 +45,6 @@ static TH1F* _p_theta;
 static TH1F* _e_theta;
 
 
-
 Prediction::Prediction() : Processor("Prediction") {
     // modify processor description
     _description = "Protype Processor" ;
@@ -62,7 +60,7 @@ Prediction::Prediction() : Processor("Prediction") {
 void Prediction::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("BW_prediction.root","RECREATE");
+    _rootfile = new TFile("WB_prediction.root","RECREATE");
     // usually a good idea to
     //printParameters() ;
     _prediction = new TH2F("predict", "Predicted Angle of Scatter, Correct vs Incorrect Kinematics", 1000, 0.0, 0.01, 1000, 0.0, 0.01);
@@ -70,6 +68,7 @@ void Prediction::init() {
     _e_theta = new TH1F("e_theta", "Theta between positron and hadronic system", 360, 0, 3.5);
     _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
     _nEvt = 0 ;
+
 }
 
 
@@ -98,14 +97,29 @@ void Prediction::processEvent( LCEvent * evt ) {
 
     int nElements = col->getNumberOfElements();
     scatter = false;
- 
-    map<int, double> max=Will::maxEnergy(col, {11, -11}, final_system);
-    
+    for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
+      //cast to MCParticle
+      MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
+      id = particle->getPDG();
+      stat = particle->getGeneratorStatus();
+      //cut on final state
+      if(stat==1){
+	//add to particle vector
+	final_system.push_back(particle); 
+	//find highest energy electron and positron
+	if(id==11){
+	  if(particle->getEnergy() > compEn_e){compEn_e=particle->getEnergy();}    
+	}
+	else if(id==-11){
+	  if(particle->getEnergy() > compEn_p){compEn_p=particle->getEnergy();}    
+	}
+      }
+    }
+    //cout << endl;
+
     //Checks for scatter in electron or positron.
     for(MCParticle* particle : final_system){
-
       id = particle->getPDG();
-      cout << "hit " << id <<endl;
       if(particle->getEnergy()==compEn_e){
 	//ELECTRON
 	mom_e[0]=particle->getMomentum()[0];    
