@@ -61,6 +61,9 @@ class Will{
   static double getTMag(double* input){
     return sqrt(pow(input[0], 2) + pow(input[1], 2));
   }
+  static double getMag(double* input){
+    return sqrt(pow(input[0], 2) + pow(input[1], 2) + pow(input[2],2));
+  }
  private:
 
 };

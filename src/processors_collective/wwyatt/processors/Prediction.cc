@@ -152,16 +152,20 @@ void Prediction::processEvent( LCEvent * evt ) {
 	_prediction->Fill(bad_t, good_t);
       }
 
-      double dot_c = electronic[0]*predict[0] + electronic[1]*predict[1] + electronic[2]*predict[3]; //Correct dot
-      double dot_i = electronic[0]*predict[0] + electronic[1]*predict[1] + electronic[2]*predict[2]; //Incorrect dot
-      double e_mag = sqrt(pow(electronic[0], 2)+pow(electronic[1], 2)+pow(electronic[2], 2)); 
+      double dot_c = mom_p[0]*predict[0] + mom_p[1]*predict[1] + mom_p[2]*predict[3]; //Correct dot
+      double dot_i = mom_p[0]*predict[0] + mom_p[1]*predict[1] + mom_p[2]*predict[2]; //Incorrect dot
+      //      double e_mag = Will::getMag(mom_e);
+      double p_mag = Will::getMag(mom_p);
+	//      double e_mag = sqrt(pow(electronic[0], 2)+pow(electronic[1], 2)+pow(electronic[2], 2)); 
       double p_mag_c = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[3], 2)); //Correct mag
-      double p_mag_i = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[3], 2)); //Incorrect mag
-
-      double theta_c = acos(dot_c/(e_mag*p_mag_c)); //Correct prediction
-      double theta_i = acos(dot_i/(e_mag*p_mag_i)); //Incorrect prediction
-      _p_theta->Fill(theta_c);
-      _e_theta->Fill(theta_i);
+      double p_mag_i = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[2], 2)); //Incorrect mag
+      //cout << dot_c << endl; //dot_c 59066.6
+      cout << "p-mag " << p_mag << endl; //200
+      cout << "p-mag_c " << p_mag_c << endl; //206
+      double theta_c = acos(dot_c/(p_mag*p_mag_c)); //Correct prediction
+      double theta_i = acos(dot_i/(p_mag*p_mag_i)); //Incorrect prediction
+      _p_theta->Fill(alpha);
+      _e_theta->Fill(beta);
       //theta = acos(dot/(e_mag*p_mag)); 
       //cout << "Prediction Efficiency :" <<  theta << endl;
     }
