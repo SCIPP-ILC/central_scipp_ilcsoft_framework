@@ -160,8 +160,13 @@ void Prediction::processEvent( LCEvent * evt ) {
       double p_mag_c = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[3], 2)); //Correct mag
       double p_mag_i = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[2], 2)); //Incorrect mag
       //cout << dot_c << endl; //dot_c 59066.6
+      if(false){
+      cout << "dot_i " << dot_i << endl; //200
+      cout << "dot_c " << dot_c << endl; //200
       cout << "p-mag " << p_mag << endl; //200
+      cout << "p-mag_i " << p_mag_i << endl; //206
       cout << "p-mag_c " << p_mag_c << endl; //206
+      }
       double theta_c = acos(dot_c/(p_mag*p_mag_c)); //Correct prediction
       double theta_i = acos(dot_i/(p_mag*p_mag_i)); //Incorrect prediction
       _p_theta->Fill(alpha);

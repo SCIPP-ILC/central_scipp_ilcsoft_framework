@@ -102,6 +102,7 @@ namespace scipp_ilc {
             double square_of_averages = average_background*average_background;
             double average_of_squares = total_squared_background_energy / weight;
             double standard_deviation = sqrt(average_of_squares - square_of_averages);
+	    double root_mean_square   = sqrt(square_of-averages / )
 
 
             //calculate significance
