@@ -91,6 +91,7 @@ void Prediction::processEvent( LCEvent * evt ) {
     double* mom_p = new double[4]();
     double tmom, theta, good_t, bad_t, mag, eT, pT;
     bool scatter;
+    //    MCParticle* electronic
     double* hadronic = new double[4]();
     double* electronic = new double[4]();
 
@@ -99,23 +100,27 @@ void Prediction::processEvent( LCEvent * evt ) {
  
     map<int, double> max=Will::maxEnergy(col, {11, -11}, final_system);
     //Checks for scatter in electron or positron.
-    for(MCParticle* particle : final_system){
+    for(int i=0; i < col->getNumberOfElements(); ++i){
+      MCParticle* particle =dynamic_cast<MCParticle*> (col->getElementAt(i));
+      if(particle->getGeneratorStatus()!=1)continue;
       id = particle->getPDG();
-      if(particle->getEnergy()==max[11]){
+      if(particle->getEnergy()==max[11]&&id==11){
 	//ELECTRON
 	mom_e=Will::getVector(particle);
 	eT = Will::getTMag(mom_e);
 	if(eT!=0){
 	  scatter = true;
-	  electronic=Will::addVector(electronic,mom_e);
+	  electronic = mom_e;
+	  //cout << "electron scatter " << eT << endl;
 	}
-      }else if(particle->getEnergy()==max[-11]){
+      }else if(particle->getEnergy()==max[-11]&&id==-11){
 	//POSITRON
 	mom_p=Will::getVector(particle);
 	pT = Will::getTMag(mom_p);
 	if(pT!=0){
 	  scatter = true;
-	  electronic=Will::addVector(electronic,mom_p);
+	  electronic= mom_p;
+	  //cout << "positron scatter" << endl;
 	}    
       }else{
 	//HADRONIC
@@ -152,10 +157,10 @@ void Prediction::processEvent( LCEvent * evt ) {
 	_prediction->Fill(bad_t, good_t);
       }
 
-      double dot_c = electronic[0]*predict[0] + electronic[1]*predict[1] + electronic[2]*predict[3]; //Correct dot
-      double dot_i = electronic[0]*predict[0] + electronic[1]*predict[1] + electronic[2]*predict[2]; //Incorrect dot
+      double dot_c = mom_e[0]*predict[0] + mom_e[1]*predict[1] + mom_e[2]*predict[3]; //Correct dot
+      double dot_i = mom_e[0]*predict[0] + mom_e[1]*predict[1] + mom_e[2]*predict[2]; //Incorrect dot
       //      double e_mag = Will::getMag(mom_e);
-      double p_mag = Will::getMag(electronic);
+      double p_mag = Will::getMag(mom_e);
 	//      double e_mag = sqrt(pow(electronic[0], 2)+pow(electronic[1], 2)+pow(electronic[2], 2)); 
       double p_mag_c = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[3], 2)); //Correct mag
       double p_mag_i = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[2], 2)); //Incorrect mag
