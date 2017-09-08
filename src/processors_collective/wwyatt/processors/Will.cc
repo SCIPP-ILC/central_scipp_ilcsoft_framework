@@ -1,0 +1,48 @@
+#include <Will.h>
+
+map<int, double> Will::maxEnergy(LCCollection* col, initializer_list<int> ids, vector<MCParticle*>& fs){
+  const int SIZE=ids.size();
+  //double* max=new double[SIZE];
+  map<int, double>* max=new map<int,double>;
+  //  map<int, int> max_id;
+  for(int i=0; i < col->getNumberOfElements(); ++i){
+    MCParticle* particle=dynamic_cast<MCParticle*>(col->getElementAt(i));
+    if(particle->getGeneratorStatus()!=1)continue;
+    fs.push_back(particle);
+    int pid=particle->getPDG();
+    for(auto id:ids){
+      if(pid==id && particle->getEnergy() > (*max)[id]){
+	(*max)[id]=particle->getEnergy();
+	//	max_id[id]=i;
+      }
+    }
+  }
+  
+  return *max;
+}
+
+
+double* Will::getVector(MCParticle* particle){
+  double* output=new double[4];
+  const double* mom=particle->getMomentum();
+  output[0]=mom[0];
+  output[1]=mom[1];
+  output[2]=mom[2];
+  output[3]=particle->getEnergy();
+  return output;
+}
+  
+double* Will::addVector(double* a, double* b, const int SIZE){
+  double* output=new double[SIZE];
+  for(int i=0; i<SIZE; ++i) output[i]=a[i]+b[i];
+  return output;
+}
+
+
+double Will::getTMag(double* input){
+  return sqrt(pow(input[0], 2) + pow(input[1], 2));
+}
+double Will::getMag(double* input){
+  return sqrt(pow(input[0], 2) + pow(input[1], 2) + pow(input[2],2));
+}
+

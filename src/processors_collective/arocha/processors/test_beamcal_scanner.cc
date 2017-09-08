@@ -103,9 +103,6 @@ namespace scipp_ilc {
             double average_of_squares = total_squared_background_energy / weight;
             double standard_deviation = sqrt(average_of_squares - square_of_averages);
 
-	    /* double root_mean_square   = sqrt(square_of-averages / ) */
-
-
             //calculate significance
             for ( int ID : *ID_list ) energy += (*pixels)[ID];
             if ( energy <= 0.0 ) return 0;
@@ -115,22 +112,6 @@ namespace scipp_ilc {
             return significance;
         }
 
-
-      float root_mean_square(double *v, int n, vector<int>* ID_list, pixel_map* pixels, float& energy, double& average_background)
-      {
-	int i;
-	double sum = 0.0;
-	for(i = 0; i < n; i++)
-	  sum += v[i] * v[i];
-	return sqrt(sum / n);
-      }
-
-      int main(void)
-      {
-	double v[] = {1., 2., 3., 4., 5., 6., 7., 8., 9., 10.};
-	printf("%f\n", rms(v, sizeof(v)/sizeof(double)));
-	return 0;
-      }
 
 
         /*

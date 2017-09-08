@@ -61,6 +61,7 @@ namespace scipp_ilc {
         static unordered_map<int,double>* _energy_averages;
         static unordered_map<int,double>* _energy_std_devs;
         static unordered_map<int,int>* _times_hit;
+        static double _uncertainty;
         
         vector<pixel_map*>* _database;
 
@@ -239,6 +240,8 @@ namespace scipp_ilc {
                 double average_of_squares = squared_energy_total / _num_bgd_events;
                 double square_of_averages = energy_average * energy_average;
                 double energy_std_dev = sqrt(average_of_squares - square_of_averages);
+
+		double uncertainty = sqrt( (*hitcount[ID]) / _num_bdg_events);
 
                 if (hitcount == 1) {
                     energy_std_dev = -1.0;

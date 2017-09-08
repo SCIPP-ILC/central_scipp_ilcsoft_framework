@@ -88,7 +88,7 @@ void SV_Overlay::processEvent( LCEvent * evt ) {
   // usually the working horse ...
   LCCollection* col = evt->getCollection( _colName ) ;
 
-  double tot_mom[]={0, 0};
+  double tot_mom[]={0, 0, 0, 0};
   double S=0,V=0,M=0; 
   double stat;
   // this will only be entered if the collection is available
@@ -111,43 +111,46 @@ void SV_Overlay::processEvent( LCEvent * evt ) {
 	mom[0] = hit->getMomentum()[0];
 	mom[1] = hit->getMomentum()[1];
 	mom[2] = hit->getMomentum()[2];
+
 				
 	double mag = sqrt(pow(mom[0], 2)+pow(mom[1], 2));
 	S+=mag;
 
-	M+=sqrt(pow(hit->getEnergy(), 2)-pow(mom[0], 2) -pow(mom[1], 2) -pow(mom[2], 2));
-		 tot_mom[0]+=mom[0];
-		 tot_mom[1]+=mom[1];
+
+	tot_mom[0]+=mom[0];
+	tot_mom[1]+=mom[1];
+	tot_mom[2]+=mom[2];
+	tot_mom[3]+=hit->getEnergy();
 
 
-		 }//end final state
-      }//end for
-      //for(MCParticle* particle : system)
+      }//end final state
+    }//end for
+    //for(MCParticle* particle : system)
 
-      V=sqrt(pow(tot_mom[0], 2)+pow(tot_mom[1], 2));
+    V=sqrt(pow(tot_mom[0], 2)+pow(tot_mom[1], 2));
+    M=sqrt(pow(tot_mom[3], 2)-pow(tot_mom[0], 2) -pow(tot_mom[1], 2) -pow(tot_mom[2], 2));
 
+    _S->Fill(S); 
 
-      _S->Fill(S); 
-
-      _V->Fill(V);
-      _M->Fill(M);
-    }
-
-    _nEvt ++ ;
+    _V->Fill(V);
+    _M->Fill(M);
   }
 
-
-
-  void SV_Overlay::check( LCEvent * evt ) { 
-    // nothing to check here - could be used to fill checkplots in reconstruction processor
-  }
+  _nEvt ++ ;
+}
 
 
 
-  void SV_Overlay::end(){ 
-    _rootfile->Write();
-  }
+void SV_Overlay::check( LCEvent * evt ) { 
+  // nothing to check here - could be used to fill checkplots in reconstruction processor
+}
 
-  void print (string input) {
-    if (v) cout << input << endl;
-  }
+
+
+void SV_Overlay::end(){ 
+  _rootfile->Write();
+}
+
+void print (string input) {
+  if (v) cout << input << endl;
+}
