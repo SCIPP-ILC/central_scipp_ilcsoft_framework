@@ -1,5 +1,3 @@
 #! /bin/bash
-ilc-x2 twophoton
-mv SV_Overlay.root twophoton.root
-ilc-x2 tp_bhabha
-mv SV_Overlay.root tp_bhabha.root
+ilc-install2 && ilc-x2 bbsignal
+mv SV_Overlay.root bbsignal.root
