@@ -260,6 +260,12 @@ namespace scipp_ilc {
         }
 
 
+      static void sigma(location) {
+
+
+
+}
+
         
         /*
          * Sort from greatest to least significance.
