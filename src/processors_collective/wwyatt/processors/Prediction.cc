@@ -35,7 +35,7 @@
 using namespace lcio;
 using namespace marlin;
 using namespace std;
-
+using namespace Will;
 Prediction Prediction;
 
 static TFile* _rootfile;
@@ -87,8 +87,10 @@ void Prediction::processEvent( LCEvent * evt ) {
     _nEvt++;
     if( col == NULL )return;
     vector<MCParticle*> hadronic_system;
+    vector<MCParticle*> final_system;
     int stat, id =0;
     double tot_mom[]={0, 0};
+    double compEn_e=0, compEn_p=0;
     double* mom   = new double[4]();//4vec
     double* mom_e = new double[4]();
     double* mom_p = new double[4]();
@@ -100,36 +102,17 @@ void Prediction::processEvent( LCEvent * evt ) {
 
     int nElements = col->getNumberOfElements();
     scatter = false;
- 
-    map<int, double> max=Will::maxEnergy(col, {11, -11}, hadronic_system);
-    //Checks for scatter in electron or positron.
-    for(auto particle: hadronic_system){
-      id = particle->getPDG();
-      if(particle->getEnergy()==max[11]){
-	//ELECTRON
-	mom_e=Will::getVector(particle);
-	eT = Will::getTMag(mom_e);
-	if(eT!=0){
-	  scatter = true;
-	  electronic = mom_e;
-	  //cout << "electron scatter " << eT << endl;
-	}
-      }else if(particle->getEnergy()==max[-11]){
-	//POSITRON
-	mom_p=Will::getVector(particle);
-	pT = Will::getTMag(mom_p);
-	if(pT!=0){
-	  scatter = true;
-	  electronic= mom_p;
-	  //cout << "positron scatter" << endl;
-	}    
-      }else{
-	//HADRONIC
-	mom=Will::getVector(particle);
-	hadronic=Will::addVector(hadronic, mom);
-	mag+=Will::getTMag(mom);
-      }
-    }
+
+    prediction d=getPrediction(col);
+    mom_e=legacy(d.electron);
+    mom_p=legacy(d.positron);
+    hadronic=legacy(d.hadronic);
+    electronic=legacy(d.electronic);
+    mag=d.mag;
+    eT=d.electron.T;
+    pT=d.positron.T;
+    scatter=d.scattered;
+
     if(scatter == true){
       //create prediction vector
       //analysis();
@@ -147,7 +130,7 @@ void Prediction::processEvent( LCEvent * evt ) {
       predict[3] = (pow(pT, 2)-pow(beta, 2))/(2*beta);
       
       //Hadron transverse momentum
-      double r = Will::getTMag(predict);
+      double r = getTMag(predict);
       
       double mag_g = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[3], 2));
       good_t = asin(r/mag_g);
@@ -160,10 +143,10 @@ void Prediction::processEvent( LCEvent * evt ) {
       }
       
       //Find a more accurate naming convention for these.
-      double dot_c = mom_e[0]*predict[0] + mom_e[1]*predict[1] + mom_e[2]*predict[3]; //Correct dot
-      double dot_i = mom_e[0]*predict[0] + mom_e[1]*predict[1] + mom_e[2]*predict[2]; //Incorrect dot
+      double dot_c = electronic[0]*predict[0] + electronic[1]*predict[1] + electronic[2]*predict[3]; //Correct dot
+      double dot_i = electronic[0]*predict[0] + electronic[1]*predict[1] + electronic[2]*predict[2]; //Incorrect dot
 
-      double p_mag = Will::getMag(mom_e);
+      double p_mag = getMag(electronic);
 
       double p_mag_c = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[3], 2)); //Correct mag
       double p_mag_i = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[2], 2)); //Incorrect mag
@@ -181,11 +164,11 @@ void Prediction::processEvent( LCEvent * evt ) {
       double theta_i = acos(dot_i/(p_mag*p_mag_i)); //Incorrect prediction
 
       //Log for anomoly #Tyco
-      if(true){
-	double electronUnit=acos(mom_e[2]/Will::getMag(mom_e));
-	//double predEUnit=acos(mom_e[2]/Will::getMag(mom_e));
+      if(false){
+	double electronUnit=acos(electronic[2]/getMag(electronic));
+	//double predEUnit=acos(electronic[2]/getMag(electronic));
 	cout << "Electron " << electronUnit << endl;
-	cout << "Positron " << 3.14159-acos(mom_p[2]/Will::getMag(mom_p)) << endl;
+	cout << "Positron " << 3.14159-acos(mom_p[2]/getMag(mom_p)) << endl;
 	cout << "Prediction (electron scatter) " << acos(predict[2]/p_mag_i) << endl;
 	cout << "Prediction (positron scatter) " << 3.14159-acos(predict[3]/p_mag_c) << endl;
       }
@@ -196,7 +179,7 @@ void Prediction::processEvent( LCEvent * evt ) {
 
       //theta = acos(dot/(e_mag*p_mag)); 
       //cout << "Prediction Efficiency :" <<  theta << endl;
-      //      double e_mag = Will::getMag(mom_e);
+      //      double e_mag = getMag(electronic);
       //      double e_mag = sqrt(pow(electronic[0], 2)+pow(electronic[1], 2)+pow(electronic[2], 2)); 
       //cout << dot_c << endl; //dot_c 59066.6
 

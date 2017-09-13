@@ -1,5 +1,3 @@
-
-
 /*
  * Created by William Wyatt
  * On Aug 30th 2017
@@ -20,27 +18,64 @@
 
 using namespace lcio;
 using namespace std;
-static vector<MCParticle *> AVAL;
-class Will{
- public:
+namespace Will{
+  struct fourvec{
+    union{ double X; double x=0.0; };
+    union{ double Y; double y=0.0; };
+    union{ double Z; double z=0.0; };
+    union{ double E; double e=0.0; };
+    union{ double T; double t=0.0; };
+    fourvec operator+(const fourvec& a) const{
+      fourvec ret;
+      ret.x=a.x+x;
+      ret.y=a.y+y;
+      ret.z=a.z+z;
+      ret.t=a.t+t;
+      return ret;
+    }
+    fourvec operator+=(const fourvec& a){
+      *this=a+*this;
+      return *this;
+    }
+  };
+  struct prediction{
+    fourvec hadronic;
+    fourvec electronic;
+    fourvec electron;
+    fourvec positron;
+    double mag=0.0;
+    bool scattered=false;
+  };
   //Specific function used in prediction algorithm.
   //Finds the highest energy particle
-  static map<int,double> maxEnergy(LCCollection*, 
-				   initializer_list<int> ids, 
-				   vector<MCParticle*>& final_state);
+   map<int,double> maxEnergy(LCCollection*, 
+			     initializer_list<int> ids, 
+			     vector<MCParticle*>& final_state);
 
-  static double* getVector(MCParticle*);
+   double* getVector(MCParticle*);
+   fourvec getFourVector(MCParticle*);
 
   //Returns the sum of the two; assumes a 4 vector
-  static double* addVector(double*, double*, const int SIZE=4);
+   double* addVector(double*, double*, const int SIZE=4);
 
   //Returns transverse momentum magnitude
-  static double getTMag(double*);
+   double getTMag(const double*);
 
-  static double getMag(double*);
+  //Returns momentum from a momentum vector
+   double getMag(const double*);
+   double getMag(const fourvec);
 
- private:
+   double* legacy(fourvec);
 
-};
+
+  /*Returns a map with a few four vectors in it.
+   * - hadronic vector
+   * - electronic vector
+   * - electron vector
+   * - positron vector
+   * This should be used to calculate a prediction vector.
+   */
+   prediction getPrediction(LCCollection*);
+}
 
 #endif

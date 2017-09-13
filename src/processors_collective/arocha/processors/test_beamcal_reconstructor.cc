@@ -182,7 +182,7 @@ namespace scipp_ilc {
                 //for each slcio file in the file list
                 while ( filelist >> slcioFile ) {
                     lcReader->open(slcioFile);
-                    
+
                     //for each event in the slcio file
                     while( (event=lcReader->readNextEvent()) ) {
                         pixel_map* new_pixels = new pixel_map();
@@ -260,13 +260,31 @@ namespace scipp_ilc {
         }
 
 
-      static void sigma(location, position, ) {
-	
+      /*In order to get the uncertainty for each pixel it is nescessary to determine
+	the exact location (position) of each pixel and then apply the background subtraction
+	using the average background
+	In order to find the high energy pixels it is nescessary to look at the neighboring regions
+	from the average background line
+
+	In each crossing there are extra crossings this is the uncertainty that we need to calculate
+	NOTE: the uncertainty should be given by the RMS (Root-Mean-Square) of the depositions
+	in the particular pixel of the detector
+       */
+      static void sigma(string bgd_list_file_name) {
+	_database = new vector<pixel_map*>();
+
+	int numEventsRead = 0;
+
+	double location;
+	double position;
+	double uncertainty;
+
 
 
 }
 
-        
+
+
         /*
          * Sort from greatest to least significance.
          * Largest significance cluster is zeroth element in list

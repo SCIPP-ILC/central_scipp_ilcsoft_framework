@@ -260,8 +260,8 @@ namespace scipp_ilc {
         }
 
 
-      static void sigma(location) {
-
+      static void sigma(location, position, ) {
+	
 
 
 }
@@ -286,6 +286,7 @@ namespace scipp_ilc {
          * fraction (given by _rejection_limit) of the clusters (and thus
          * of the bgd events themselves) will exceed.
          */
+
         static void calibrate_scanner() {
             cout << "Calibrating Scanner...\n";
 

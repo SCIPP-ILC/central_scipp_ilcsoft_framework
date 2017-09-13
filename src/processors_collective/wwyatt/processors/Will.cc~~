@@ -1,5 +1,5 @@
 #include <Will.h>
-using namespace Will;
+
 map<int, double> Will::maxEnergy(LCCollection* col, initializer_list<int> ids, vector<MCParticle*>& fs){
   const int SIZE=ids.size();
   //double* max=new double[SIZE];
@@ -31,18 +31,6 @@ double* Will::getVector(MCParticle* particle){
   output[3]=particle->getEnergy();
   return output;
 }
-
-fourvec Will::getFourVector(MCParticle* particle){
-  fourvec* output=new fourvec;
-  const double* mom=particle->getMomentum();
-  output.x=mom[0];
-  output.y=mom[1];
-  output.z=mom[2];
-  output.E=particle->getEnergy();
-  output.T=getTMag(mom);
-  return *output;
-}
-
   
 double* Will::addVector(double* a, double* b, const int SIZE){
   double* output=new double[SIZE];
@@ -58,41 +46,7 @@ double Will::getMag(double* input){
   return sqrt(pow(input[0], 2) + pow(input[1], 2) + pow(input[2],2));
 }
 
-prediction Will::getPrediction(LCCollection* col){
-  prediction out;
-  vector<MCParticle*> hadronic_system;
-  map<int, double> max=maxEnergy(col, {11, -11}, hadronic_system);
-  fourvec hadronic=out.hadronic, 
-    electronic=out.electronic,
-    electron=out.electron,
-    positron=out.positron;
-  double mag=0.0;
-  //Checks for scatter in electron or positron.
-  for(auto particle: hadronic_system){
-    int id = particle->getPDG();
-    if(particle->getEnergy()==max[11]){
-      //ELECTRON
-      electron=getFourVector(particle);
-      if(electron.T!=0.0){
-	out.scattered=true;
-	electronic=electron;
-      }
-    }else if(particle->getEnergy()==max[-11]){
-      //POSITRON
-      mom_p=getVector(particle);
-      positron=getFourVector(particle);
-      if(positron.T!=0.0){
-	out.scattered=true;
-	electronic=positron;
-      }    
-    }else{
-      //HADRONIC
-      fourvec hadron=getVector(particle);
-      hadronic+=hadron;
-      mag+=hadron.T;
-    }
-  }
-  return out;
+map<string, Will::fourvec> Will::getPrediction(LCCollection* col){
+  map<string, Will::fourvec> t;
+  return t;
 }
-
-
