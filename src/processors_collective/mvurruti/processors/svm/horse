@@ -1,9 +1,9 @@
 #! /bin/bash
-ilc-install2 && ilc-x2 signal_all
-mv SV_Overlay.root signal_all.root
+ilc-install2 && ilc-x2 bwsignal
+mv SV_Overlay.root bwsignal.root
 
-ilc-install2 && ilc-x2 signal
-mv SV_Overlay.root signal.root
+ilc-install2 && ilc-x2 bbsignal
+mv SV_Overlay.root bbsignal.root
 
 ilc-install2 && ilc-x2 tp_bhabha
 mv SV_Overlay.root tp_bhabha.root

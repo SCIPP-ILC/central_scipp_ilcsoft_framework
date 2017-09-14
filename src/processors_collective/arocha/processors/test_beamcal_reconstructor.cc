@@ -241,7 +241,7 @@ namespace scipp_ilc {
                 double square_of_averages = energy_average * energy_average;
                 double energy_std_dev = sqrt(average_of_squares - square_of_averages);
 
-		double sigma = sqrt( (hitcount*hitcount) / _num_bdg_events);
+		//double sigma = sqrt( (hitcount*hitcount) / _num_bdg_events);
 
                 if (hitcount == 1) {
                     energy_std_dev = -1.0;
@@ -271,7 +271,7 @@ namespace scipp_ilc {
 	in the particular pixel of the detector
        */
       static void sigma(string bgd_list_file_name) {
-	_database = new vector<pixel_map*>();
+	  cout << "Calculating Uncertainty....\n";
 
 	int numEventsRead = 0;
 
@@ -318,7 +318,7 @@ namespace scipp_ilc {
             }
 
             sort(cluster_list.begin(), cluster_list.end(), compare_cluster);
-            
+
             int cutoff_index = (int)( cluster_list.size()*_rejection_limit );
             _sigma_cut = cluster_list[cutoff_index]->significance;
 
