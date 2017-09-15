@@ -17,6 +17,7 @@
 
 //#include <ctime>    //************************************************************
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <chrono>
 #include <string>
@@ -235,7 +236,7 @@ void BeamCalRecon_xy::PrintRadiusThetaTable_two(int a[width][height]){//string t
 }
 */
 
-void BeamCalRecon_xy::PrintRadiusThetaTable(string key){//string table){
+void BeamCalRecon_xy::PrintRadiusThetaTable(string key){//, ofstream fout){//string table){
     if(key=="wBgd"){
         cout << "\nradius vs. theta w/ Bgd" << endl;
     }
@@ -250,6 +251,19 @@ void BeamCalRecon_xy::PrintRadiusThetaTable(string key){//string table){
     int width = _arr_width;
     double div = 0.0;
     double one = 1.0;
+
+    
+    ofstream fout;
+    fout.open("output.txt");
+    if (fout.fail()){
+      cout << "Output file failed to open.\n";
+      exit(-1);
+    }
+
+    fout.close();
+      
+    //    fout << "average = " << average << endl;
+    //    s
 
     for(int i = 0; i < height; i++){
         if(i==0){
@@ -306,7 +320,6 @@ void BeamCalRecon_xy::PrintRadiusThetaTable(string key){//string table){
 	      else{
 		  cout << setw(5) << "0.0";
 		}
-
 	      cout << " ";
 	    }
 	}
@@ -333,13 +346,11 @@ void BeamCalRecon_xy::init() {
     _1DRadHitsSigE_wBGD = new TH1F("radHitsWBgd","",140,0,140);
     _1DRadHitsSigE_wDiv = new TH1F("radHitsWDiv","",70,0,140);
 
-
     std::stringstream s1;
 
     PlotTH1F(_1DRadHitsSigE_wCut,s1,"eHit v rad (wCut),");
     PlotTH1F(_1DRadHitsSigE_wBGD,s1,"eHit v rad (wBgd),");
     PlotTH1F(_1DRadHitsSigE_wDiv,s1,"eHit v rad (wDiv),");
-
 
     Double_t theta[8];
     Double_t radius[8];
@@ -601,9 +612,22 @@ void BeamCalRecon_xy::end(){
     //    PrintRadiusThetaTable_two(_RadTheta_wCut);
     //    PrintRadiusThetaTable_two(_RadTheta_wBgd);
 
+    //    stringstream& stream
+    //    std::ofstream fout;
+    /*    ofstream fout;
+        fout.open("output.txt");
+    if (fout.fail()){
+      cout << "Output file failed to open.\n";
+      exit(-1);
+    }
+    */
+
+    //    PrintRadiusThetaTable("wCut", fout);
     PrintRadiusThetaTable("wCut");
     PrintRadiusThetaTable("wBgd");
     PrintRadiusThetaTable("wDiv");
+
+			  //    fout.close();
 
     // ------ clock end ------
     //    _t2 = Clock::now();

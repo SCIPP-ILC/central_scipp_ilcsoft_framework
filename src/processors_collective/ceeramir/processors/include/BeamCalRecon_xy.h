@@ -46,7 +46,8 @@ class BeamCalRecon_xy : public Processor {
 	//	virtual void PrintRadiusThetaTable();
 	//	virtual void PrintRadiusThetaTable_two(int a[][13]);
 	//	virtual void PrintRadiusThetaTable_two(int a[int][int]);
-	virtual void PrintRadiusThetaTable(std::string key);
+	virtual void PrintRadiusThetaTable(std::string key);    //this virtual works!!!!!1
+	//	virtual void PrintRadiusThetaTable(std::string key, ofstream fout);
 
         /** Called at the begin of the job before anything is read.
          * Use to initialize the processor, e.g. book histograms.
