@@ -26,7 +26,7 @@ namespace Will{
     union{ double E; double e=0.0; };
     union{ double T; double t=0.0; };
     fourvec operator+(const fourvec& a) const{
-      fourbec ret;
+      fourvec ret;
       ret.x=a.x+x;
       ret.y=a.y+y;
       ret.z=a.z+z;
@@ -37,16 +37,22 @@ namespace Will{
       *this=a+*this;
       return *this;
     }
-    double* operator=(const fourvec& a){
-
-    }
   };
   struct prediction{
+    fourvec electron;
+    fourvec positron;
+    prediction(double x,double y){
+      electron.x=x;
+      positron.y=y;
+    }
+  }
+  struct measure{
     fourvec hadronic;
     fourvec electronic;
     fourvec electron;
     fourvec positron;
-    boolean scattered=false;
+    double mag=0.0;
+    bool scattered=false;
   };
   //Specific function used in prediction algorithm.
   //Finds the highest energy particle
@@ -61,10 +67,15 @@ namespace Will{
    double* addVector(double*, double*, const int SIZE=4);
 
   //Returns transverse momentum magnitude
-   double getTMag(double*);
+   double getTMag(const double*);
+   double getTMag(const fourvec);
 
   //Returns momentum from a momentum vector
-   double getMag(double*);
+   double getMag(const double*);
+   double getMag(const fourvec);
+
+   double* legacy(fourvec);
+
 
   /*Returns a map with a few four vectors in it.
    * - hadronic vector
@@ -73,7 +84,7 @@ namespace Will{
    * - positron vector
    * This should be used to calculate a prediction vector.
    */
-   map<string, fourvec> getPrediction(LCCollection*);
+   measure getMeasure(LCCollection*);
 }
 
 #endif

@@ -64,7 +64,7 @@ Prediction::Prediction() : Processor("Prediction") {
 void Prediction::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("BW_prediction.root","RECREATE");
+    _rootfile = new TFile("ppredict.root","RECREATE");
     // usually a good idea to
     //printParameters() ;
     _prediction = new TH2F("predict", "Predicted Angle of Scatter, Correct vs Incorrect Kinematics", 1000, 0.0, 0.01, 1000, 0.0, 0.01);
@@ -80,15 +80,15 @@ void Prediction::processRunHeader( LCRunHeader* run) {
 //    _nRun++ ;
 } 
 
-
-
 void Prediction::processEvent( LCEvent * evt ) { 
     LCCollection* col = evt->getCollection( _colName ) ;
     _nEvt++;
     if( col == NULL )return;
     vector<MCParticle*> hadronic_system;
+    vector<MCParticle*> final_system;
     int stat, id =0;
-    double tot_mom[]={0, 0};
+    /*double tot_mom[]={0, 0};
+    double compEn_e=0, compEn_p=0;
     double* mom   = new double[4]();//4vec
     double* mom_e = new double[4]();
     double* mom_p = new double[4]();
@@ -99,29 +99,44 @@ void Prediction::processEvent( LCEvent * evt ) {
     double* electronic = new double[4]();
 
     int nElements = col->getNumberOfElements();
-    scatter = false;
-    
-    map<string, fourvec> d=getPrediction(col);
-    
-    if(scatter == true){
-      //create prediction vector
-      //analysis();
-      double predict[4];
-      predict[0] = -hadronic[0];
-      predict[1] = -hadronic[1];
-      double alpha = 500 - hadronic[3] - hadronic[2];
-      double beta = 500 - hadronic[3] + hadronic[2];
-      
+    scatter = false;*/
 
-      //Given positron deflection (eBpW)
-      //incorrect prediction (correct if electron deflection)
-      predict[2] = -(pow(eT, 2)-pow(alpha, 2))/(2*alpha);
+    measure data=getMeasure(col);
+
+    /*mom_e=legacy(measure.electron);
+    mom_p=legacy(measure.positron);
+    hadronic=legacy(measure.hadronic);
+    electronic=legacy(measure.electronic);
+    mag=measure.mag;
+    eT=measure.electron.T;
+    pT=measure.positron.T;
+    scatter=measure.scattered;*/
+    
+    if(data.scatter == true){
+      fourvec
+	electron=data.electron,
+	poritron=data.positron,
+	hadronic=data.hadronic,
+	electronic=data.electronic;
+      double mag=data.mag;
+
+      fourvec predict;
+      predict.x=-measure.hadronic.x;
+      predict.y=-measure.hadronic.y;
+      double alpha = 500 - measure.hadronic.E - measure.hadronic.z;
+      double beta = 500 - measure.hadronic.E + measure.hadronic.z;
+
+      prediction p(-hadronic.x,-hadronic.y);
+      predict_incorrect.z = -(pow(eT, 2)-pow(alpha, 2))/(2*alpha);
+      //      predict[2] = -(pow(eT, 2)-pow(alpha, 2))/(2*alpha);
       //correct prediction (correct if positron deflection)
-      predict[3] = (pow(pT, 2)-pow(beta, 2))/(2*beta);
+      predict_correct.z = (pow(pT, 2)-pow(beta, 2))/(2*beta);
+      //      predict[3] = (pow(pT, 2)-pow(beta, 2))/(2*beta);
       
       //Hadron transverse momentum
       double r = getTMag(predict);
       
+
       double mag_g = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[3], 2));
       good_t = asin(r/mag_g);
 
@@ -133,10 +148,10 @@ void Prediction::processEvent( LCEvent * evt ) {
       }
       
       //Find a more accurate naming convention for these.
-      double dot_c = mom_e[0]*predict[0] + mom_e[1]*predict[1] + mom_e[2]*predict[3]; //Correct dot
-      double dot_i = mom_e[0]*predict[0] + mom_e[1]*predict[1] + mom_e[2]*predict[2]; //Incorrect dot
+      double dot_c = electronic[0]*predict[0] + electronic[1]*predict[1] + electronic[2]*predict[3]; //Correct dot
+      double dot_i = electronic[0]*predict[0] + electronic[1]*predict[1] + electronic[2]*predict[2]; //Incorrect dot
 
-      double p_mag = getMag(mom_e);
+      double p_mag = getMag(electronic);
 
       double p_mag_c = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[3], 2)); //Correct mag
       double p_mag_i = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[2], 2)); //Incorrect mag
@@ -155,8 +170,8 @@ void Prediction::processEvent( LCEvent * evt ) {
 
       //Log for anomoly #Tyco
       if(false){
-	double electronUnit=acos(mom_e[2]/getMag(mom_e));
-	//double predEUnit=acos(mom_e[2]/getMag(mom_e));
+	double electronUnit=acos(electronic[2]/getMag(electronic));
+	//double predEUnit=acos(electronic[2]/getMag(electronic));
 	cout << "Electron " << electronUnit << endl;
 	cout << "Positron " << 3.14159-acos(mom_p[2]/getMag(mom_p)) << endl;
 	cout << "Prediction (electron scatter) " << acos(predict[2]/p_mag_i) << endl;
@@ -169,7 +184,7 @@ void Prediction::processEvent( LCEvent * evt ) {
 
       //theta = acos(dot/(e_mag*p_mag)); 
       //cout << "Prediction Efficiency :" <<  theta << endl;
-      //      double e_mag = getMag(mom_e);
+      //      double e_mag = getMag(electronic);
       //      double e_mag = sqrt(pow(electronic[0], 2)+pow(electronic[1], 2)+pow(electronic[2], 2)); 
       //cout << dot_c << endl; //dot_c 59066.6
 

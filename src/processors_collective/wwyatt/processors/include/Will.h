@@ -37,8 +37,19 @@ namespace Will{
       *this=a+*this;
       return *this;
     }
+    fourvec(double _x,double _y){x=_x;y=_y;}
+    fourvec(double _x,double _y,double _z):fourvec(_x,_y){z=_z;}
+    fourvec(double _x,double _y,double _z,double _e):fourvec(_x,_y,_z){e=_e;}
   };
   struct prediction{
+    fourvec electron;
+    fourvec positron;
+    prediction(double x,double y){
+      electron.x=x;
+      positron.y=y;
+    }
+  }
+  struct measure{
     fourvec hadronic;
     fourvec electronic;
     fourvec electron;
@@ -55,15 +66,32 @@ namespace Will{
    double* getVector(MCParticle*);
    fourvec getFourVector(MCParticle*);
 
-  //Returns the sum of the two; assumes a 4 vector
+   //Returns the sum of the two; assumes a 4 vector
    double* addVector(double*, double*, const int SIZE=4);
 
-  //Returns transverse momentum magnitude
+   //Returns transverse momentum magnitude
    double getTMag(const double*);
+   double getTMag(const fourvec);
 
-  //Returns momentum from a momentum vector
+   //Returns momentum from a momentum vector
    double getMag(const double*);
    double getMag(const fourvec);
+
+   //Returns angle off of the z-axis, theta
+   double getTheta(const double*);
+   double getTheta(const fourvec);
+
+   //Returns dot product of two vectors
+   double getDot(const double*, const double*);
+   double getDot(const fourvec, const fourvec);
+
+
+   /* Not implemented
+   //Retuns anglebetween vectors or doubles in rads
+   double theta(const double*, const double*);
+   double theta(const fourvec, const fourvec);
+   */
+   
 
    double* legacy(fourvec);
 
@@ -75,7 +103,7 @@ namespace Will{
    * - positron vector
    * This should be used to calculate a prediction vector.
    */
-   prediction getPrediction(LCCollection*);
+   measure getMeasure(LCCollection*);
 }
 
 #endif

@@ -58,38 +58,8 @@ double Will::getMag(double* input){
   return sqrt(pow(input[0], 2) + pow(input[1], 2) + pow(input[2],2));
 }
 
-double Will::getTMag(fourvec input){
-  return getTMag(new double[2]{input.x,input.y})
-}
-double Will::getMag(fourvec input){
-  return getMag(new double[3]{input.x,input.y,input.z});
-}
-
-double getTheta(double* input){
-  return asin(getTMag(input)/getMag(input));
-}
-double getTheta(fourvec input){
-  return asin(getTMag(input)/getMag(input));
-}
-
-double getDot(double*, double*){
-  
-}
-double getDot(fourvec, fourvec){
-  return 
-}
-
-
-/*double Will::theta(double*, double*){
-  return 
-}
-double Will::theta(fourvec, fourvec){
-
-}*/
-
-
-measure Will::getMeasure(LCCollection* col){
-  measure out;
+prediction Will::getPrediction(LCCollection* col){
+  prediction out;
   vector<MCParticle*> hadronic_system;
   map<int, double> max=maxEnergy(col, {11, -11}, hadronic_system);
   fourvec hadronic=out.hadronic, 

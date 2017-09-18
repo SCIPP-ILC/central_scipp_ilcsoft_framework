@@ -64,7 +64,7 @@ Prediction::Prediction() : Processor("Prediction") {
 void Prediction::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("BW_prediction.root","RECREATE");
+    _rootfile = new TFile("ppredict.root","RECREATE");
     // usually a good idea to
     //printParameters() ;
     _prediction = new TH2F("predict", "Predicted Angle of Scatter, Correct vs Incorrect Kinematics", 1000, 0.0, 0.01, 1000, 0.0, 0.01);
@@ -80,8 +80,6 @@ void Prediction::processRunHeader( LCRunHeader* run) {
 //    _nRun++ ;
 } 
 
-
-
 void Prediction::processEvent( LCEvent * evt ) { 
     LCCollection* col = evt->getCollection( _colName ) ;
     _nEvt++;
@@ -89,7 +87,7 @@ void Prediction::processEvent( LCEvent * evt ) {
     vector<MCParticle*> hadronic_system;
     vector<MCParticle*> final_system;
     int stat, id =0;
-    double tot_mom[]={0, 0};
+    /*double tot_mom[]={0, 0};
     double compEn_e=0, compEn_p=0;
     double* mom   = new double[4]();//4vec
     double* mom_e = new double[4]();
@@ -101,48 +99,49 @@ void Prediction::processEvent( LCEvent * evt ) {
     double* electronic = new double[4]();
 
     int nElements = col->getNumberOfElements();
-    scatter = false;
+    scatter = false;*/
 
-    prediction d=getPrediction(col);
-    mom_e=legacy(d.electron);
-    mom_p=legacy(d.positron);
-    hadronic=legacy(d.hadronic);
-    electronic=legacy(d.electronic);
-    mag=d.mag;
-    eT=d.electron.T;
-    pT=d.positron.T;
-    scatter=d.scattered;
+    measure data=getMeasure(col);
 
-    if(scatter == true){
-      //create prediction vector
-      //analysis();
-      double predict[4];
-      predict[0] = -hadronic[0];
-      predict[1] = -hadronic[1];
-      double alpha = 500 - hadronic[3] - hadronic[2];
-      double beta = 500 - hadronic[3] + hadronic[2];
+    /*mom_e=legacy(measure.electron);
+    mom_p=legacy(measure.positron);
+    hadronic=legacy(measure.hadronic);
+    electronic=legacy(measure.electronic);
+    mag=measure.mag;
+    eT=measure.electron.T;
+    pT=measure.positron.T;
+    scatter=measure.scattered;*/
+    
+    if(data.scatter == true){
+      fourvec
+	electron=data.electron,
+	poritron=data.positron,
+	hadronic=data.hadronic,
+	electronic=data.electronic;
+      double mag=data.mag;
+      double alpha=(500-hadronic.E -hadronic.z);
+      double  beta=(500-hadronic.E +hadronic.z);
+      //Legacy
+      fourvec predict;
+      predict.x=-hadronic.x;
+      predict.y=-hadronic.y;
+      //END
+      prediction p(-hadronic.x,-hadronic.y);
+      p.electron.z = -(pow(eT, 2)-pow(alpha, 2))/(2*alpha);
+      p.positron.z = (pow(pT, 2)-pow(beta, 2))/(2*beta);
       
-
-      //Given positron deflection (eBpW)
-      //incorrect prediction (correct if electron deflection)
-      predict[2] = -(pow(eT, 2)-pow(alpha, 2))/(2*alpha);
+      //      predict[3] = (pow(pT, 2)-pow(beta, 2))/(2*beta);
+      //      predict[2] = -(pow(eT, 2)-pow(alpha, 2))/(2*alpha);
       //correct prediction (correct if positron deflection)
-      predict[3] = (pow(pT, 2)-pow(beta, 2))/(2*beta);
-      
-      //Hadron transverse momentum
-      double r = getTMag(predict);
-      
-      double mag_g = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[3], 2));
-      good_t = asin(r/mag_g);
 
-      double mag_b = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[2], 2));
-      bad_t = asin(r/mag_b);
-            
+      double electronTheta=getTheta(p.electron);
+      double positronTheta=getTheta(p.positron);
       if(mag>1.0){
-	_prediction->Fill(bad_t, good_t);
+	_prediction->Fill(electron_Theta,positron_Theta);
       }
       
       //Find a more accurate naming convention for these.
+      
       double dot_c = electronic[0]*predict[0] + electronic[1]*predict[1] + electronic[2]*predict[3]; //Correct dot
       double dot_i = electronic[0]*predict[0] + electronic[1]*predict[1] + electronic[2]*predict[2]; //Incorrect dot
 
@@ -182,6 +181,7 @@ void Prediction::processEvent( LCEvent * evt ) {
       //      double e_mag = getMag(electronic);
       //      double e_mag = sqrt(pow(electronic[0], 2)+pow(electronic[1], 2)+pow(electronic[2], 2)); 
       //cout << dot_c << endl; //dot_c 59066.6
+
 
     }
 }

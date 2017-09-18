@@ -57,9 +57,15 @@ double Will::getTMag(double* input){
 double Will::getMag(double* input){
   return sqrt(pow(input[0], 2) + pow(input[1], 2) + pow(input[2],2));
 }
+double Will::getTMag(fourvec input){
+  return getTMag(new double[2]{input.x,input.y})
+}
+double Will::getMag(fourvec input){
+  return getMag(new double[3]{input.x,input.y,input.z});
+}
 
-prediction Will::getPrediction(LCCollection* col){
-  prediction out;
+measure Will::getMeasure(LCCollection* col){
+  measure out;
   vector<MCParticle*> hadronic_system;
   map<int, double> max=maxEnergy(col, {11, -11}, hadronic_system);
   fourvec hadronic=out.hadronic, 
