@@ -1,5 +1,66 @@
 #include <Will.h>
 using namespace Will;
+struct Will::fourvec{
+  union{ double X; double x=0.0; };
+  union{ double Y; double y=0.0; };
+  union{ double Z; double z=0.0; };
+  union{ double E; double e=0.0; };
+  union{ double T; double t=0.0; };
+  fourvec operator+(const fourvec& a) const{
+    return fourvec(
+		   a.x+x,
+		   a.y+y,
+		   a.z+z,
+		   a.e+e,
+		   sqrt(pow(a.x+x,2)+pow(a.y+y,2))
+		   );
+  }
+  double operator*(const fourvec& a) const{
+    return a.x*x + a.y*y + a.z*z;
+  }
+  fourvec operator+=(const fourvec& a){
+    *this=a+*this;
+    return *this;
+  }
+  fourvec(const double _x,const double _y){x=_x;y=_y;t=getTMag(new double[2]{_x,_y});}
+  fourvec(const double _x,const double _y,const double _z):fourvec(_x,_y){z=_z;}
+  fourvec(const double _x,const double _y,const double _z,const double _e):fourvec(_x,_y,_z){e=_e;}
+  fourvec(const double _x,const double _y,const double _z,const double _e,const double _t):fourvec(_x,_y,_z,_e){t=_t;}
+  fourvec():fourvec(0,0,0,0,0){};
+  fourvec(const double* input,const unsigned short SIZE){
+    switch(SIZE){
+    case 4:
+      e=input[3];
+    case 3:
+      z=input[2];
+    case 2:
+      t=getTMag(new double[2]{input[0], input[1]});
+      y=input[1];
+    case 1:
+      x=input[0];
+    }
+  }
+};
+
+struct Will::prediction{
+  fourvec electron;
+  fourvec positron;
+  prediction(double x,double y){
+    electron.x=x;
+    positron.y=y;
+  };
+};
+
+struct Will::measure{
+  fourvec hadronic;
+  fourvec electronic;
+  fourvec electron;
+  fourvec positron;
+  double mag=0.0;
+  bool scattered=false;
+};
+
+
 map<int, double> Will::maxEnergy(LCCollection* col, initializer_list<int> ids, vector<MCParticle*>& fs){
   const int SIZE=ids.size();
   //double* max=new double[SIZE];
@@ -35,11 +96,11 @@ double* Will::getVector(MCParticle* particle){
 fourvec Will::getFourVector(MCParticle* particle){
   fourvec* output=new fourvec;
   const double* mom=particle->getMomentum();
-  output.x=mom[0];
-  output.y=mom[1];
-  output.z=mom[2];
-  output.E=particle->getEnergy();
-  output.T=getTMag(mom);
+  output->x=mom[0];
+  output->y=mom[1];
+  output->z=mom[2];
+  output->E=particle->getEnergy();
+  output->T=getTMag(mom);
   return *output;
 }
 
@@ -51,41 +112,41 @@ double* Will::addVector(double* a, double* b, const int SIZE){
 }
 
 
-double Will::getTMag(double* input){
+double Will::getTMag(const double* input){
   return sqrt(pow(input[0], 2) + pow(input[1], 2));
 }
-double Will::getMag(double* input){
+double Will::getMag(const double* input){
   return sqrt(pow(input[0], 2) + pow(input[1], 2) + pow(input[2],2));
 }
 
 double Will::getTMag(fourvec input){
-  return getTMag(new double[2]{input.x,input.y})
+  return getTMag(new double[2]{input.x,input.y});
 }
 double Will::getMag(fourvec input){
   return getMag(new double[3]{input.x,input.y,input.z});
 }
 
-double getTheta(double* input){
+double getTheta(const double* input){
   return asin(getTMag(input)/getMag(input));
 }
 double getTheta(fourvec input){
   return asin(getTMag(input)/getMag(input));
 }
 
-double getDot(double*, double*){
-  
+double getDot(const double* a, const double* b){
+  return getDot(fourvec(a,3),fourvec(b,3));
 }
-double getDot(fourvec, fourvec){
-  return 
+double getDot(fourvec a, fourvec b){
+  return a.x*b.x+a.y*b.y+a.z*b.z;
 }
 
 
-/*double Will::theta(double*, double*){
-  return 
+double Will::getTheta(const double* a, const double* b){
+  return getTheta(fourvec(a,3),fourvec(b,3));
 }
-double Will::theta(fourvec, fourvec){
-
-}*/
+double Will::getTheta(fourvec a, fourvec b){
+  return acos(a*b/getMag(a)*getMag(b));
+}
 
 
 measure Will::getMeasure(LCCollection* col){
@@ -109,7 +170,6 @@ measure Will::getMeasure(LCCollection* col){
       }
     }else if(particle->getEnergy()==max[-11]){
       //POSITRON
-      mom_p=getVector(particle);
       positron=getFourVector(particle);
       if(positron.T!=0.0){
 	out.scattered=true;
@@ -117,7 +177,7 @@ measure Will::getMeasure(LCCollection* col){
       }    
     }else{
       //HADRONIC
-      fourvec hadron=getVector(particle);
+      fourvec hadron=getFourVector(particle);
       hadronic+=hadron;
       mag+=hadron.T;
     }

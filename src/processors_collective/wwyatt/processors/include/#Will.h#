@@ -20,11 +20,24 @@ using namespace lcio;
 using namespace std;
 namespace Will{
   struct fourvec;
-
   double getTMag(const double*);
 
-  struct prediction;
-  struct measure;
+  struct prediction{
+    fourvec electron;
+    fourvec positron;
+    prediction(double x,double y){
+      electron.x=x;
+      positron.y=y;
+    };
+  };
+  struct measure{
+    fourvec hadronic;
+    fourvec electronic;
+    fourvec electron;
+    fourvec positron;
+    double mag=0.0;
+    bool scattered=false;
+  };
   //Specific function used in prediction algorithm.
   //Finds the highest energy particle
    map<int,double> maxEnergy(LCCollection*, 
@@ -69,7 +82,6 @@ namespace Will{
    * This should be used to calculate a prediction vector.
    */
    measure getMeasure(LCCollection*);
-   
 }
 
 #endif

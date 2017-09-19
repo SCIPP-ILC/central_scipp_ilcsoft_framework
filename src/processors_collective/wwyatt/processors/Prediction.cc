@@ -36,7 +36,9 @@ using namespace lcio;
 using namespace marlin;
 using namespace std;
 using namespace Will;
+
 Prediction Prediction;
+
 
 static TFile* _rootfile;
 static TH2F* _prediction;
@@ -101,7 +103,7 @@ void Prediction::processEvent( LCEvent * evt ) {
     int nElements = col->getNumberOfElements();
     scatter = false;*/
 
-    measure data=getMeasure(col);
+    Will::measure data = Will::getMeasure(col);
 
     /*mom_e=legacy(measure.electron);
     mom_p=legacy(measure.positron);
@@ -112,10 +114,10 @@ void Prediction::processEvent( LCEvent * evt ) {
     pT=measure.positron.T;
     scatter=measure.scattered;*/
     
-    if(data.scatter == true){
+    if(data.scattered == true){
       fourvec
 	electron=data.electron,
-	poritron=data.positron,
+	positron=data.positron,
 	hadronic=data.hadronic,
 	electronic=data.electronic;
       double mag=data.mag;
@@ -127,8 +129,8 @@ void Prediction::processEvent( LCEvent * evt ) {
       predict.y=-hadronic.y;
       //END
       prediction p(-hadronic.x,-hadronic.y);
-      p.electron.z = -(pow(eT, 2)-pow(alpha, 2))/(2*alpha);
-      p.positron.z = (pow(pT, 2)-pow(beta, 2))/(2*beta);
+      p.electron.z = -(pow(electron.T, 2)-pow(alpha, 2))/(2*alpha);
+      p.positron.z = (pow(positron.T, 2)-pow(beta, 2))/(2*beta);
       
       //      predict[3] = (pow(pT, 2)-pow(beta, 2))/(2*beta);
       //      predict[2] = -(pow(eT, 2)-pow(alpha, 2))/(2*alpha);
@@ -137,20 +139,21 @@ void Prediction::processEvent( LCEvent * evt ) {
       double electronTheta=getTheta(p.electron);
       double positronTheta=getTheta(p.positron);
       if(mag>1.0){
-	_prediction->Fill(electron_Theta,positron_Theta);
+	_prediction->Fill(electronTheta,positronTheta);
       }
       
       //Find a more accurate naming convention for these.
       
-      double dot_c = electronic[0]*predict[0] + electronic[1]*predict[1] + electronic[2]*predict[3]; //Correct dot
-      double dot_i = electronic[0]*predict[0] + electronic[1]*predict[1] + electronic[2]*predict[2]; //Incorrect dot
+      //      double dot_c = electronic[0]*predict[0] + electronic[1]*predict[1] + electronic[2]*predict[3]; //Correct dot
+      //      double dot_i = electronic[0]*predict[0] + electronic[1]*predict[1] + electronic[2]*predict[2]; //Incorrect dot
 
       double p_mag = getMag(electronic);
 
-      double p_mag_c = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[3], 2)); //Correct mag
-      double p_mag_i = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[2], 2)); //Incorrect mag
+      //      double p_mag_c = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[3], 2)); //Correct mag
+      //      double p_mag_i = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[2], 2)); //Incorrect mag
 
       //Log for the values above.
+      /*
       if(false){
 	cout << "dot_i " << dot_i << endl; //200
 	cout << "dot_c " << dot_c << endl; //200
@@ -158,10 +161,13 @@ void Prediction::processEvent( LCEvent * evt ) {
 	cout << "p-mag_i " << p_mag_i << endl; //206
 	cout << "p-mag_c " << p_mag_c << endl; //206
       }
+      */
+      double e_theta=getTheta(electronic,p.electron);
+      double p_theta=getTheta(electronic,p.positron);
+      //double theta_c = acos(dot_c/(p_mag*p_mag_c)); //Correct prediction
+      //double theta_i = acos(dot_i/(p_mag*p_mag_i)); //Incorrect prediction
 
-      double theta_c = acos(dot_c/(p_mag*p_mag_c)); //Correct prediction
-      double theta_i = acos(dot_i/(p_mag*p_mag_i)); //Incorrect prediction
-
+      /*
       //Log for anomoly #Tyco
       if(false){
 	double electronUnit=acos(electronic[2]/getMag(electronic));
@@ -171,9 +177,9 @@ void Prediction::processEvent( LCEvent * evt ) {
 	cout << "Prediction (electron scatter) " << acos(predict[2]/p_mag_i) << endl;
 	cout << "Prediction (positron scatter) " << 3.14159-acos(predict[3]/p_mag_c) << endl;
       }
-
-      _p_theta->Fill(theta_c);
-      _e_theta->Fill(theta_i);
+      */
+      _p_theta->Fill(e_theta);
+      _e_theta->Fill(p_theta);
 
 
       //theta = acos(dot/(e_mag*p_mag)); 
