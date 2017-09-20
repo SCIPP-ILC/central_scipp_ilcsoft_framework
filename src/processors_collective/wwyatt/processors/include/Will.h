@@ -20,11 +20,9 @@ using namespace lcio;
 using namespace std;
 namespace Will{
   struct fourvec;
-
-  double getTMag(const double*);
-
   struct prediction;
   struct measure;
+  
   //Specific function used in prediction algorithm.
   //Finds the highest energy particle
    map<int,double> maxEnergy(LCCollection*, 
@@ -39,7 +37,8 @@ namespace Will{
 
    //Returns transverse momentum magnitude
    double getTMag(const fourvec);
-
+   double getTMag(const double*);
+   
    //Returns momentum from a momentum vector
    double getMag(const double*);
    double getMag(const fourvec);
