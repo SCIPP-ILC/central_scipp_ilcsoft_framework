@@ -19,9 +19,43 @@
 using namespace lcio;
 using namespace std;
 namespace Will{
-  struct fourvec;
-  struct prediction;
-  struct measure;
+  struct fourvec{
+    union{ double X; double x=0.0; };
+    union{ double Y; double y=0.0; };
+    union{ double Z; double z=0.0; };
+    union{ double E; double e=0.0; };
+    union{ double T; double t=0.0; };
+    fourvec operator+(const fourvec& a) const;
+    double operator*(const fourvec& a) const;
+    fourvec operator+=(const fourvec& a);
+    fourvec();
+    fourvec(const double,const double);
+    fourvec(const double,const double,const double);
+    fourvec(const double,const double,const double,const double);
+    fourvec(const double,const double,const double,const double,const double);
+    fourvec(const double*,const unsigned short SIZE);
+  };
+  
+  
+  struct prediction{
+    fourvec electron;
+    fourvec positron;
+    prediction(double x,double y);
+  };
+  
+  
+  struct measure{
+    fourvec hadronic;
+    fourvec electronic;
+    fourvec electron;
+    fourvec positron;
+    double mag=0.0;
+    bool scattered=false;
+  };
+  
+
+
+
   
   //Specific function used in prediction algorithm.
   //Finds the highest energy particle
@@ -69,6 +103,10 @@ namespace Will{
    */
    measure getMeasure(LCCollection*);
    
+   void print(string );
+   void print(string , string );
+
+
 }
 
 #endif

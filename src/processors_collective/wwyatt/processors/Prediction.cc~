@@ -27,6 +27,7 @@
 #include <TH2D.h>
 #include <MyParticle.h>
 #include <Will.h>
+
 // ----- include for verbosity dependend logging ---------
 #include "marlin/VerbosityLevels.h"
 
@@ -36,7 +37,9 @@ using namespace lcio;
 using namespace marlin;
 using namespace std;
 using namespace Will;
+
 Prediction Prediction;
+
 
 static TFile* _rootfile;
 static TH2F* _prediction;
@@ -101,8 +104,7 @@ void Prediction::processEvent( LCEvent * evt ) {
     int nElements = col->getNumberOfElements();
     scatter = false;*/
 
-    measure data=getMeasure(col);
-
+    Will::measure data = Will::getMeasure(col);
     /*mom_e=legacy(measure.electron);
     mom_p=legacy(measure.positron);
     hadronic=legacy(measure.hadronic);
@@ -113,6 +115,7 @@ void Prediction::processEvent( LCEvent * evt ) {
     scatter=measure.scattered;*/
     
     if(data.scattered == true){
+      cout << "dest: " << data.electron.z << endl;
       fourvec
 	electron=data.electron,
 	positron=data.positron,
@@ -160,6 +163,11 @@ void Prediction::processEvent( LCEvent * evt ) {
 	cout << "p-mag_c " << p_mag_c << endl; //206
       }
       */
+      cout << "electic " << positron.z << endl;
+
+      //There is something wrong with getTheta, it is returning a null variable instaed of a double.
+
+
       double e_theta=getTheta(electronic,p.electron);
       double p_theta=getTheta(electronic,p.positron);
       //double theta_c = acos(dot_c/(p_mag*p_mag_c)); //Correct prediction
@@ -176,6 +184,11 @@ void Prediction::processEvent( LCEvent * evt ) {
 	cout << "Prediction (positron scatter) " << 3.14159-acos(predict[3]/p_mag_c) << endl;
       }
       */
+      //Testing new functions
+      if(true){
+	cout << "e_theta : " << e_theta <<endl;
+	cout << "p_theta : " << p_theta << endl;
+      }
       _p_theta->Fill(e_theta);
       _e_theta->Fill(p_theta);
 
