@@ -15,6 +15,7 @@
 #include "lcio.h"
 #include <EVENT/LCCollection.h>
 #include <EVENT/MCParticle.h>
+#include "scipp_ilc_utilities.h"
 
 using namespace lcio;
 using namespace std;
@@ -51,6 +52,8 @@ namespace Will{
     fourvec positron;
     double mag=0.0;
     bool scattered=false;
+    bool p_scatter=false;
+    bool e_scatter=false;
   };
   
 
@@ -89,7 +92,12 @@ namespace Will{
    double getTheta(const double*, const double*);
    double getTheta(const fourvec, const fourvec);
 
-   
+   //Returns hit status
+   // 1 - hit Beamcal
+   // 2 - outside Beamcal radius
+   // 3 - outgoing beampipe hole
+   // 4 - incoming beampipe hole
+   int get_hitStatus(const fourvec);
 
    double* legacy(fourvec);
 

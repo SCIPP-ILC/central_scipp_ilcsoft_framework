@@ -50,7 +50,11 @@ static TH1F* _e_theta;
 static vector<double> spread_e;
 static vector<double> spread_p;
 
-
+static int ph_th = 0;
+static int ph_tm = 0;
+static int pm_th = 0;
+static int pm_tm = 0;
+static int total = 0;
 
 Prediction::Prediction() : Processor("Prediction") {
     // modify processor description
@@ -119,6 +123,27 @@ void Prediction::processEvent( LCEvent * evt ) {
 
       _p_theta->Fill(e_theta);
       _e_theta->Fill(p_theta);
+
+      //The bool is true if the particle hits.
+      bool predicted_electron=get_hitStatus(p.electron)<3;
+      bool predicted_positron=get_hitStatus(p.positron)<3;
+      bool actual_positron=get_hitStatus(positron)<3;
+      bool actual_electron=get_hitStatus(electron)<3;
+      
+      ++total;
+      if(data.p_scatter){
+	if(actual_positron&&predicted_positron)ph_th++;
+	else if( actual_positron && !predicted_positron)ph_tm++;
+	else if(!actual_positron &&  predicted_positron)pm_th++;
+	else if(!actual_positron && !predicted_positron)pm_tm++;
+      }else if(data.e_scatter){
+	if(actual_electron&&predicted_electron)ph_th++;
+	else if( actual_electron && !predicted_electron)ph_tm++;
+	else if(!actual_electron &&  predicted_electron)pm_th++;
+	else if(!actual_electron && !predicted_electron)pm_tm++;	
+      }else{
+	cout << "err" << endl;
+      }
     }
 }
 
@@ -131,4 +156,8 @@ void Prediction::check( LCEvent * evt ) {
 void Prediction::end(){ 
     cout << interest << endl;
     _rootfile->Write();
+    cout << "ph_th : " << static_cast<double>(ph_th)/total;
+    cout << "ph_tm : " << static_cast<double>(ph_tm)/total;
+    cout << "pm_th : " << static_cast<double>(pm_th)/total;
+    cout << "pm_tm : " << static_cast<double>(pm_tm)/total;
 }

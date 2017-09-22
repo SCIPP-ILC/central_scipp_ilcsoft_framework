@@ -125,7 +125,7 @@ double Will::getTheta(const double* a, const double* b){
   return getTheta(fourvec(a,3),fourvec(b,3));
 }
 double Will::getTheta(fourvec a, fourvec b){
-  return acos(a*b/getMag(a)*getMag(b));
+  return acos( a*b / (getMag(a)*getMag(b)) );
 }
 
 
