@@ -50,6 +50,8 @@ static TH1F* _e_theta;
 static vector<double> spread_e;
 static vector<double> spread_p;
 
+static int p_scatter=0;
+static int e_scatter=0;
 static int ph_th = 0;
 static int ph_tm = 0;
 static int pm_th = 0;
@@ -129,18 +131,24 @@ void Prediction::processEvent( LCEvent * evt ) {
       bool predicted_positron=get_hitStatus(p.positron)<3;
       bool actual_positron=get_hitStatus(positron)<3;
       bool actual_electron=get_hitStatus(electron)<3;
-      
+
+      //cout << "p:e = " << positron.T << ":" << electron.T<< endl;
       ++total;
       if(data.p_scatter){
+
 	if(actual_positron&&predicted_positron)ph_th++;
 	else if( actual_positron && !predicted_positron)ph_tm++;
 	else if(!actual_positron &&  predicted_positron)pm_th++;
 	else if(!actual_positron && !predicted_positron)pm_tm++;
+	else cout << "err2" << endl;
+	p_scatter++;
       }else if(data.e_scatter){
 	if(actual_electron&&predicted_electron)ph_th++;
 	else if( actual_electron && !predicted_electron)ph_tm++;
 	else if(!actual_electron &&  predicted_electron)pm_th++;
 	else if(!actual_electron && !predicted_electron)pm_tm++;	
+	else cout << "err3" << endl;
+	e_scatter++;
       }else{
 	cout << "err" << endl;
       }
@@ -156,8 +164,11 @@ void Prediction::check( LCEvent * evt ) {
 void Prediction::end(){ 
     cout << interest << endl;
     _rootfile->Write();
-    cout << "ph_th : " << static_cast<double>(ph_th)/total;
-    cout << "ph_tm : " << static_cast<double>(ph_tm)/total;
-    cout << "pm_th : " << static_cast<double>(pm_th)/total;
-    cout << "pm_tm : " << static_cast<double>(pm_tm)/total;
+    cout << "# Events: " << _nEvt << endl;
+    cout << "p_scatter:e_scatter = " << p_scatter << ":"<<e_scatter<<endl;
+    cout << "ph_th : " << (1.0*ph_th) << endl;
+    cout << "ph_tm : " << (1.0*ph_tm) << endl;
+    cout << "pm_th : " << (1.0*pm_th) << endl;
+    cout << "pm_tm : " << (1.0*pm_tm) << endl;
+    cout << "s: " <<STATS[1] << "-"<<STATS[2]<<"-"<<STATS[3]<<"-"<<STATS[4]<<endl;
 }

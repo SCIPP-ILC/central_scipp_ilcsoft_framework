@@ -141,14 +141,14 @@ measure Will::getMeasure(LCCollection* col){
       //ELECTRON
       out.electron=getFourVector(particle);
       if(out.electron.T!=0.0){
-	out.scattered=true;
+	out.e_scatter=out.scattered=true;
 	out.electronic=out.electron;
       }
     }else if(particle->getEnergy()==max[-11]){
       //POSITRON
       out.positron=getFourVector(particle);
       if(out.positron.T!=0.0){
-	out.scattered=true;
+	out.p_scatter=out.scattered=true;
 	out.electronic=out.positron;
       }    
     }else{
@@ -161,7 +161,9 @@ measure Will::getMeasure(LCCollection* col){
   return out;
 }
 
-
+void Will::get_hitStatus(const fourvec input){
+  return get_hitStatus(input.x, input.y, input.z);
+}
 void Will::print(string input){
   cout << input << endl;
 }

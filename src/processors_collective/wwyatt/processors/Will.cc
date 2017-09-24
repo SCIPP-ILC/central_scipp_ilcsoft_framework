@@ -161,8 +161,11 @@ measure Will::getMeasure(LCCollection* col){
   return out;
 }
 
-void Will::get_hitStatus(const fourvec input){
-  return get_hitStatus(input.x, input.y, input.z);
+int Will::get_hitStatus(fourvec input){
+  int stat = scipp_ilc::get_hitStatus(input.x, input.y, input.z);
+  STATS[stat]++;
+  cout << "s: " <<STATS[1] << "-"<<STATS[2]<<"-"<<STATS[3]<<"-"<<STATS[4]<<endl;
+  return stat;
 }
 void Will::print(string input){
   cout << input << endl;

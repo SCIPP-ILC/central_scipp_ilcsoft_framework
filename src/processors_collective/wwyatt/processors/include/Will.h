@@ -55,8 +55,6 @@ namespace Will{
     bool p_scatter=false;
     bool e_scatter=false;
   };
-  
-
 
 
   
@@ -98,6 +96,7 @@ namespace Will{
    // 3 - outgoing beampipe hole
    // 4 - incoming beampipe hole
    int get_hitStatus(const fourvec);
+   static int STATS[5]={0};
 
    double* legacy(fourvec);
 
