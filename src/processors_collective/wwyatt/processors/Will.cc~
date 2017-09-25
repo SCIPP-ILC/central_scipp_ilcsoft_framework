@@ -1,4 +1,5 @@
 #include <Will.h>
+#include "scipp_ilc_globals.h"
 using namespace Will;
 fourvec fourvec::operator+(const fourvec& a) const{
   return fourvec(
@@ -59,10 +60,26 @@ map<int, double> Will::maxEnergy(LCCollection* col, initializer_list<int> ids, v
       }
     }
   }
-  
   return *max;
 }
-
+map<int,MCParticle*> Will::maxParticle(LCCollection* col, initializer_list<int> ids){
+  const int SIZE=ids.size();
+  map<int, MCParticle*>max;
+  //  map<int, int> max_id;
+  for(int i=0; i < col->getNumberOfElements(); ++i){
+    MCParticle* particle=dynamic_cast<MCParticle*>(col->getElementAt(i));
+    if(particle->getGeneratorStatus()!=1)continue;
+    int pid=particle->getPDG();
+    for(auto id:ids){
+      if(pid!=id)continue;
+      double energy=0.0;
+      if(max[id]==NULL) max[id]=particle;
+      else energy=max[id]->getEnergy();
+      if(particle->getEnergy()>energy) max[id]=particle;
+    }
+  }
+  return max;
+}
 
 double* Will::getVector(MCParticle* particle){
   double* output=new double[4];
@@ -101,7 +118,7 @@ double Will::getMag(const double* input){
 }
 
 double Will::getTMag(fourvec input){
-  return getTMag(new double[2]{input.x,input.y});
+  return sqrt(pow(input.x, 2) + pow(input.y, 2));
 }
 double Will::getMag(fourvec input){
   return getMag(new double[3]{input.x,input.y,input.z});
@@ -157,13 +174,58 @@ measure Will::getMeasure(LCCollection* col){
       out.hadronic+=hadron;
       out.mag+=hadron.T;
     }
+    get_hitStatus(particle);
   }
+  out.scattered ? meta.SCATTERS++ : meta.NOSCATTERS++;
   return out;
 }
 
-void Will::get_hitStatus(const fourvec input){
-  return get_hitStatus(input.x, input.y, input.z);
+fourvec Will::transform_to_lab(fourvec input){
+  //  cout << "start: " << input.x << endl;
+  double theta = 0.007;
+  double beta = sin(theta);
+  double gamma = pow((1-pow(beta, 2)), -0.5);
+  double e_temp = input.E;
+  double E_new = input.E*gamma + gamma*beta*input.x;
+  double pX_new = input.x*gamma + gamma*beta*e_temp;
+  input.x=pX_new;
+  input.e=E_new;
+  input.t=getTMag(input);
+  fourvec out(pX_new,input.y,input.z,E_new);
+  //  cout << "end: " << pX_new << endl;
+  return out;
 }
+
+fourvec Will::transform_to_lab(MCParticle* input){
+  return transform_to_lab(getFourVector(input));
+}
+
+int Will::get_hitStatus(fourvec input, bool lab){
+  if(lab){
+    input=transform_to_lab(input);
+    meta.MSC++;
+    //    cout << "POST: " << input.x << endl;
+  }
+  double x=input.x, y=input.y, z=input.z;
+  double rad = sqrt(pow(x, 2)+pow(y, 2));
+  double x_shift = x - scipp_ilc::_BeamCal_zmin*tan(scipp_ilc::_crossing_angle);
+  double rad_shift = sqrt(pow(x_shift, 2)+pow(y, 2));
+  //cout << "T: " << input.Z << endl;
+  //cout << "Rad: " << rad << endl;
+  int stat = scipp_ilc::get_hitStatus(input.x, input.y, input.z);
+  meta.STATS[stat]++;
+  //  cout << " 
+  //cout << "s: " <<STATS[1] << "-"<<STATS[2]<<"-"<<STATS[3]<<"-"<<STATS[4]<<endl;
+  return stat;
+}
+
+int Will::get_hitStatus(MCParticle* input){
+  const double* mom = input->getMomentum();
+  double x=mom[0],y=mom[1],z=mom[2];
+  int stat = scipp_ilc::get_hitStatus(x,y,z);
+  return stat;
+}
+
 void Will::print(string input){
   cout << input << endl;
 }
@@ -171,3 +233,5 @@ void Will::print(string input){
 void Will::print(string input, string input2){
   cout << input << " : " << input2 << endl;
 }
+
+META Will::getMETA(){return meta;}

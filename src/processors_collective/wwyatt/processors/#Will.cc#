@@ -111,7 +111,11 @@ double* Will::addVector(double* a, double* b, const int SIZE){
 
 
 double Will::getTMag(const double* input){
-  return sqrt(pow(input[0], 2) + pow(input[1], 2));
+  double x = input.x;
+  double e = input.e;
+  ilc_
+  double t = sqrt(pow(input[0], 2) + pow(input[1], 2));
+  return 
 }
 double Will::getMag(const double* input){
   return sqrt(pow(input[0], 2) + pow(input[1], 2) + pow(input[2],2));

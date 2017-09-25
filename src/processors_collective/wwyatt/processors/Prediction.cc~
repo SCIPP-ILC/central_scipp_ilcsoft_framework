@@ -46,6 +46,9 @@ static TH2F* _prediction;
 static TH1F* _vector;
 static TH1F* _p_theta;
 static TH1F* _e_theta;
+static TH1F* zmom;
+static TH1F* tmom;
+
 
 static vector<double> spread_e;
 static vector<double> spread_p;
@@ -80,6 +83,9 @@ void Prediction::init() {
     _p_theta = new TH1F("p_theta", "Theta between positron and hadronic system", 360, 0, 3.5);
     _e_theta = new TH1F("e_theta", "Theta between positron and hadronic system", 360, 0, 3.5);
     _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
+    zmom=new TH1F("zmom", "Z-Momentum Distribution", 300, 0, 500);
+    tmom=new TH1F("tmom", "T-Momentum Distribution", 300, 0, 150);
+
     _nEvt = 0 ;
 }
 
@@ -96,14 +102,17 @@ void Prediction::processEvent( LCEvent * evt ) {
     vector<MCParticle*> hadronic_system;
     vector<MCParticle*> final_system;
     int stat, id =0;
-
+    map<int,MCParticle*> max=maxParticle(col, {-11, 11});
     Will::measure data = Will::getMeasure(col);
-    if(data.scattered == true){
+    if(data.scattered){
       fourvec
 	electron=data.electron,
 	positron=data.positron,
 	hadronic=data.hadronic,
 	electronic=data.electronic;
+      //      cout << "Z- " << positron.z << endl;
+      zmom->Fill(abs(positron.z));
+      tmom->Fill(positron.t);
       double mag=data.mag;
       double alpha=(500-hadronic.E -hadronic.z);
       double  beta=(500-hadronic.E +hadronic.z);
@@ -127,15 +136,23 @@ void Prediction::processEvent( LCEvent * evt ) {
       _e_theta->Fill(p_theta);
 
       //The bool is true if the particle hits.
+      
       bool predicted_electron=get_hitStatus(p.electron)<3;
       bool predicted_positron=get_hitStatus(p.positron)<3;
       bool actual_positron=get_hitStatus(positron)<3;
       bool actual_electron=get_hitStatus(electron)<3;
+      
+      /*
+      bool predicted_electron=get_hitStatus(p.electron)<3;
+      bool predicted_positron=get_hitStatus(p.positron)<3;
+      bool actual_positron=get_hitStatus(getFourVector(max[-11]))<3;
+      bool actual_electron=get_hitStatus(getFourVector(max[11]))<3;
+      */
 
       //cout << "p:e = " << positron.T << ":" << electron.T<< endl;
       ++total;
+      
       if(data.p_scatter){
-
 	if(actual_positron&&predicted_positron)ph_th++;
 	else if( actual_positron && !predicted_positron)ph_tm++;
 	else if(!actual_positron &&  predicted_positron)pm_th++;
@@ -152,6 +169,7 @@ void Prediction::processEvent( LCEvent * evt ) {
       }else{
 	cout << "err" << endl;
       }
+      
     }
 }
 
@@ -162,12 +180,16 @@ void Prediction::check( LCEvent * evt ) {
 
 
 void Prediction::end(){ 
-    cout << interest << endl;
-    _rootfile->Write();
-    cout << "p_scatter:e_scatter = " << p_scatter << ":"<<e_scatter<<endl;
-    cout << "ph_th : " << (1.0*ph_th) << endl;
-    cout << "ph_tm : " << (1.0*ph_tm) << endl;
-    cout << "pm_th : " << (1.0*pm_th) << endl;
-    cout << "pm_tm : " << (1.0*pm_tm) << endl;
-    cout << "s: " <<STATS[1] << "-"<<STATS[2]<<"-"<<STATS[3]<<"-"<<STATS[4]<<endl;
+  Will::META meta = Will::getMETA();
+  cout << interest << endl;
+  _rootfile->Write();
+  cout << "# Events: " << _nEvt << endl;
+  cout << "p_scatter:e_scatter = " << p_scatter << ":"<<e_scatter<<endl;
+  cout << "ph_th : " << (1.0*ph_th) << endl;
+  cout << "ph_tm : " << (1.0*ph_tm) << endl;
+  cout << "pm_th : " << (1.0*pm_th) << endl;
+  cout << "pm_tm : " << (1.0*pm_tm) << endl;
+  cout << "hit-miss-out-in: " <<meta.STATS[1]<< "-"<<meta.STATS[2]<<"-"<<meta.STATS[3]<<"-"<<meta.STATS[4]<<endl;
+  cout << "Scat:noScat " << meta.SCATTERS << ":" << meta.NOSCATTERS << endl;
+  cout << "MSC : " << meta.MSC << endl;
 }

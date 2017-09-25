@@ -12,6 +12,9 @@
 #include <iostream>
 #include <cmath>
 
+#include <TFile.h>
+#include <TH2D.h>
+
 #include "lcio.h"
 #include <EVENT/LCCollection.h>
 #include <EVENT/MCParticle.h>
@@ -44,7 +47,6 @@ namespace Will{
     prediction(double x,double y);
   };
   
-  
   struct measure{
     fourvec hadronic;
     fourvec electronic;
@@ -56,10 +58,18 @@ namespace Will{
     bool e_scatter=false;
   };
 
+  struct META{
+    int SCATTERS=0;
+    int NOSCATTERS=0;
+    int STATS[5]={0};
+    int MSC=0;
+  };
+  static META meta;
+  META getMETA();
 
-  
   //Specific function used in prediction algorithm.
   //Finds the highest energy particle
+   map<int,MCParticle*> maxParticle(LCCollection*, initializer_list<int>);
    map<int,double> maxEnergy(LCCollection*, 
 			     initializer_list<int> ids, 
 			     vector<MCParticle*>& final_state);
@@ -95,8 +105,11 @@ namespace Will{
    // 2 - outside Beamcal radius
    // 3 - outgoing beampipe hole
    // 4 - incoming beampipe hole
-   int get_hitStatus(const fourvec);
-   static int STATS[5]={0};
+   int get_hitStatus(const fourvec, const bool=true);
+   int get_hitStatus(MCParticle*);
+   
+   fourvec transform_to_lab(MCParticle*);
+   fourvec transform_to_lab(const fourvec);
 
    double* legacy(fourvec);
 
