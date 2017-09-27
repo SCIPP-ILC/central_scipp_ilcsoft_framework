@@ -271,7 +271,7 @@ namespace scipp_ilc {
 	NOTE: the uncertainty should be given by the RMS (Root-Mean-Square) of the depositions
 	in the particular pixel of the detector
        */
-      static void sigma(string bgd_list_file_name) {
+      static void sigma_grid(string bgd_list_file_name) {
 	  cout << "Calculating Uncertainty....\n";
 
 	int numEventsRead = 0;

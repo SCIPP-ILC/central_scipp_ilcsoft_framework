@@ -220,8 +220,8 @@ namespace scipp_ilc {
              _energy_averages = new unordered_map<int,double>();
              _energy_std_devs = new unordered_map<int,double>();
              _times_hit = new unordered_map<int,int>();
-
-            //read in all of the background events in the given
+         
+	     //read in all of the background events in the given
             //bgd file list.
             //NOTE: Depending on the number of bgd events, this
             //one function will take longer than the entire rest
@@ -240,6 +240,7 @@ namespace scipp_ilc {
                 double average_of_squares = squared_energy_total / _num_bgd_events;
                 double square_of_averages = energy_average * energy_average;
                 double energy_std_dev = sqrt(average_of_squares - square_of_averages);
+
 
 		//double sigma = sqrt( (hitcount*hitcount) / _num_bdg_events);
 
