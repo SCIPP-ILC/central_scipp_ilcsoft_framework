@@ -84,7 +84,7 @@ void Prediction::init() {
     _e_theta = new TH1F("e_theta", "Theta between positron and hadronic system", 360, 0, 3.5);
     _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
     zmom=new TH1F("zmom", "Z-Momentum Distribution", 300, 0, 500);
-    tmom=new TH1F("tmom", "T-Momentum Distribution", 300, 0, 150);
+    tmom=new TH1F("tmom", "T-Momentum Distribution", 300, 0, 10);
 
     _nEvt = 0 ;
 }
@@ -102,6 +102,12 @@ void Prediction::processEvent( LCEvent * evt ) {
     vector<MCParticle*> hadronic_system;
     vector<MCParticle*> final_system;
     int stat, id =0;
+    for(int i=0; i < col->getNumberOfElements(); ++i){
+      MCParticle* particle=dynamic_cast<MCParticle*>(col->getElementAt(i));
+      if(particle->getGeneratorStatus()!=1)continue;
+      zmom->Fill(abs(particle->getMomentum()[2]));
+      tmom->Fill(getTMag(particle->getMomentum()));
+    }
     map<int,MCParticle*> max=maxParticle(col, {-11, 11});
     Will::measure data = Will::getMeasure(col);
     if(data.scattered){
@@ -111,8 +117,8 @@ void Prediction::processEvent( LCEvent * evt ) {
 	hadronic=data.hadronic,
 	electronic=data.electronic;
       //      cout << "Z- " << positron.z << endl;
-      zmom->Fill(abs(positron.z));
-      tmom->Fill(positron.t);
+      //zmom->Fill(abs(positron.z));
+      //tmom->Fill(positron.t);
       double mag=data.mag;
       double alpha=(500-hadronic.E -hadronic.z);
       double  beta=(500-hadronic.E +hadronic.z);
