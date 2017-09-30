@@ -44,7 +44,10 @@ namespace Will{
   struct prediction{
     fourvec electron;
     fourvec positron;
+    double alpha=0;
+    double beta=0;
     prediction(double x,double y);
+    prediction(measure input)
   };
   
   struct measure{

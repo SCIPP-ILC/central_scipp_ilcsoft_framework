@@ -62,132 +62,91 @@ static int pm_tm = 0;
 static int total = 0;
 
 Prediction::Prediction() : Processor("Prediction") {
-    // modify processor description
-    _description = "Protype Processor" ;
+  // modify processor description
+  _description = "Protype Processor" ;
 
-    // register steering parameters: name, description, class-variable, default value
-    registerInputCollection( LCIO::MCPARTICLE, "CollectionName" , "Name of the MCParticle collection"  , _colName , std::string("MCParticle") );
+  // register steering parameters: name, description, class-variable, default value
+  registerInputCollection( LCIO::MCPARTICLE, "CollectionName" , "Name of the MCParticle collection"  , _colName , std::string("MCParticle") );
 
-    registerProcessorParameter( "RootOutputName" , "output file"  , _root_file_name , std::string("output.root") );
+  registerProcessorParameter( "RootOutputName" , "output file"  , _root_file_name , std::string("output.root") );
 }
 
 
 
 void Prediction::init() { 
-    streamlog_out(DEBUG) << "   init called  " << std::endl ;
+  streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("ppredict.root","RECREATE");
-    // usually a good idea to
-    //printParameters() ;
-    _prediction = new TH2F("predict", "Predicted Angle of Scatter, Correct vs Incorrect Kinematics", 1000, 0.0, 0.01, 1000, 0.0, 0.01);
-    _p_theta = new TH1F("p_theta", "Theta between positron and hadronic system", 360, 0, 3.5);
-    _e_theta = new TH1F("e_theta", "Theta between positron and hadronic system", 360, 0, 3.5);
-    _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
-    zmom=new TH1F("zmom", "Z-Momentum Distribution", 300, 0, 500);
-    tmom=new TH1F("tmom", "T-Momentum Distribution", 300, 0, 300);
+  _rootfile = new TFile("ppredict.root","RECREATE");
+  // usually a good idea to
+  //printParameters() ;
+  _prediction = new TH2F("predict", "Predicted Angle of Scatter, Correct vs Incorrect Kinematics", 1000, 0.0, 0.01, 1000, 0.0, 0.01);
+  _p_theta = new TH1F("p_theta", "Theta between positron and hadronic system", 360, 0, 3.5);
+  _e_theta = new TH1F("e_theta", "Theta between positron and hadronic system", 360, 0, 3.5);
+  _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
+  zmom=new TH1F("zmom", "Z-Momentum Distribution", 300, 0, 500);
+  tmom=new TH1F("tmom", "T-Momentum Distribution", 300, 0, 300);
 
-    _nEvt = 0 ;
+  _nEvt = 0 ;
 }
 
 
 
 void Prediction::processRunHeader( LCRunHeader* run) { 
-//    _nRun++ ;
+  //    _nRun++ ;
 } 
 
 void Prediction::processEvent( LCEvent * evt ) { 
-    LCCollection* col = evt->getCollection( _colName ) ;
-    _nEvt++;
-    if( col == NULL )return;
+  LCCollection* col = evt->getCollection( _colName ) ;
+  if( col == NULL )return;
+  Will::measure data = Will::getMeasure(col);
+  if(!data.scattered)return;
+  prediction p(data);
+  fourvec electron=data.electron,
+    positron=data.positron,
+    hadronic=data.hadronic,
+    electronic=data.electronic;
+  double mag=data.mag; //Magnitude of the hadronic vector?
+  double electronTheta=getTheta(p.electron); //Angle off of z-axis
+  double positronTheta=getTheta(p.positron);
 
-    for(int i=0; i < col->getNumberOfElements(); ++i){
-      MCParticle* particle=dynamic_cast<MCParticle*>(col->getElementAt(i));
-      if(particle->getGeneratorStatus()!=1)continue;
-      zmom->Fill(abs(particle->getMomentum()[2]));
-      const double* mom = particle->getMomentum();
-      double x = 0.0;
-      double ener = 0.0;
-      scipp_ilc::transform_to_lab(mom[0], particle->getEnergy(), x, ener);
-      tmom->Fill(sqrt(x*x + mom[1]*mom[1]));
-    }
-    return;
-
-    vector<MCParticle*> hadronic_system;
-    vector<MCParticle*> final_system;
-    int stat, id =0;
-    map<int,MCParticle*> max=maxParticle(col, {-11, 11});
-    Will::measure data = Will::getMeasure(col);
-    if(data.scattered){
-      fourvec
-	electron=data.electron,
-	positron=data.positron,
-	hadronic=data.hadronic,
-	electronic=data.electronic;
-      //      cout << "Z- " << positron.z << endl;
-      //zmom->Fill(abs(positron.z));
-      //tmom->Fill(positron.t);
-      double mag=data.mag;
-      double alpha=(500-hadronic.E -hadronic.z);
-      double  beta=(500-hadronic.E +hadronic.z);
-
-      prediction p(-hadronic.x,-hadronic.y);
-      p.electron.z = -(pow(electron.T, 2)-pow(alpha, 2))/(2*alpha);
-      p.positron.z = (pow(positron.T, 2)-pow(beta, 2))/(2*beta);
-
-      double electronTheta=getTheta(p.electron);
-      double positronTheta=getTheta(p.positron);
-
-      if(mag>1.0){
-	_prediction->Fill(electronTheta,positronTheta);
-      }
+  if(mag>1.0){
+    _prediction->Fill(electronTheta,positronTheta);
+  }
       
-      double p_mag = getMag(electronic);
-      double e_theta=getTheta(electronic,p.electron);
-      double p_theta=getTheta(electronic,p.positron);
+  double p_mag = getMag(electronic);
+  double e_theta=getTheta(electronic,p.electron);
+  double p_theta=getTheta(electronic,p.positron);
 
-      _p_theta->Fill(e_theta);
-      _e_theta->Fill(p_theta);
+  _p_theta->Fill(e_theta);
+  _e_theta->Fill(p_theta);
 
-      //The bool is true if the particle hits.
-      
-      bool predicted_electron=get_hitStatus(p.electron)<3;
-      bool predicted_positron=get_hitStatus(p.positron)<3;
-      bool actual_positron=get_hitStatus(positron)<3;
-      bool actual_electron=get_hitStatus(electron)<3;
-      
-      /*
-      bool predicted_electron=get_hitStatus(p.electron)<3;
-      bool predicted_positron=get_hitStatus(p.positron)<3;
-      bool actual_positron=get_hitStatus(getFourVector(max[-11]))<3;
-      bool actual_electron=get_hitStatus(getFourVector(max[11]))<3;
-      */
-
-      //cout << "p:e = " << positron.T << ":" << electron.T<< endl;
-      ++total;
-      
-      if(data.p_scatter){
-	if(actual_positron&&predicted_positron)ph_th++;
-	else if( actual_positron && !predicted_positron)ph_tm++;
-	else if(!actual_positron &&  predicted_positron)pm_th++;
-	else if(!actual_positron && !predicted_positron)pm_tm++;
-	else cout << "err2" << endl;
-	p_scatter++;
-      }else if(data.e_scatter){
-	if(actual_electron&&predicted_electron)ph_th++;
-	else if( actual_electron && !predicted_electron)ph_tm++;
-	else if(!actual_electron &&  predicted_electron)pm_th++;
-	else if(!actual_electron && !predicted_electron)pm_tm++;	
-	else cout << "err3" << endl;
-	e_scatter++;
-      }else{
-	cout << "err" << endl;
-      }
-      
-    }
+  //The bool is true if the particle hits.
+  bool predicted_electron=get_hitStatus(p.electron)<3;
+  bool predicted_positron=get_hitStatus(p.positron)<3;
+  bool actual_positron=get_hitStatus(positron)<3;
+  bool actual_electron=get_hitStatus(electron)<3;
+  ++total;
+  if(data.p_scatter){
+    if(actual_positron&&predicted_positron)ph_th++;
+    else if( actual_positron && !predicted_positron)ph_tm++;
+    else if(!actual_positron &&  predicted_positron)pm_th++;
+    else if(!actual_positron && !predicted_positron)pm_tm++;
+    else cout << "err2" << endl;
+    p_scatter++;
+  }else if(data.e_scatter){
+    if(actual_electron&&predicted_electron)ph_th++;
+    else if( actual_electron && !predicted_electron)ph_tm++;
+    else if(!actual_electron &&  predicted_electron)pm_th++;
+    else if(!actual_electron && !predicted_electron)pm_tm++;	
+    else cout << "err3" << endl;
+    e_scatter++;
+  }else{
+    cout << "err" << endl;
+  }
 }
 
 void Prediction::check( LCEvent * evt ) { 
-    // nothing to check here - could be used to fill checkplots in reconstruction processor
+  // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
 
 

@@ -12,6 +12,9 @@
 #include <iostream>
 #include <cmath>
 
+#include <TFile.h>
+#include <TH2D.h>
+
 #include "lcio.h"
 #include <EVENT/LCCollection.h>
 #include <EVENT/MCParticle.h>

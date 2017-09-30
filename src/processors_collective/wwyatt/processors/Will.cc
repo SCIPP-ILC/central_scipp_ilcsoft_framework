@@ -40,6 +40,13 @@ prediction::prediction(double x,double y){
   electron.x=x;
   positron.y=y;
 }
+prediction::prediction(measure input)
+  :prediction(-input.hadronic.x, -input.hadronic.y){
+  alpha=(500-input.hadronic.E - input.hadronic.z);
+  beta=(500-input.hadronic.E + input.hadronic.z);
+  electron.z = -(pow(input.electron.T, 2)-pow(alpha, 2))/(2*alpha);
+  positron.z = (pow(input.positron.T, 2)-pow(beta, 2))/(2*beta);
+}
 
 
 

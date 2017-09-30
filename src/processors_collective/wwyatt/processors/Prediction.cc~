@@ -84,7 +84,7 @@ void Prediction::init() {
     _e_theta = new TH1F("e_theta", "Theta between positron and hadronic system", 360, 0, 3.5);
     _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
     zmom=new TH1F("zmom", "Z-Momentum Distribution", 300, 0, 500);
-    tmom=new TH1F("tmom", "T-Momentum Distribution", 300, 0, 10);
+    tmom=new TH1F("tmom", "T-Momentum Distribution", 300, 0, 300);
 
     _nEvt = 0 ;
 }
@@ -99,15 +99,22 @@ void Prediction::processEvent( LCEvent * evt ) {
     LCCollection* col = evt->getCollection( _colName ) ;
     _nEvt++;
     if( col == NULL )return;
-    vector<MCParticle*> hadronic_system;
-    vector<MCParticle*> final_system;
-    int stat, id =0;
+
     for(int i=0; i < col->getNumberOfElements(); ++i){
       MCParticle* particle=dynamic_cast<MCParticle*>(col->getElementAt(i));
       if(particle->getGeneratorStatus()!=1)continue;
       zmom->Fill(abs(particle->getMomentum()[2]));
-      tmom->Fill(getTMag(particle->getMomentum()));
+      const double* mom = particle->getMomentum();
+      double x = 0.0;
+      double ener = 0.0;
+      scipp_ilc::transform_to_lab(mom[0], particle->getEnergy(), x, ener);
+      tmom->Fill(sqrt(x*x + mom[1]*mom[1]));
     }
+    return;
+
+    vector<MCParticle*> hadronic_system;
+    vector<MCParticle*> final_system;
+    int stat, id =0;
     map<int,MCParticle*> max=maxParticle(col, {-11, 11});
     Will::measure data = Will::getMeasure(col);
     if(data.scattered){
