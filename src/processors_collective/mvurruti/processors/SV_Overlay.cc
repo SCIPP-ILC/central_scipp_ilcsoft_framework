@@ -89,6 +89,7 @@ void SV_Overlay::processEvent( LCEvent * evt ) {
   LCCollection* col = evt->getCollection( _colName ) ;
 
   double tot_mom[]={0, 0, 0, 0};
+  double tot_mag[]={0, 0, 0, 0};
   double S=0,V=0,M=0; 
   double stat;
   // this will only be entered if the collection is available
@@ -98,7 +99,10 @@ void SV_Overlay::processEvent( LCEvent * evt ) {
     print();
     print("=====EVENT: " + to_string( _nEvt ) + " ===== " );
     vector<MCParticle*> system;
+    //Pre analysis
 
+
+    //Analysis
     for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
       MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
 
@@ -122,13 +126,19 @@ void SV_Overlay::processEvent( LCEvent * evt ) {
 	tot_mom[2]+=mom[2];
 	tot_mom[3]+=hit->getEnergy();
 
+	tot_mag[0]+=abs(mom[0]);
+	tot_mag[1]+=abs(mom[1]);
+	tot_mag[2]+=abs(mom[2]);
+	tot_mag[3]+=hit->getEnergy();
+
 
       }//end final state
     }//end for
     //for(MCParticle* particle : system)
 
     V=sqrt(pow(tot_mom[0], 2)+pow(tot_mom[1], 2));
-    M=sqrt(pow(tot_mom[3], 2)-pow(tot_mom[0], 2) -pow(tot_mom[1], 2) -pow(tot_mom[2], 2));
+    //M=sqrt(pow(tot_mom[3], 2)-pow(tot_mom[0], 2) -pow(tot_mom[1], 2) -pow(tot_mom[2], 2));
+    M=sqrt(pow(tot_mag[3], 2)-pow(tot_mag[0], 2) -pow(tot_mag[1], 2) -pow(tot_mag[2], 2));
 
     _S->Fill(S); 
 
