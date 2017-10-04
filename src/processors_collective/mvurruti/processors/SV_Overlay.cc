@@ -99,9 +99,20 @@ void SV_Overlay::processEvent( LCEvent * evt ) {
     print();
     print("=====EVENT: " + to_string( _nEvt ) + " ===== " );
     vector<MCParticle*> system;
-    //Pre analysis
+    //Pre analysis - I need to identify particle, status, and energy- If stat =1 (final state) highest energy of electron and positron, remove. Also energy
+    double ID = particle->getPDG();
+    double MaxEnerge,MaxEnergp = 0.0
 
 
+    if( ID==11) {
+      // something to exclude(?) out of data
+      if(tot_mom[3] = MaxEnerge)
+	}
+    
+    if( ID==-11) {
+      // xsame thing
+      if(tot_mom[3] = MaxEnergp)
+	}
     //Analysis
     for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
       MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
