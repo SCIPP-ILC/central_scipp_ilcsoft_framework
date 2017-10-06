@@ -23,6 +23,17 @@
 using namespace lcio;
 using namespace std;
 namespace Will{
+
+  /* ==== fourvec ====
+   * I made fourvec to make all the code more readable.
+   * To make a fourvec just pass it components
+   * fourvec example(momentum[0], momentum[1], momentum[2], particle.getEnergy()); 
+   * To get momentum:
+   * example.x //return x momentum.
+   * example.T //returns transverse momentum
+   * Also it is case insensitive so:
+   * example.y = example.Y
+   */
   struct fourvec{
     union{ double X; double x=0.0; };
     union{ double Y; double y=0.0; };
@@ -39,17 +50,8 @@ namespace Will{
     fourvec(const double,const double,const double,const double,const double);
     fourvec(const double*,const unsigned short SIZE);
   };
-  
-  
-  struct prediction{
-    fourvec electron;
-    fourvec positron;
-    double alpha=0;
-    double beta=0;
-    prediction(double x,double y);
-    prediction(measure input)
-  };
-  
+
+  //This is used to store all the vectors needed in two-photon analysis.
   struct measure{
     fourvec hadronic;
     fourvec electronic;
@@ -61,11 +63,24 @@ namespace Will{
     bool e_scatter=false;
   };
 
+  //This will contain and calculate a prediction vector from a filled measure stucture.
+  struct prediction{
+    fourvec electron;
+    fourvec positron;
+    double alpha=0;
+    double beta=0;
+    prediction(double x,double y);
+    prediction( measure );
+  };
+  
+
+  //Keep track of numbers for debugging.
   struct META{
     int SCATTERS=0;
     int NOSCATTERS=0;
     int STATS[5]={0};
     int MSC=0;
+    static const int BEAMCAL = 3265; //Distance to beamcal
   };
   static META meta;
   META getMETA();
@@ -77,7 +92,10 @@ namespace Will{
 			     initializer_list<int> ids, 
 			     vector<MCParticle*>& final_state);
 
+   //Gets momentum vector as non constant
    double* getVector(MCParticle*);
+
+   //casting function for MCParticle to fourvec
    fourvec getFourVector(MCParticle*);
 
    //Returns the sum of the two; assumes a 4 vector
@@ -111,9 +129,12 @@ namespace Will{
    int get_hitStatus(const fourvec, const bool=true);
    int get_hitStatus(MCParticle*);
    
+   //Like the ilc version but it supports MCParticle and fourvectors. 
+   //Also it returns a new foucvec that has been transformed.
    fourvec transform_to_lab(MCParticle*);
    fourvec transform_to_lab(const fourvec);
 
+   //Used to debug old code.
    double* legacy(fourvec);
 
 
@@ -126,6 +147,10 @@ namespace Will{
    */
    measure getMeasure(LCCollection*);
    
+   //Returns a position fourvec, of the particle on the face of the beamcal.
+   fourvec getBeamcalPosition(fourvec);
+
+   //Python version of cout. I don't use these.
    void print(string );
    void print(string , string );
 

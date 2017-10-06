@@ -36,6 +36,17 @@ fourvec::fourvec(const double* input,const unsigned short SIZE){
   }
 }
 
+fourvec Will::getBeamcalPosition(const fourvec input){
+  fourvec lab = transform_to_lab(input);
+  fourvec pos;
+  //Positron moves in -z direction
+  double direction = lab.z/abs(lab.z);
+  pos.z = META::BEAMCAL * direction;
+  pos.x = lab.x * pos.z / lab.z;
+  pos.y = lab.y * pos.z / lab.z;
+  pos.x+= pos.z*.007 * (-direction);
+  return pos;
+}
 prediction::prediction(double x,double y){
   electron.x=x;
   positron.y=y;
@@ -180,7 +191,9 @@ measure Will::getMeasure(LCCollection* col){
       fourvec hadron=getFourVector(particle);
       out.hadronic+=hadron;
       out.mag+=hadron.T;
+      //Possibly make cuts based on angle.
     }
+    
     get_hitStatus(particle);
   }
   out.scattered ? meta.SCATTERS++ : meta.NOSCATTERS++;
@@ -189,7 +202,7 @@ measure Will::getMeasure(LCCollection* col){
 
 fourvec Will::transform_to_lab(fourvec input){
   //  cout << "start: " << input.x << endl;
-  double theta = 0.007;
+  /*  double theta = 0.007;
   double beta = sin(theta);
   double gamma = pow((1-pow(beta, 2)), -0.5);
   double e_temp = input.E;
@@ -197,9 +210,13 @@ fourvec Will::transform_to_lab(fourvec input){
   double pX_new = input.x*gamma + gamma*beta*e_temp;
   input.x=pX_new;
   input.e=E_new;
-  input.t=getTMag(input);
-  fourvec out(pX_new,input.y,input.z,E_new);
-  //  cout << "end: " << pX_new << endl;
+  input.t=getTMag(input);*/
+
+  double px=input.x;
+  double e = input.e;
+  scipp_ilc::transform_to_lab(px,e,px,e);
+  fourvec out(px,input.y,input.z,e);
+  cout << "delta " << input.x-px << endl;
   return out;
 }
 

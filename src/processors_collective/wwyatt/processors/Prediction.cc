@@ -18,6 +18,7 @@
 #include "Prediction.h"
 #include "scipp_ilc_utilities.h"
 #include <iostream>
+#include <iomanip> 
 
 #include <EVENT/LCCollection.h>
 #include <EVENT/SimCalorimeterHit.h>
@@ -96,10 +97,28 @@ void Prediction::processRunHeader( LCRunHeader* run) {
 } 
 
 void Prediction::processEvent( LCEvent * evt ) { 
+  // DISCLAIMER: THERE IS MORE DOCUMENTATION IN THE HEADER FILE (Will.h).
   LCCollection* col = evt->getCollection( _colName ) ;
   if( col == NULL )return;
+
+  /* "getMeasure(LCCollection)" Takes the collection, calculates the hadronic system.
+   * A measure is a struct with several fourvectors in it:
+   * - electron - Highest energy final state electron
+   * - positron - Highest energy final state positron
+   * - hadronic - Calculated from all non final state high energy electron/positron
+   * - electronic
+   *   |=> Either the electron or the positron above WITH transverse momentum (e.g. scatter)
+   *   |=> Transverse momentum means this is the particle that scattered.
+   */
   Will::measure data = Will::getMeasure(col);
-  if(!data.scattered)return;
+  if(!data.scattered)return; //If there was no scatter, then there is nothing to see.
+  /* "prediction" will calculate and return two prediction vectors.
+   * - electron 
+   * - positron
+   * Only one of these will be correct; that can be checked by measure.p_scatter and measure.e_scatter.
+   * I will make it easier to get the correct prediction.
+   */
+
   prediction p(data);
   fourvec electron=data.electron,
     positron=data.positron,
@@ -119,24 +138,30 @@ void Prediction::processEvent( LCEvent * evt ) {
 
   _p_theta->Fill(e_theta);
   _e_theta->Fill(p_theta);
-
-  //The bool is true if the particle hits.
-  bool predicted_electron=get_hitStatus(p.electron)<3;
-  bool predicted_positron=get_hitStatus(p.positron)<3;
-  bool actual_positron=get_hitStatus(positron)<3;
-  bool actual_electron=get_hitStatus(electron)<3;
+  
+  //Create position vectors
+  fourvec real_e = getBeamcalPosition(data.electron);
+  fourvec real_p = getBeamcalPosition(data.positron);
+  fourvec pred_e = getBeamcalPosition(p.electron);
+  fourvec pred_p = getBeamcalPosition(p.positron);
+  //The following is a for a hit miss table to test efficiancy.
+  //These booleans are true if the particle had hit.
+  bool actual_electron=get_hitStatus(real_e)<3;
+  bool actual_positron=get_hitStatus(real_p)<3;
+  bool predicted_electron=get_hitStatus(pred_e)<3;
+  bool predicted_positron=get_hitStatus(pred_p)<3;
   ++total;
   if(data.p_scatter){
     if(actual_positron&&predicted_positron)ph_th++;
-    else if( actual_positron && !predicted_positron)ph_tm++;
-    else if(!actual_positron &&  predicted_positron)pm_th++;
+    else if( actual_positron && !predicted_positron)pm_th++;
+    else if(!actual_positron &&  predicted_positron)ph_tm++;
     else if(!actual_positron && !predicted_positron)pm_tm++;
     else cout << "err2" << endl;
     p_scatter++;
   }else if(data.e_scatter){
     if(actual_electron&&predicted_electron)ph_th++;
-    else if( actual_electron && !predicted_electron)ph_tm++;
-    else if(!actual_electron &&  predicted_electron)pm_th++;
+    else if( actual_electron && !predicted_electron)pm_th++;
+    else if(!actual_electron &&  predicted_electron)ph_tm++;
     else if(!actual_electron && !predicted_electron)pm_tm++;	
     else cout << "err3" << endl;
     e_scatter++;
@@ -157,11 +182,20 @@ void Prediction::end(){
   _rootfile->Write();
   cout << "# Events: " << _nEvt << endl;
   cout << "p_scatter:e_scatter = " << p_scatter << ":"<<e_scatter<<endl;
-  cout << "ph_th : " << (1.0*ph_th) << endl;
-  cout << "ph_tm : " << (1.0*ph_tm) << endl;
-  cout << "pm_th : " << (1.0*pm_th) << endl;
-  cout << "pm_tm : " << (1.0*pm_tm) << endl;
+  cout << "ph_th : " << 1.0*ph_th/meta.SCATTERS << endl;
+  cout << "ph_tm : " << 1.0*ph_tm/meta.SCATTERS << endl;
+  cout << "pm_th : " << 1.0*pm_th/meta.SCATTERS << endl;
+  cout << "pm_tm : " << 1.0*pm_tm/meta.SCATTERS << endl;
   cout << "hit-miss-out-in: " <<meta.STATS[1]<< "-"<<meta.STATS[2]<<"-"<<meta.STATS[3]<<"-"<<meta.STATS[4]<<endl;
   cout << "Scat:noScat " << meta.SCATTERS << ":" << meta.NOSCATTERS << endl;
   cout << "MSC : " << meta.MSC << endl;
+  double a=1.0*ph_th/meta.SCATTERS;
+  double b=1.0*ph_tm/meta.SCATTERS;
+  double c=1.0*pm_th/meta.SCATTERS;
+  double d=1.0*pm_tm/meta.SCATTERS;
+  
+  cout << "         | Truth Hit | Truth Miss" <<endl;
+  cout <<setprecision(4)<< "Pred Hit | "<< a <<"  |  "<< b <<endl;
+  cout <<setprecision(3)<< "Pred Miss| "<< c <<"    |  "<< d <<endl;
+
 }
