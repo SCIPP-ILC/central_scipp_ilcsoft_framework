@@ -64,7 +64,7 @@ void SV_Overlay::init() {
   _rootfile = new TFile("SV_Overlay.root","RECREATE");
   _S = new TH1D("S", "Scalar", 200, 0.0, 23.0);
   _V = new TH1D("V", "Vector", 1000, 0.0, 1.5); 
-  _M = new TH1D("M", "Mass", 2500, 0.02, 0.030); 
+  _M = new TH1D("M", "Mass", 1000, 0.0, 150.0); 
 
 
   // usually a good idea to
@@ -100,26 +100,41 @@ void SV_Overlay::processEvent( LCEvent * evt ) {
     print("=====EVENT: " + to_string( _nEvt ) + " ===== " );
     vector<MCParticle*> system;
     //Pre analysis - I need to identify particle, status, and energy- If stat =1 (final state) highest energy of electron and positron, remove. Also energy
-    double ID = particle->getPDG();
-    double MaxEnerge,MaxEnergp = 0.0
-
-
-    if( ID==11) {
-      // something to exclude(?) out of data
-      if(tot_mom[3] = MaxEnerge)
-	}
     
-    if( ID==-11) {
-      // xsame thing
-      if(tot_mom[3] = MaxEnergp)
-	}
-    //Analysis
+    double MaxEnerge=0.0, MaxEnergp=0.0;
+
+    for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
+      MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
+      stat = particle->getGeneratorStatus();
+      //yo dis is kewl. like it says "if not final state, skip" so ya. 
+      //TWO EQUALS ARE EQUAL> ONE EQUAL IS DEFINING
+      if(stat!=1) continue;
+      double ID = particle->getPDG();
+      double energy=particle->getEnergy();
+     
+      if( ID==11 && energy>MaxEnerge){
+	  MaxEnerge=energy;
+      }else if( ID==-11 && energy>MaxEnergp){
+	  MaxEnergp=energy;
+      } 
+    }
+
+
+
     for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
       MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
-
+      double energy=hit->getEnergy();
 
       stat = hit->getGeneratorStatus();
       if(stat==1){ 
+	double ID = hit->getPDG();
+	if( ID==11 && energy==MaxEnerge){
+	  
+	  continue;
+	}
+	if( ID==-11 && energy==MaxEnergp) {
+	  continue;
+	}
 
 
 	double mom[3] = {0};
