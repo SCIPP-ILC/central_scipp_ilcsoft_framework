@@ -57,6 +57,7 @@ namespace Will{
     fourvec electronic;
     fourvec electron;
     fourvec positron;
+    fourvec pseudo;
     double mag=0.0;
     bool scattered=false;
     bool p_scatter=false;
@@ -154,6 +155,7 @@ namespace Will{
    void print(string );
    void print(string , string );
 
+   void getJane(LCCollection * );
 
 }
 

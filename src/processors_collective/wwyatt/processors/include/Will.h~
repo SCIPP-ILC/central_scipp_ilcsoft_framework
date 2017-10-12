@@ -50,7 +50,20 @@ namespace Will{
     fourvec(const double,const double,const double,const double,const double);
     fourvec(const double*,const unsigned short SIZE);
   };
-  
+
+  //This is used to store all the vectors needed in two-photon analysis.
+  struct measure{
+    fourvec hadronic;
+    fourvec electronic;
+    fourvec electron;
+    fourvec positron;
+    fourvec pseudo;
+    double mag=0.0;
+    bool scattered=false;
+    bool p_scatter=false;
+    bool e_scatter=false;
+  };
+
   //This will contain and calculate a prediction vector from a filled measure stucture.
   struct prediction{
     fourvec electron;
@@ -62,25 +75,13 @@ namespace Will{
   };
   
 
-  //This is used to store all the vectors needed in two-photon analysis.
-  struct measure{
-    fourvec hadronic;
-    fourvec electronic;
-    fourvec electron;
-    fourvec positron;
-    double mag=0.0;
-    bool scattered=false;
-    bool p_scatter=false;
-    bool e_scatter=false;
-  };
-
   //Keep track of numbers for debugging.
   struct META{
     int SCATTERS=0;
     int NOSCATTERS=0;
     int STATS[5]={0};
     int MSC=0;
-    const int BEAMCAL = 3265; //Distance to beamcal
+    static const int BEAMCAL = 3265; //Distance to beamcal
   };
   static META meta;
   META getMETA();
@@ -154,6 +155,7 @@ namespace Will{
    void print(string );
    void print(string , string );
 
+   void getJane(LCEvent * );
 
 }
 

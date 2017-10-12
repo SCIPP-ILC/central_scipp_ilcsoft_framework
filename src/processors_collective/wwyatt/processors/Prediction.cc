@@ -78,7 +78,7 @@ void Prediction::init() {
   streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
   _rootfile = new TFile("ppredict.root","RECREATE");
-  // usually a good idea to
+  //usually a good idea to
   //printParameters() ;
   _prediction = new TH2F("predict", "Predicted Angle of Scatter, Correct vs Incorrect Kinematics", 1000, 0.0, 0.01, 1000, 0.0, 0.01);
   _p_theta = new TH1F("p_theta", "Theta between positron and hadronic system", 360, 0, 3.5);
@@ -97,10 +97,12 @@ void Prediction::processRunHeader( LCRunHeader* run) {
 } 
 
 void Prediction::processEvent( LCEvent * evt ) { 
+
   // DISCLAIMER: THERE IS MORE DOCUMENTATION IN THE HEADER FILE (Will.h).
   LCCollection* col = evt->getCollection( _colName ) ;
   if( col == NULL )return;
-
+  //Run janes code for comparison.
+  Will::measure data = Will::getMeasure(col);  
   /* "getMeasure(LCCollection)" Takes the collection, calculates the hadronic system.
    * A measure is a struct with several fourvectors in it:
    * - electron - Highest energy final state electron
@@ -110,8 +112,8 @@ void Prediction::processEvent( LCEvent * evt ) {
    *   |=> Either the electron or the positron above WITH transverse momentum (e.g. scatter)
    *   |=> Transverse momentum means this is the particle that scattered.
    */
-  Will::measure data = Will::getMeasure(col);
-  if(!data.scattered)return; //If there was no scatter, then there is nothing to see.
+  if(!data.scattered || data.mag<=1) return;//If there was no scatter, then there is nothing to see.
+  prediction p(data); //Store prediction vector as variable 'p';
   /* "prediction" will calculate and return two prediction vectors.
    * - electron 
    * - positron
@@ -119,7 +121,8 @@ void Prediction::processEvent( LCEvent * evt ) {
    * I will make it easier to get the correct prediction.
    */
 
-  prediction p(data);
+  
+  //I rename the particles just for ease of use. I might take this out later for explicitness.
   fourvec electron=data.electron,
     positron=data.positron,
     hadronic=data.hadronic,
@@ -127,11 +130,17 @@ void Prediction::processEvent( LCEvent * evt ) {
   double mag=data.mag; //Magnitude of the hadronic vector?
   double electronTheta=getTheta(p.electron); //Angle off of z-axis
   double positronTheta=getTheta(p.positron);
+  
+  //DEBUG
+  //Find the mag difference between the electron & -hadron vector.
+  //cout << "electronic:hadronic " << getTMag(electronic) << ":" << getTMag(hadronic) << endl;
+  //cout << "delta: " << abs(getTMag(electronic)-getTMag(hadronic)) << endl;
+  //END DEBUG
 
   if(mag>1.0){
     _prediction->Fill(electronTheta,positronTheta);
   }
-      
+
   double p_mag = getMag(electronic);
   double e_theta=getTheta(electronic,p.electron);
   double p_theta=getTheta(electronic,p.positron);
@@ -144,6 +153,7 @@ void Prediction::processEvent( LCEvent * evt ) {
   fourvec real_p = getBeamcalPosition(data.positron);
   fourvec pred_e = getBeamcalPosition(p.electron);
   fourvec pred_p = getBeamcalPosition(p.positron);
+
   //The following is a for a hit miss table to test efficiancy.
   //These booleans are true if the particle had hit.
   bool actual_electron=get_hitStatus(real_e)<3;
@@ -151,23 +161,21 @@ void Prediction::processEvent( LCEvent * evt ) {
   bool predicted_electron=get_hitStatus(pred_e)<3;
   bool predicted_positron=get_hitStatus(pred_p)<3;
   ++total;
+
   if(data.p_scatter){
     if(actual_positron&&predicted_positron)ph_th++;
     else if( actual_positron && !predicted_positron)pm_th++;
     else if(!actual_positron &&  predicted_positron)ph_tm++;
     else if(!actual_positron && !predicted_positron)pm_tm++;
-    else cout << "err2" << endl;
     p_scatter++;
   }else if(data.e_scatter){
     if(actual_electron&&predicted_electron)ph_th++;
     else if( actual_electron && !predicted_electron)pm_th++;
     else if(!actual_electron &&  predicted_electron)ph_tm++;
     else if(!actual_electron && !predicted_electron)pm_tm++;	
-    else cout << "err3" << endl;
     e_scatter++;
-  }else{
-    cout << "err" << endl;
   }
+
 }
 
 void Prediction::check( LCEvent * evt ) { 
@@ -180,22 +188,17 @@ void Prediction::end(){
   Will::META meta = Will::getMETA();
   cout << interest << endl;
   _rootfile->Write();
-  cout << "# Events: " << _nEvt << endl;
   cout << "p_scatter:e_scatter = " << p_scatter << ":"<<e_scatter<<endl;
-  cout << "ph_th : " << 1.0*ph_th/meta.SCATTERS << endl;
-  cout << "ph_tm : " << 1.0*ph_tm/meta.SCATTERS << endl;
-  cout << "pm_th : " << 1.0*pm_th/meta.SCATTERS << endl;
-  cout << "pm_tm : " << 1.0*pm_tm/meta.SCATTERS << endl;
-  cout << "hit-miss-out-in: " <<meta.STATS[1]<< "-"<<meta.STATS[2]<<"-"<<meta.STATS[3]<<"-"<<meta.STATS[4]<<endl;
   cout << "Scat:noScat " << meta.SCATTERS << ":" << meta.NOSCATTERS << endl;
   cout << "MSC : " << meta.MSC << endl;
-  double a=1.0*ph_th/meta.SCATTERS;
-  double b=1.0*ph_tm/meta.SCATTERS;
-  double c=1.0*pm_th/meta.SCATTERS;
-  double d=1.0*pm_tm/meta.SCATTERS;
+  int sum = ph_th+ph_tm+pm_th+pm_tm;
+  double hh=1.0*ph_th/sum;
+  double hm=1.0*ph_tm/sum;
+  double mh=1.0*pm_th/sum;
+  double mm=1.0*pm_tm/sum;
   
-  cout << "         | Truth Hit | Truth Miss" <<endl;
-  cout <<setprecision(4)<< "Pred Hit | "<< a <<"  |  "<< b <<endl;
-  cout <<setprecision(3)<< "Pred Miss| "<< c <<"    |  "<< d <<endl;
+  cout << "          | Truth Hit | Truth Miss" << endl;
+  cout << setprecision(4) << "Pred Hit  | " << hh << "   |  " << hm << endl;
+  cout << setprecision(4) << "Pred Miss | " << mh << "   |  " << mm << endl;
 
 }
