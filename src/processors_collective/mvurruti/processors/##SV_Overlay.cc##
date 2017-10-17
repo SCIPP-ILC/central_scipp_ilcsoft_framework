@@ -39,7 +39,7 @@ using namespace scipp_ilc;
 SV_Overlay SV_Overlay;
 
 static TFile* _rootfile;
-static TH1D* _S;
+static TH1* _S;
 static TH1D* _V;
 static TH1D* _M;
 static bool v = false;

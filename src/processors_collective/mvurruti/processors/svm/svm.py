@@ -2,7 +2,6 @@ import time
 import argparse
 import ROOT
 
-
 parser = argparse.ArgumentParser(description = "plots SVM root files.")
 
 parser.add_argument("filename", metavar = "filename", nargs = "?", help = "input a root file name to plot.")
@@ -14,6 +13,7 @@ if prefix is None:
 
 if ".root" in prefix:
     prefix = prefix[-5:]
+print("%s.root" % prefix)
 f = ROOT.TFile("%s.root"%prefix)
 c = ROOT.TCanvas()
 c.SetLogy()
@@ -21,14 +21,14 @@ c.SetLogy()
 def plot(name): 
     graph = f.Get(name)
     graph.GetYaxis().SetTitle("# of Events")
-    if name == "S" or name == "V":
+    if name == "total_detected_vector" or name == "total_detectable_vector" or name == "total_true_vector" or name == "total_detected_scalar" or name == "total_detectable_scalar" or name == "total_true_scalar":
         graph.GetXaxis().SetTitle("Momentum (GeV)")
-    if name == "M":
+    if name == "total_detected_mass" or name == "total_detectable_mass" or name == "total_true_mass":
         graph.GetXaxis().SetTitle("Mass (GeV)")    
     graph.Draw()
     time.sleep(4)
     c.SaveAs("./%s_%s.png"%(prefix,name))
 
-graphs = ["S","V","M"]
+graphs = ["total_detected_vector","_total_detectable_vector","_total_true_vector","_total_detected_scalar","_total_detectable_scalar","_total_true_scalar","total_detected_mass","_total_detectable_mass","_total_true_mass"]
 for g in graphs:
     plot(g)

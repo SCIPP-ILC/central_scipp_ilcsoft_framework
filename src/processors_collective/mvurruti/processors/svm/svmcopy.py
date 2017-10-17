@@ -20,14 +20,14 @@ c.SetLogy()
 def plot(name): 
     graph = f.Get(name)
     graph.GetYaxis().SetTitle("# of Events")
-    if name == "total_detected_vector" or name == "total_detectable_vector" or name == "total_true_vector" or name == "total_detected_scalar" or name == "total_detectable_scalar" or name == "total_true_scalar":
+    if name == "S" or name == "V":
         graph.GetXaxis().SetTitle("Momentum (GeV)")
-    if name == "total_detected_mass" or name == "total_detectable_mass" or name == "total_true_mass":
+    if name == "M":
         graph.GetXaxis().SetTitle("Mass (GeV)")    
     graph.Draw()
     time.sleep(4)
     c.SaveAs("./%s_%s.png"%(prefix,name))
 
-graphs = ["total_detected_vector","_total_detectable_vector","_total_true_vector","_total_detected_scalar","_total_detectable_scalar","_total_true_scalar","total_detected_mass","_total_detectable_mass","_total_true_mass"]
+graphs = ["S","V","M"]
 for g in graphs:
     plot(g)
