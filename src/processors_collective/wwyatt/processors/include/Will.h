@@ -81,6 +81,8 @@ namespace Will{
     int NOSCATTERS=0;
     int STATS[5]={0};
     int MSC=0;
+    fourvec tmp;
+    fourvec* _tmp;
     static const int BEAMCAL = 3265; //Distance to beamcal
   };
   static META meta;

@@ -40,14 +40,20 @@ prediction::prediction(double x,double y){
   electron.x=x;
   positron.y=y;
 }
-prediction::prediction(measure input)
-  :prediction(-input.hadronic.x, -input.hadronic.y){
+prediction::prediction(measure input){
   alpha=(500-input.hadronic.E - input.hadronic.z);
   beta=(500-input.hadronic.E + input.hadronic.z);
+  electron.x = -input.hadronic.x;
+  electron.y = -input.hadronic.y;
   electron.z = -(pow(input.electron.T, 2)-pow(alpha, 2))/(2*alpha);
   electron.e = 500 - input.hadronic.e - electron.z - input.hadronic.z;
+  electron.t = getTMag(electron);
+
+  positron.x = -input.hadronic.x;
+  positron.y = -input.hadronic.y;
   positron.z = (pow(input.positron.T, 2)-pow(beta, 2))/(2*beta);
   positron.e = 500 - input.hadronic.e + positron.z + input.hadronic.z;
+  positron.t = getTMag(positron);
 }
 
 
@@ -164,9 +170,8 @@ measure Will::getMeasure(LCCollection* col){
    * The sketchy thing I did was have it return a vector with final state particles (genStat==1)
    * That is what the all_particles thing is.
    */
-
-  double mag=0.0;
   int hits = 0;
+  out.mag=0;
   //Checks for scatter in electron or positron.
   for(auto particle: all_particles){
     if(particle->getGeneratorStatus()!=1) continue; //Redundant, maxEnergy does this.
@@ -192,7 +197,7 @@ measure Will::getMeasure(LCCollection* col){
       fourvec hadron=getFourVector(particle);
       hadronic_system.push_back(hadron);
       out.hadronic+=hadron;
-      
+      out.mag += getTMag(hadron);
     }
   }
   /*
@@ -242,7 +247,6 @@ fourvec Will::getBeamcalPosition(const fourvec input){
   fourvec pos;
   //Positron moves in -z direction
   double direction = lab.z/abs(lab.z);
-  cout << direction << endl;
   pos.z = META::BEAMCAL * direction;
   pos.x = lab.x * pos.z / lab.z + pos.z * .007 * (-direction);
   pos.y = lab.y * pos.z / lab.z;
@@ -372,7 +376,7 @@ void Will::getJane(LCCollection* col){
         if(scatter==true){
             
             //create balancing particle
-            double x = hadronic[0] + electronic[0];
+	  /*            double x = hadronic[0] + electronic[0];
             double y = hadronic[1] + electronic[1];
 
             double pseudo_x = -x;
@@ -405,10 +409,9 @@ void Will::getJane(LCCollection* col){
             //add balancing particle to hadronic system
             hadronic[0]+=pseudo_x;
             hadronic[1]+=pseudo_y;
-
+	  */
             //cut on S
             if(mag>1.0){
-                
                 total++;
                 //create prediction vectors
                 pred_e[0] = -hadronic[0];
@@ -462,7 +465,9 @@ void Will::getJane(LCCollection* col){
                 real_p_pos[0] = real_p_pos[0] + real_p_pos[2]*0.007;
                 pred_e_pos[0] = pred_e_pos[0] - pred_e_pos[2]*0.007;
                 pred_p_pos[0] = pred_p_pos[0] + pred_p_pos[2]*0.007;
-                
+
+		//cout << "Jane real e pos : " << getTMag(real_e_pos) << endl;
+		//cout << "Jane pred e pos : " << getTMag(pred_e_pos) << endl;
 
                 //get hit status
                 int re_hit = scipp_ilc::get_hitStatus(real_e_pos[0], real_e_pos[1], real_e_pos[2]);
@@ -493,9 +498,6 @@ void Will::getJane(LCCollection* col){
                 else if(pred == 2 && real == 1){_mh++;}
                 else if(pred ==2 && real == 2){_mm++;}
 
-                cout << "REAL POSITRON: " << real_p_pos[0] << " " << real_p_pos[1] << " " << real_p_pos[2] << endl;
-                cout << "PRED POSITRON: " << pred_p_pos[0] << " " << pred_p_pos[1] << " " << pred_p_pos[2] << endl;
-                
                 real = 0;
                 pred = 0;
             }

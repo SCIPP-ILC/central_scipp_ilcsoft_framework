@@ -68,18 +68,18 @@ SV_Overlay::SV_Overlay() : Processor("SV_Overlay") {
 void SV_Overlay::init() { 
   streamlog_out(DEBUG) << "   init called  " << std::endl ;
   _rootfile = new TFile("SV_Overlay.root","RECREATE");
-    _V_Dtd = new TH1F("V_Dtd","Detected Vector",80,0,20);
-    _V_Dbl = new TH1F("V_Dbl","Detectable Vector",80,0,20);
-    _V_Tru = new TH1F("V_Tru","True Vector",80,0,20);
+    _V_Dtd = new TH1F("V_Dtd","Detected Vector",100,0,10);
+    _V_Dbl = new TH1F("V_Dbl","Detectable Vector",100,0,10);
+    _V_Tru = new TH1F("V_Tru","True Vector",100,0,10);
 
-    _S_Dtd = new TH1F("S_Dtd","Detected Scalar",80,0,20);
-    _S_Dbl = new TH1F("S_Dbl","Detectable Scalar",80,0,20);
-    _S_Tru = new TH1F("S_Tru","True Scalar",80,0,20);
+    _S_Dtd = new TH1F("S_Dtd","Detected Scalar",100,0,10);
+    _S_Dbl = new TH1F("S_Dbl","Detectable Scalar",100,0,10);
+    _S_Tru = new TH1F("S_Tru","True Scalar",100,0,10);
  
   
-    _M_Dtd = new TH1F("M_Dtd","Detected Mass",80,0,20);
-    _M_Dbl = new TH1F("M_Dbl","Detectable Mass",80,0,20);
-    _M_Tru = new TH1F("M_Tru","True Mass",80,0,20);
+    _M_Dtd = new TH1F("M_Dtd","Detected Mass",100,0,10);
+    _M_Dbl = new TH1F("M_Dbl","Detectable Mass",100,0,10);
+    _M_Tru = new TH1F("M_Tru","True Mass",100,0,10);
   
     //_S = new TH1D("S", "Scalar", 200, 0.0, 23.0);
     //_V = new TH1D("V", "Vector", 1000, 0.0, 1.5); 
@@ -106,7 +106,7 @@ void SV_Overlay::processEvent( LCEvent * evt ) {
   // this gets called for every event 
   // usually the working horse ...
   LCCollection* col = evt->getCollection( _colName ) ;
-   cout << "# of Elements "<<col->getNumberOfElements()<<endl;
+  //cout << "# of Elements "<<col->getNumberOfElements()<<endl;
   
   double vec[4][3];
   double scalars[4];
@@ -116,13 +116,13 @@ void SV_Overlay::processEvent( LCEvent * evt ) {
   double tot_mom[]={0, 0, 0, 0};
   double tot_mag[]={0, 0, 0, 0};
   double S=0,V=0,M=0; 
-  double stat;
+  int stat;
   // this will only be entered if the collection is available
   if( col != NULL ){
     int nElements = col->getNumberOfElements()  ;
     print();
     print();
-    print("=====EVENT: " + to_string( _nEvt ) + " ===== " );
+    // print("=====EVENT: " + to_string( _nEvt ) + " ===== " );
     vector<MCParticle*> system;
     //Pre analysis - I need to identify particle, status, and energy- If stat =1 (final state) highest energy of electron and positron, remove. Also energy
     
@@ -131,14 +131,14 @@ void SV_Overlay::processEvent( LCEvent * evt ) {
     for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
       MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
       stat = particle->getGeneratorStatus();
-      int id, stat;
+      int id;
 
        try{ 
             id = particle->getPDG();
-            cout << id << endl;  
+          //  cout << id << endl;  
        }
        catch(const std::exception& e){
-               cout << "exception caught with message " << e.what() << "\n";
+	 //         cout << "exception caught with message " << e.what() << "\n";
        }  
       //yo dis is kewl. like it says "if not final state, skip" so ya. 
       //TWO EQUALS ARE EQUAL> ONE EQUAL IS DEFINING
@@ -166,6 +166,9 @@ void SV_Overlay::processEvent( LCEvent * evt ) {
                     id == 16 || id == -16 ||
                     id == 18 || id == -18);
                 bool isForward = ( cos > 0.9 || cos < -0.9);               
+		
+		//cout << "anything u want "<< scalar << endl;
+
                 scalars[0]+=scalar; //true
                 vec[0][0]+=P[0];
                 vec[0][1]+=P[1];
@@ -192,7 +195,9 @@ void SV_Overlay::processEvent( LCEvent * evt ) {
  
     }//end for
 
-    cout << "event "<< _nEvt <<" finished " << endl;
+
+
+    // cout << "event "<< _nEvt <<" finished " << endl;
     //all
     double total_true_scalar = scalars[0];
     double total_detected_scalar = scalars[1];

@@ -97,11 +97,13 @@ void Prediction::processRunHeader( LCRunHeader* run) {
 } 
 
 void Prediction::processEvent( LCEvent * evt ) { 
-
+  
   // DISCLAIMER: THERE IS MORE DOCUMENTATION IN THE HEADER FILE (Will.h).
   LCCollection* col = evt->getCollection( _colName ) ;
   if( col == NULL )return;
   //Run janes code for comparison.
+  getJane(col);
+
   Will::measure data = Will::getMeasure(col);  
   /* "getMeasure(LCCollection)" Takes the collection, calculates the hadronic system.
    * A measure is a struct with several fourvectors in it:
@@ -125,16 +127,19 @@ void Prediction::processEvent( LCEvent * evt ) {
   //I rename the particles just for ease of use. I might take this out later for explicitness.
   fourvec electron=data.electron,
     positron=data.positron,
-    hadronic=data.hadronic,
+    hadronic=data.electronic,
     electronic=data.electronic;
+  fourvec nelectron = fourvec(-data.electronic.x,-data.electronic.y,data.electronic.z,data.electronic.e);
+  //data.hadronic=nelectron;
   double mag=data.mag; //Magnitude of the hadronic vector?
   double electronTheta=getTheta(p.electron); //Angle off of z-axis
   double positronTheta=getTheta(p.positron);
   
   //DEBUG
-  //Find the mag difference between the electron & -hadron vector.
-  //cout << "electronic:hadronic " << getTMag(electronic) << ":" << getTMag(hadronic) << endl;
-  //cout << "delta: " << abs(getTMag(electronic)-getTMag(hadronic)) << endl;
+  //cout << "will : " << hadronic.e << " : " << hadronic.z << " : " << p.electron.z << endl;
+  //fourvec pred_e_lab = transform_to_lab(p.electron);
+  //cout << "will : " << pred_e_lab.x << ":" << pred_e_lab.y << ": " << pred_e_lab.e << endl;
+  //cout << "before : " << p.electron.e <<endl;
   //END DEBUG
 
   if(mag>1.0){
@@ -144,7 +149,7 @@ void Prediction::processEvent( LCEvent * evt ) {
   double p_mag = getMag(electronic);
   double e_theta=getTheta(electronic,p.electron);
   double p_theta=getTheta(electronic,p.positron);
-
+  
   _p_theta->Fill(e_theta);
   _e_theta->Fill(p_theta);
   
@@ -154,6 +159,11 @@ void Prediction::processEvent( LCEvent * evt ) {
   fourvec pred_e = getBeamcalPosition(p.electron);
   fourvec pred_p = getBeamcalPosition(p.positron);
 
+  
+  //cout << "Will real e pos : " << getTMag(real_e) << endl;
+  //cout << "Will pred e cmp : " << pred_e.x << "\t" << pred_e.y << endl;
+  //cout << "Will pred e pos : " << getTMag(pred_e) << endl;
+  
   //The following is a for a hit miss table to test efficiancy.
   //These booleans are true if the particle had hit.
   bool actual_electron=get_hitStatus(real_e)<3;
@@ -174,6 +184,9 @@ void Prediction::processEvent( LCEvent * evt ) {
     else if(!actual_electron &&  predicted_electron)ph_tm++;
     else if(!actual_electron && !predicted_electron)pm_tm++;	
     e_scatter++;
+    if(false && actual_electron && !predicted_electron){
+      cout << "W " << pred_e.x << " : " << pred_e.y << endl;
+    }
   }
 
 }

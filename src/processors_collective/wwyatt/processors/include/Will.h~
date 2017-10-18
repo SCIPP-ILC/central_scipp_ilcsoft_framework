@@ -155,7 +155,7 @@ namespace Will{
    void print(string );
    void print(string , string );
 
-   void getJane(LCEvent * );
+   void getJane(LCCollection * );
 
 }
 
