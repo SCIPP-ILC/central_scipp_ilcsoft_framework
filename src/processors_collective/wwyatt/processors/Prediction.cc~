@@ -127,8 +127,10 @@ void Prediction::processEvent( LCEvent * evt ) {
   //I rename the particles just for ease of use. I might take this out later for explicitness.
   fourvec electron=data.electron,
     positron=data.positron,
-    hadronic=data.hadronic,
+    hadronic=data.electronic,
     electronic=data.electronic;
+  fourvec nelectron = fourvec(-data.electronic.x,-data.electronic.y,data.electronic.z,data.electronic.e);
+  //data.hadronic=nelectron;
   double mag=data.mag; //Magnitude of the hadronic vector?
   double electronTheta=getTheta(p.electron); //Angle off of z-axis
   double positronTheta=getTheta(p.positron);
@@ -157,11 +159,11 @@ void Prediction::processEvent( LCEvent * evt ) {
   fourvec pred_e = getBeamcalPosition(p.electron);
   fourvec pred_p = getBeamcalPosition(p.positron);
 
-  /*
-  cout << "Will real e pos : " << getTMag(real_e) << endl;
-  cout << "Will pred e cmp : " << pred_e.x << "\t" << pred_e.y << endl;
-  cout << "Will pred e pos : " << getTMag(pred_e) << endl;
-  */
+  
+  //cout << "Will real e pos : " << getTMag(real_e) << endl;
+  //cout << "Will pred e cmp : " << pred_e.x << "\t" << pred_e.y << endl;
+  //cout << "Will pred e pos : " << getTMag(pred_e) << endl;
+  
   //The following is a for a hit miss table to test efficiancy.
   //These booleans are true if the particle had hit.
   bool actual_electron=get_hitStatus(real_e)<3;
@@ -169,7 +171,8 @@ void Prediction::processEvent( LCEvent * evt ) {
   bool predicted_electron=get_hitStatus(pred_e)<3;
   bool predicted_positron=get_hitStatus(pred_p)<3;
   ++total;
-
+  Will::META meta = Will::getMETA();
+  
   if(data.p_scatter){
     if(actual_positron&&predicted_positron)ph_th++;
     else if( actual_positron && !predicted_positron)pm_th++;
@@ -182,8 +185,18 @@ void Prediction::processEvent( LCEvent * evt ) {
     else if(!actual_electron &&  predicted_electron)ph_tm++;
     else if(!actual_electron && !predicted_electron)pm_tm++;	
     e_scatter++;
+    map<int, string> key;
+    key[0]="pred_e";key[1]="real_e";key[2]="pred_p";key[3]="real_p";
+    vector<fourvec> jane = {meta.pred_e, meta.real_e, meta.pred_p, meta.real_p};
+    vector<fourvec> will = {pred_e, real_e, pred_p, real_p};
+    for(unsigned short int i=0; i < jane.size(); ++i){
+      if(jane[i].x-will[i].x > 0.0 || jane[i].y-will[i].y > 0.0 || jane[i].z-will[i].z > 0.0){
+	cout <<endl << "=== "<< key[i] <<" ===" << endl;
+	cout << "J " << jane[i].x << " : " << jane[i].y << " : " << jane[i].z << endl;
+	cout << "W " << will[i].x << " : " << will[i].y << " : " << will[i].z << endl;
+      }
+    }
   }
-
 }
 
 void Prediction::check( LCEvent * evt ) { 

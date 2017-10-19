@@ -171,7 +171,8 @@ void Prediction::processEvent( LCEvent * evt ) {
   bool predicted_electron=get_hitStatus(pred_e)<3;
   bool predicted_positron=get_hitStatus(pred_p)<3;
   ++total;
-
+  Will::META meta = Will::getMETA();
+  
   if(data.p_scatter){
     if(actual_positron&&predicted_positron)ph_th++;
     else if( actual_positron && !predicted_positron)pm_th++;
@@ -184,8 +185,17 @@ void Prediction::processEvent( LCEvent * evt ) {
     else if(!actual_electron &&  predicted_electron)ph_tm++;
     else if(!actual_electron && !predicted_electron)pm_tm++;	
     e_scatter++;
-    if(false && actual_electron && !predicted_electron){
-      cout << "W " << pred_e.x << " : " << pred_e.y << endl;
+  }
+
+  map<int, string> key;
+  key[0]="pred_e";key[1]="real_e";key[2]="pred_p";key[3]="real_p";
+  vector<fourvec> jane = {meta.pred_e, meta.real_e, meta.pred_p, meta.real_p};
+  vector<fourvec> will = {pred_e, real_e, pred_p, real_p};
+  for(unsigned short int i=0; i < jane.size(); ++i){
+    if(jane[i].x-will[i].x > 0.0 || jane[i].y-will[i].y > 0.0 || jane[i].z-will[i].z > 0.0){
+      cout <<endl << "=== "<< key[i] <<" ===" << endl;
+      cout << "J " << jane[i].x << " : " << jane[i].y << " : " << jane[i].z << endl;
+      cout << "W " << will[i].x << " : " << will[i].y << " : " << will[i].z << endl;
     }
   }
 
@@ -213,5 +223,15 @@ void Prediction::end(){
   cout << "          | Truth Hit | Truth Miss" << endl;
   cout << setprecision(4) << "Pred Hit  | " << hh << "   |  " << hm << endl;
   cout << setprecision(4) << "Pred Miss | " << mh << "   |  " << mm << endl;
+ 
+  cout << "TOTAL: " << meta.total << endl; 
+  double hh2=(double)meta.hh/(double)meta.total;
+  double hm2=(double)meta.hm/(double)meta.total;
+  double mh2=(double)meta.mh/(double)meta.total;
+  double mm2=(double)meta.mm/(double)meta.total;
 
+  cout << "HH: " << hh2 << endl;
+  cout << "HM: " << hm2 << endl;
+  cout << "MH: " << mh2 << endl;
+  cout << "MM: " << mm2 << endl;
 }

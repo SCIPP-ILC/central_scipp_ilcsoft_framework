@@ -133,7 +133,8 @@ double Will::getMag(const double* input){
 }
 
 double Will::getTMag(fourvec input){
-  return sqrt(pow(input.x, 2) + pow(input.y, 2));
+  input.T = sqrt(pow(input.x, 2) + pow(input.y, 2));
+  return input.T;
 }
 double Will::getMag(fourvec input){
   return getMag(new double[3]{input.x,input.y,input.z});
@@ -163,7 +164,7 @@ double Will::getTheta(fourvec a, fourvec b){
 measure Will::getMeasure(LCCollection* col){
   measure out;
   vector<MCParticle*> all_particles;
-  vector<fourvec> hadronic_system;
+  vector<MCParticle*> hadronic_system;
 
   map<int, double> max=maxEnergy(col, {11, -11}, all_particles);
   /* Max energy is a big function. It finds the max energy of the given particle ids.
@@ -195,25 +196,38 @@ measure Will::getMeasure(LCCollection* col){
     }else{
       //HADRONIC
       fourvec hadron=getFourVector(particle);
-      hadronic_system.push_back(hadron);
+      hadronic_system.push_back(particle);
       out.hadronic+=hadron;
       out.mag += getTMag(hadron);
+
     }
   }
-  /*
   if(out.scattered){
+
     //PSEUDO PARTICLE
     out.pseudo=*(new fourvec(
 		       -(out.hadronic.x+out.electronic.x),
 		       -(out.hadronic.y+out.electronic.y) ));
-    out.hadronic=*(new fourvec);
-    for(fourvec hadron: hadronic_system){
+    out.hadronic.x=0;
+    out.hadronic.y=0;
+    //    out.hadronic.z=0;
+    //    out.hadronic.e=0;
+    //    out.hadronic.t=0;
+    int count = 0;
+    for(auto particle: hadronic_system){
+      fourvec hadron = getFourVector(particle);
       const double angle = 0.5; //Cutting angle
-      if(abs(hadron.z/getMag(hadron)) < angle) out.hadronic+=hadron;
+      if(abs(hadron.z/getMag(hadron)) < angle){
+	++count;
+	//cout << "W iter : "<< getMag(out.hadronic) << endl;
+	out.hadronic+=hadron;
+      }
     }
+    //cout << "W count : " << count << endl;
     out.hadronic+=out.pseudo;
+    out.mag += getTMag(out.pseudo);
   }
-  */
+  //if (out.scattered) cout << "will " << out.hadronic.e << " : " << out.hadronic.z << endl;
   out.scattered ? meta.SCATTERS++ : meta.NOSCATTERS++; //Accounting for later statistical use.
   return out;
 }
@@ -374,9 +388,10 @@ void Will::getJane(LCCollection* col){
         }//end for
 
         if(scatter==true){
-            
+	  
+	  
             //create balancing particle
-	  /*            double x = hadronic[0] + electronic[0];
+	    double x = hadronic[0] + electronic[0];
             double y = hadronic[1] + electronic[1];
 
             double pseudo_x = -x;
@@ -387,7 +402,7 @@ void Will::getJane(LCCollection* col){
 
             hadronic[0]=0;
             hadronic[1]=0;
-
+	    int count = 0;
             //refill hadronic system with cuts and balancing particle
             for(MCParticle* particle : had){
                 mom[0]=particle->getMomentum()[0];    
@@ -399,19 +414,27 @@ void Will::getJane(LCCollection* col){
                 double cos = mom[2]/hyp;
                 if(abs(cos)<0.5){
                     //scipp_ilc::transform_to_lab(mom[0], mom[3], mom[0], mom[3]);
-                    hadronic[0]+=mom[0];    
+		  //cout << "J iter : "<< getMag(hadronic) << endl;                    
+		  hadronic[0]+=mom[0];    
                     hadronic[1]+=mom[1];    
                     hadronic[2]+=mom[2];    
                     hadronic[3]+=mom[3];    
+		    
+		    ++count;
                 }
             }
-
+	    //cout << "J count : " << count << endl;
             //add balancing particle to hadronic system
             hadronic[0]+=pseudo_x;
             hadronic[1]+=pseudo_y;
-	  */
+
+	    //cout << "jane " << hadronic[3] << " : " << hadronic[2] << endl;
+
             //cut on S
             if(mag>1.0){
+	      //DEBUG LINE:
+	      //cout << endl << "==========" << endl;
+
                 total++;
                 //create prediction vectors
                 pred_e[0] = -hadronic[0];
@@ -427,13 +450,17 @@ void Will::getJane(LCCollection* col){
                 pred_e[3] = 500 - hadronic[3] - pred_e[2] - hadronic[2];
                 pred_p[2] = (pow(pT, 2)-pow(beta, 2))/(2*beta);
                 pred_p[3] = 500 - hadronic[3] + pred_p[2] + hadronic[2];
-               
+
+		//cout << "jane : " << hadronic[3] << " : " << hadronic[2] << " : " << pred_e[2] << endl;
+
                 //Lorentz transform - frome center of mass to lab frame 
                 scipp_ilc::transform_to_lab(real_e[0], real_e[3], real_e[0], real_e[3]);
                 scipp_ilc::transform_to_lab(real_p[0], real_p[3], real_p[0], real_p[3]);
                 scipp_ilc::transform_to_lab(pred_e[0], pred_e[3], pred_e[0], pred_e[3]);
                 scipp_ilc::transform_to_lab(pred_p[0], pred_p[3], pred_p[0], pred_p[3]);
                
+		//cout << "jane : " << pred_e[0] << ":" << pred_e[1] << ": " << pred_e[3] << endl;
+
                 //create position vector
                 double real_e_pos[3];
                 double real_p_pos[3];
@@ -466,9 +493,18 @@ void Will::getJane(LCCollection* col){
                 pred_e_pos[0] = pred_e_pos[0] - pred_e_pos[2]*0.007;
                 pred_p_pos[0] = pred_p_pos[0] + pred_p_pos[2]*0.007;
 
-		//cout << "Jane real e pos : " << getTMag(real_e_pos) << endl;
-		//cout << "Jane pred e pos : " << getTMag(pred_e_pos) << endl;
+		//Debugging
+		meta.pred_e=fourvec(pred_e_pos[0], pred_e_pos[1], pred_e_pos[2]);
+		meta.real_e=fourvec(real_e_pos[0], real_e_pos[1], real_e_pos[2]);
+		meta.real_p=fourvec(real_p_pos[0], real_p_pos[1], real_p_pos[2]);
+		meta.pred_p=fourvec(pred_p_pos[0], pred_p_pos[1], pred_p_pos[2]);
 
+
+		//cout << "Jane real e pos : " << getTMag(real_e_pos) << endl;
+		//cout << "Jane pred e cmp : " << pred_e_pos[0] << "\t" << pred_e_pos[1] << endl;
+		//cout << "Jane pred e pos : " << getTMag(pred_e_pos) << endl;
+		
+		//cout << endl<< "J " << pred_e_pos[0] << " : " << pred_e_pos[1] << endl;
                 //get hit status
                 int re_hit = scipp_ilc::get_hitStatus(real_e_pos[0], real_e_pos[1], real_e_pos[2]);
                 int rp_hit = scipp_ilc::get_hitStatus(real_p_pos[0], real_p_pos[1], real_p_pos[2]);

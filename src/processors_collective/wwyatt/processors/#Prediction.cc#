@@ -18,6 +18,7 @@
 #include "Prediction.h"
 #include "scipp_ilc_utilities.h"
 #include <iostream>
+#include <iomanip> 
 
 #include <EVENT/LCCollection.h>
 #include <EVENT/SimCalorimeterHit.h>
@@ -27,6 +28,7 @@
 #include <TH2D.h>
 #include <MyParticle.h>
 #include <Will.h>
+
 // ----- include for verbosity dependend logging ---------
 #include "marlin/VerbosityLevels.h"
 
@@ -35,155 +37,190 @@
 using namespace lcio;
 using namespace marlin;
 using namespace std;
+using namespace Will;
 
 Prediction Prediction;
+
 
 static TFile* _rootfile;
 static TH2F* _prediction;
 static TH1F* _vector;
 static TH1F* _p_theta;
 static TH1F* _e_theta;
+static TH1F* zmom;
+static TH1F* tmom;
 
 
+static vector<double> spread_e;
+static vector<double> spread_p;
+
+static int p_scatter=0;
+static int e_scatter=0;
+static int ph_th = 0;
+static int ph_tm = 0;
+static int pm_th = 0;
+static int pm_tm = 0;
+static int total = 0;
 
 Prediction::Prediction() : Processor("Prediction") {
-    // modify processor description
-    _description = "Protype Processor" ;
+  // modify processor description
+  _description = "Protype Processor" ;
 
-    // register steering parameters: name, description, class-variable, default value
-    registerInputCollection( LCIO::MCPARTICLE, "CollectionName" , "Name of the MCParticle collection"  , _colName , std::string("MCParticle") );
+  // register steering parameters: name, description, class-variable, default value
+  registerInputCollection( LCIO::MCPARTICLE, "CollectionName" , "Name of the MCParticle collection"  , _colName , std::string("MCParticle") );
 
-    registerProcessorParameter( "RootOutputName" , "output file"  , _root_file_name , std::string("output.root") );
+  registerProcessorParameter( "RootOutputName" , "output file"  , _root_file_name , std::string("output.root") );
 }
 
 
 
 void Prediction::init() { 
-    streamlog_out(DEBUG) << "   init called  " << std::endl ;
+  streamlog_out(DEBUG) << "   init called  " << std::endl ;
 
-    _rootfile = new TFile("BW_prediction.root","RECREATE");
-    // usually a good idea to
-    //printParameters() ;
-    _prediction = new TH2F("predict", "Predicted Angle of Scatter, Correct vs Incorrect Kinematics", 1000, 0.0, 0.01, 1000, 0.0, 0.01);
-    _p_theta = new TH1F("p_theta", "Theta between positron and hadronic system", 360, 0, 3.5);
-    _e_theta = new TH1F("e_theta", "Theta between positron and hadronic system", 360, 0, 3.5);
-    _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
-    _nEvt = 0 ;
+  _rootfile = new TFile("ppredict.root","RECREATE");
+  //usually a good idea to
+  //printParameters() ;
+  _prediction = new TH2F("predict", "Predicted Angle of Scatter, Correct vs Incorrect Kinematics", 1000, 0.0, 0.01, 1000, 0.0, 0.01);
+  _p_theta = new TH1F("p_theta", "Theta between positron and hadronic system", 360, 0, 3.5);
+  _e_theta = new TH1F("e_theta", "Theta between positron and hadronic system", 360, 0, 3.5);
+  _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
+  zmom=new TH1F("zmom", "Z-Momentum Distribution", 300, 0, 500);
+  tmom=new TH1F("tmom", "T-Momentum Distribution", 300, 0, 300);
+
+  _nEvt = 0 ;
 }
 
 
 
 void Prediction::processRunHeader( LCRunHeader* run) { 
-//    _nRun++ ;
+  //    _nRun++ ;
 } 
 
-
-
 void Prediction::processEvent( LCEvent * evt ) { 
-    LCCollection* col = evt->getCollection( _colName ) ;
-    _nEvt++;
-    if( col == NULL )return;
-    vector<MCParticle*> final_system;
-    int stat, id =0;
-    double tot_mom[]={0, 0};
-    double* mom   = new double[4]();//4vec
-    double* mom_e = new double[4]();
-    double* mom_p = new double[4]();
-    double tmom, theta, good_t, bad_t, mag, eT, pT;
-    bool scatter;
-    double* hadronic = new double[4]();
-    double* electronic = new double[4]();
+  
+  // DISCLAIMER: THERE IS MORE DOCUMENTATION IN THE HEADER FILE (Will.h).
+  LCCollection* col = evt->getCollection( _colName ) ;
+  if( col == NULL )return;
+  //Run janes code for comparison.
+  getJane(col);
 
-    int nElements = col->getNumberOfElements();
-    scatter = false;
- 
-    map<int, double> max=Will::maxEnergy(col, {11, -11}, final_system);
-    //Checks for scatter in electron or positron.
-    for(MCParticle* particle : final_system){
-      id = particle->getPDG();
-      if(particle->getEnergy()==max[11]){
-	//ELECTRON
-	mom_e=Will::getVector(particle);
-	eT = Will::getTMag(mom_e);
-	if(eT!=0){
-	  scatter = true;
-	  electronic=Will::addVector(electronic,mom_e);
-	}
-      }else if(particle->getEnergy()==max[-11]){
-	//POSITRON
-	mom_p=Will::getVector(particle);
-	pT = Will::getTMag(mom_p);
-	if(pT!=0){
-	  scatter = true;
-	  electronic=Will::addVector(electronic,mom_p);
-	}    
-      }else{
-	//HADRONIC
-	mom=Will::getVector(particle);
-	hadronic=Will::addVector(hadronic, mom);
-	mag+=Will::getTMag(mom);
-      }
+  Will::measure data = Will::getMeasure(col);  
+  /* "getMeasure(LCCollection)" Takes the collection, calculates the hadronic system.
+   * A measure is a struct with several fourvectors in it:
+   * - electron - Highest energy final state electron
+   * - positron - Highest energy final state positron
+   * - hadronic - Calculated from all non final state high energy electron/positron
+   * - electronic
+   *   |=> Either the electron or the positron above WITH transverse momentum (e.g. scatter)
+   *   |=> Transverse momentum means this is the particle that scattered.
+   */
+  if(!data.scattered || data.mag<=1) return;//If there was no scatter, then there is nothing to see.
+  prediction p(data); //Store prediction vector as variable 'p';
+  /* "prediction" will calculate and return two prediction vectors.
+   * - electron 
+   * - positron
+   * Only one of these will be correct; that can be checked by measure.p_scatter and measure.e_scatter.
+   * I will make it easier to get the correct prediction.
+   */
+
+  
+  //I rename the particles just for ease of use. I might take this out later for explicitness.
+  fourvec electron=data.electron,
+    positron=data.positron,
+    hadronic=data.electronic,
+    electronic=data.electronic;
+  fourvec nelectron = fourvec(-data.electronic.x,-data.electronic.y,data.electronic.z,data.electronic.e);
+  //data.hadronic=nelectron;
+  double mag=data.mag; //Magnitude of the hadronic vector?
+  double electronTheta=getTheta(p.electron); //Angle off of z-axis
+  double positronTheta=getTheta(p.positron);
+  
+  //DEBUG
+  //cout << "will : " << hadronic.e << " : " << hadronic.z << " : " << p.electron.z << endl;
+  //fourvec pred_e_lab = transform_to_lab(p.electron);
+  //cout << "will : " << pred_e_lab.x << ":" << pred_e_lab.y << ": " << pred_e_lab.e << endl;
+  //cout << "before : " << p.electron.e <<endl;
+  //END DEBUG
+
+  if(mag>1.0){
+    _prediction->Fill(electronTheta,positronTheta);
+  }
+
+  double p_mag = getMag(electronic);
+  double e_theta=getTheta(electronic,p.electron);
+  double p_theta=getTheta(electronic,p.positron);
+  
+  _p_theta->Fill(e_theta);
+  _e_theta->Fill(p_theta);
+  
+  //Create position vectors
+  fourvec real_e = getBeamcalPosition(data.electron);
+  fourvec real_p = getBeamcalPosition(data.positron);
+  fourvec pred_e = getBeamcalPosition(p.electron);
+  fourvec pred_p = getBeamcalPosition(p.positron);
+
+  
+  //cout << "Will real e pos : " << getTMag(real_e) << endl;
+  //cout << "Will pred e cmp : " << pred_e.x << "\t" << pred_e.y << endl;
+  //cout << "Will pred e pos : " << getTMag(pred_e) << endl;
+  
+  //The following is a for a hit miss table to test efficiancy.
+  //These booleans are true if the particle had hit.
+  bool actual_electron=get_hitStatus(real_e)<3;
+  bool actual_positron=get_hitStatus(real_p)<3;
+  bool predicted_electron=get_hitStatus(pred_e)<3;
+  bool predicted_positron=get_hitStatus(pred_p)<3;
+  ++total;
+  Will::META meta = Will::getMETA();
+  
+  if(data.p_scatter){
+    if(actual_positron&&predicted_positron)ph_th++;
+    else if( actual_positron && !predicted_positron)pm_th++;
+    else if(!actual_positron &&  predicted_positron)ph_tm++;
+    else if(!actual_positron && !predicted_positron)pm_tm++;
+    p_scatter++;
+  }else if(data.e_scatter){
+    if(actual_electron&&predicted_electron)ph_th++;
+    else if( actual_electron && !predicted_electron)pm_th++;
+    else if(!actual_electron &&  predicted_electron)ph_tm++;
+    else if(!actual_electron && !predicted_electron)pm_tm++;	
+    e_scatter++;
+  }
+  map<int, string> key;
+  key[0]="pred_e";key[1]="real_e";key[2]="pred_p";key[3]="real_p";
+  vector<fourvec> jane = {meta.pred_e, meta.real_e, meta.pred_p, meta.real_p};
+  vector<fourvec> will = {pred_e, real_e, pred_p, real_p};
+  for(unsigned short int i=0; i < jane.size(); ++i){
+    if(jane[i].x-will[i].x > 0.0 || jane[i].y-will[i].y > 0.0 || jane[i].z-will[i].z > 0.0){
+      cout <<endl << "=== "<< key[i] <<" ===" << endl;
+      cout << "J " << jane[i].x << " : " << jane[i].y << " : " << jane[i].z << endl;
+      cout << "W " << will[i].x << " : " << will[i].y << " : " << will[i].z << endl;
     }
-    if(scatter == true){
-      //create prediction vector
-      double predict[4];
-      predict[0] = -hadronic[0];
-      predict[1] = -hadronic[1];
-      double alpha = 500 - hadronic[3] - hadronic[2];
-      double beta = 500 - hadronic[3] + hadronic[2];
-      
+  }
 
-      //Given positron deflection (eBpW)
-      //incorrect prediction (correct if electron deflection)
-      predict[2] = -(pow(eT, 2)-pow(alpha, 2))/(2*alpha);
-      //correct prediction (correct if positron deflection)
-      predict[3] = (pow(pT, 2)-pow(beta, 2))/(2*beta);
-      
-      //Hadron transverse momentum
-      double r = Will::getTMag(predict);
-      
-      double mag_g = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[3], 2));
-      good_t = asin(r/mag_g);
-
-      double mag_b = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[2], 2));
-      bad_t = asin(r/mag_b);
-            
-      if(mag>1.0){
-	_prediction->Fill(bad_t, good_t);
-      }
-
-      double dot_c = mom_p[0]*predict[0] + mom_p[1]*predict[1] + mom_p[2]*predict[3]; //Correct dot
-      double dot_i = mom_p[0]*predict[0] + mom_p[1]*predict[1] + mom_p[2]*predict[2]; //Incorrect dot
-      //      double e_mag = Will::getMag(mom_e);
-      double p_mag = Will::getMag(mom_p);
-	//      double e_mag = sqrt(pow(electronic[0], 2)+pow(electronic[1], 2)+pow(electronic[2], 2)); 
-      double p_mag_c = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[3], 2)); //Correct mag
-      double p_mag_i = sqrt(pow(predict[0], 2)+pow(predict[1], 2)+pow(predict[2], 2)); //Incorrect mag
-      //cout << dot_c << endl; //dot_c 59066.6
-
-      if(false){
-      cout << "dot_i " << dot_i << endl; //200
-      cout << "dot_c " << dot_c << endl; //200
-      cout << "p-mag " << p_mag << endl; //200
-      cout << "p-mag_i " << p_mag_i << endl; //206
-      cout << "p-mag_c " << p_mag_c << endl; //206
-      }
-      double theta_c = acos(dot_c/(p_mag*p_mag_c)); //Correct prediction
-      double theta_i = acos(dot_i/(p_mag*p_mag_i)); //Incorrect prediction
-      _p_theta->Fill(alpha);
-      _e_theta->Fill(beta);
-      //theta = acos(dot/(e_mag*p_mag)); 
-      //cout << "Prediction Efficiency :" <<  theta << endl;
-    }
 }
 
 void Prediction::check( LCEvent * evt ) { 
-    // nothing to check here - could be used to fill checkplots in reconstruction processor
+  // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
 
 
 
 void Prediction::end(){ 
-    cout << interest << endl;
-    _rootfile->Write();
+  Will::META meta = Will::getMETA();
+  cout << interest << endl;
+  _rootfile->Write();
+  cout << "p_scatter:e_scatter = " << p_scatter << ":"<<e_scatter<<endl;
+  cout << "Scat:noScat " << meta.SCATTERS << ":" << meta.NOSCATTERS << endl;
+  cout << "MSC : " << meta.MSC << endl;
+  int sum = ph_th+ph_tm+pm_th+pm_tm;
+  double hh=1.0*ph_th/sum;
+  double hm=1.0*ph_tm/sum;
+  double mh=1.0*pm_th/sum;
+  double mm=1.0*pm_tm/sum;
+  
+  cout << "          | Truth Hit | Truth Miss" << endl;
+  cout << setprecision(4) << "Pred Hit  | " << hh << "   |  " << hm << endl;
+  cout << setprecision(4) << "Pred Miss | " << mh << "   |  " << mm << endl;
+
 }

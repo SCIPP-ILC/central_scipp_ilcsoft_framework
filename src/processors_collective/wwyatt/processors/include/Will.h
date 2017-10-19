@@ -82,10 +82,14 @@ namespace Will{
     int STATS[5]={0};
     int MSC=0;
     fourvec tmp;
+    fourvec pred_e, pred_p, real_e, real_p;
+    double fv[4];
     fourvec* _tmp;
+    int hh=0,hm=0,mh=0,mm=0,total=0;
     static const int BEAMCAL = 3265; //Distance to beamcal
   };
   static META meta;
+
   META getMETA();
 
   //Specific function used in prediction algorithm.
@@ -160,5 +164,4 @@ namespace Will{
    void getJane(LCCollection * );
 
 }
-
 #endif

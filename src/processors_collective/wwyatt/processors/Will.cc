@@ -435,7 +435,7 @@ void Will::getJane(LCCollection* col){
 	      //DEBUG LINE:
 	      //cout << endl << "==========" << endl;
 
-                total++;
+                meta.total++;
                 //create prediction vectors
                 pred_e[0] = -hadronic[0];
                 pred_e[1] = -hadronic[1];
@@ -492,7 +492,14 @@ void Will::getJane(LCCollection* col){
                 real_p_pos[0] = real_p_pos[0] + real_p_pos[2]*0.007;
                 pred_e_pos[0] = pred_e_pos[0] - pred_e_pos[2]*0.007;
                 pred_p_pos[0] = pred_p_pos[0] + pred_p_pos[2]*0.007;
-		
+
+		//Debugging
+		meta.pred_e=fourvec(pred_e_pos[0], pred_e_pos[1], pred_e_pos[2]);
+		meta.real_e=fourvec(real_e_pos[0], real_e_pos[1], real_e_pos[2]);
+		meta.real_p=fourvec(real_p_pos[0], real_p_pos[1], real_p_pos[2]);
+		meta.pred_p=fourvec(pred_p_pos[0], pred_p_pos[1], pred_p_pos[2]);
+
+
 		//cout << "Jane real e pos : " << getTMag(real_e_pos) << endl;
 		//cout << "Jane pred e cmp : " << pred_e_pos[0] << "\t" << pred_e_pos[1] << endl;
 		//cout << "Jane pred e pos : " << getTMag(pred_e_pos) << endl;
@@ -522,13 +529,14 @@ void Will::getJane(LCCollection* col){
                 if(pp_hit!=3 && pp_hit!=4){pred = 1;}
                 else{pred = 2;}
 
-                if(pred == 1 && real == 1){_hh++;}
-                else if(pred == 1 && real == 2){_hm++;}
-                else if(pred == 2 && real == 1){_mh++;}
-                else if(pred ==2 && real == 2){_mm++;}
+                if(pred == 1 && real == 1){meta.hh++;}
+                else if(pred == 1 && real == 2){meta.hm++;}
+                else if(pred == 2 && real == 1){meta.mh++;}
+                else if(pred ==2 && real == 2){meta.mm++;}
 
                 real = 0;
                 pred = 0;
+		
             }
 
 
