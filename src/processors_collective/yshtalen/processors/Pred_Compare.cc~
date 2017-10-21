@@ -113,8 +113,8 @@ void Pred_Compare::processEvent( LCEvent * evt ) {
     // this will only be entered if the collection is available
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
-        //cout << endl;
-        //cout << "************************EVENT: " << _nEvt << "*****************************" << endl;
+        cout << endl;
+        cout << "************************EVENT: " << _nEvt << "*****************************" << endl;
         scatter = false;
 
 //****************************************************INITIAL*****PASS******************************************************************************
@@ -199,7 +199,7 @@ void Pred_Compare::processEvent( LCEvent * evt ) {
             
 
 
-	  //cout << "HADRONIC before correction: " << hadronic[0] << " " << hadronic[1] << endl;
+            cout << "HADRONIC before correction: " << hadronic[0] << " " << hadronic[1] << endl;
             
             //create balancing particle
             double x = hadronic[0] + electronic[0];
@@ -328,8 +328,8 @@ void Pred_Compare::processEvent( LCEvent * evt ) {
                 else if(pred == 2 && real == 1){mh++;}
                 else if(pred ==2 && real == 2){mm++;}
 
-                //cout << "REAL POSITRON: " << real_p_pos[0] << " " << real_p_pos[1] << " " << real_p_pos[2] << endl;
-                //cout << "PRED POSITRON: " << pred_p_pos[0] << " " << pred_p_pos[1] << " " << pred_p_pos[2] << endl;
+                cout << "REAL POSITRON: " << real_p_pos[0] << " " << real_p_pos[1] << " " << real_p_pos[2] << endl;
+                cout << "PRED POSITRON: " << pred_p_pos[0] << " " << pred_p_pos[1] << " " << pred_p_pos[2] << endl;
                 
                 real = 0;
                 pred = 0;

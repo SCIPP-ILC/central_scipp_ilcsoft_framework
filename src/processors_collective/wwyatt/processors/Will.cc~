@@ -278,15 +278,12 @@ void Will::print(string input, string input2){
 META Will::getMETA(){return meta;}
 
 void Will::getJane(LCCollection* col){
-    // this gets called for every event 
-    // usually the working horse ...
     //vector<MyParticle*> particles;
     vector<MCParticle*> final_system;
     vector<MCParticle*> had;
     int stat, id =0;
     bool scatter;
-    int total = 0;
-    int _hh=0,_hm=0,_mh=0,_mm=0;
+
     double compEn_e=0;
     double compEn_p=0;
 
@@ -296,8 +293,7 @@ void Will::getJane(LCCollection* col){
     double pred_e[4];
     double pred_p[4];
 
-    double eT, pT, mag;
-    
+    double eT, pT, mag=0;
     double hadronic[] = {0, 0, 0, 0};
     double electronic[] = {0, 0, 0, 0};
 
@@ -307,6 +303,7 @@ void Will::getJane(LCCollection* col){
     // this will only be entered if the collection is available
     if( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
+
         scatter = false;
 
 //****************************************************INITIAL*****PASS******************************************************************************
@@ -388,10 +385,9 @@ void Will::getJane(LCCollection* col){
         }//end for
 
         if(scatter==true){
-	  
-	  
-            //create balancing particle
-	    double x = hadronic[0] + electronic[0];
+       
+	  //create balancing particle
+            double x = hadronic[0] + electronic[0];
             double y = hadronic[1] + electronic[1];
 
             double pseudo_x = -x;
@@ -402,7 +398,7 @@ void Will::getJane(LCCollection* col){
 
             hadronic[0]=0;
             hadronic[1]=0;
-	    int count = 0;
+
             //refill hadronic system with cuts and balancing particle
             for(MCParticle* particle : had){
                 mom[0]=particle->getMomentum()[0];    
@@ -414,28 +410,21 @@ void Will::getJane(LCCollection* col){
                 double cos = mom[2]/hyp;
                 if(abs(cos)<0.5){
                     //scipp_ilc::transform_to_lab(mom[0], mom[3], mom[0], mom[3]);
-		  //cout << "J iter : "<< getMag(hadronic) << endl;                    
-		  hadronic[0]+=mom[0];    
+                    hadronic[0]+=mom[0];    
                     hadronic[1]+=mom[1];    
                     hadronic[2]+=mom[2];    
                     hadronic[3]+=mom[3];    
-		    
-		    ++count;
                 }
             }
-	    //cout << "J count : " << count << endl;
+
             //add balancing particle to hadronic system
             hadronic[0]+=pseudo_x;
             hadronic[1]+=pseudo_y;
 
-	    //cout << "jane " << hadronic[3] << " : " << hadronic[2] << endl;
-
             //cut on S
             if(mag>1.0){
-	      //DEBUG LINE:
-	      //cout << endl << "==========" << endl;
-
-                total++;
+                
+                meta.total++;
                 //create prediction vectors
                 pred_e[0] = -hadronic[0];
                 pred_e[1] = -hadronic[1];
@@ -450,17 +439,13 @@ void Will::getJane(LCCollection* col){
                 pred_e[3] = 500 - hadronic[3] - pred_e[2] - hadronic[2];
                 pred_p[2] = (pow(pT, 2)-pow(beta, 2))/(2*beta);
                 pred_p[3] = 500 - hadronic[3] + pred_p[2] + hadronic[2];
-
-		//cout << "jane : " << hadronic[3] << " : " << hadronic[2] << " : " << pred_e[2] << endl;
-
+               
                 //Lorentz transform - frome center of mass to lab frame 
                 scipp_ilc::transform_to_lab(real_e[0], real_e[3], real_e[0], real_e[3]);
                 scipp_ilc::transform_to_lab(real_p[0], real_p[3], real_p[0], real_p[3]);
                 scipp_ilc::transform_to_lab(pred_e[0], pred_e[3], pred_e[0], pred_e[3]);
                 scipp_ilc::transform_to_lab(pred_p[0], pred_p[3], pred_p[0], pred_p[3]);
                
-		//cout << "jane : " << pred_e[0] << ":" << pred_e[1] << ": " << pred_e[3] << endl;
-
                 //create position vector
                 double real_e_pos[3];
                 double real_p_pos[3];
@@ -492,26 +477,19 @@ void Will::getJane(LCCollection* col){
                 real_p_pos[0] = real_p_pos[0] + real_p_pos[2]*0.007;
                 pred_e_pos[0] = pred_e_pos[0] - pred_e_pos[2]*0.007;
                 pred_p_pos[0] = pred_p_pos[0] + pred_p_pos[2]*0.007;
-
-		//Debugging
+                
 		meta.pred_e=fourvec(pred_e_pos[0], pred_e_pos[1], pred_e_pos[2]);
 		meta.real_e=fourvec(real_e_pos[0], real_e_pos[1], real_e_pos[2]);
 		meta.real_p=fourvec(real_p_pos[0], real_p_pos[1], real_p_pos[2]);
 		meta.pred_p=fourvec(pred_p_pos[0], pred_p_pos[1], pred_p_pos[2]);
 
-
-		//cout << "Jane real e pos : " << getTMag(real_e_pos) << endl;
-		//cout << "Jane pred e cmp : " << pred_e_pos[0] << "\t" << pred_e_pos[1] << endl;
-		//cout << "Jane pred e pos : " << getTMag(pred_e_pos) << endl;
-		
-		//cout << endl<< "J " << pred_e_pos[0] << " : " << pred_e_pos[1] << endl;
                 //get hit status
                 int re_hit = scipp_ilc::get_hitStatus(real_e_pos[0], real_e_pos[1], real_e_pos[2]);
                 int rp_hit = scipp_ilc::get_hitStatus(real_p_pos[0], real_p_pos[1], real_p_pos[2]);
                 int pe_hit = scipp_ilc::get_hitStatus(pred_e_pos[0], pred_e_pos[1], pred_e_pos[2]);
                 int pp_hit = scipp_ilc::get_hitStatus(pred_p_pos[0], pred_p_pos[1], pred_p_pos[2]);
 
-		/* 
+               /* 
                 //eWpB 
                 if(re_hit!=3 && re_hit!=4){real = 1;}
                 else{real = 2;}
@@ -522,17 +500,22 @@ void Will::getJane(LCCollection* col){
                 else if(pred == 1 && real == 2){hm++;}
                 else if(pred == 2 && real == 1){mh++;}
                 else if(pred == 2 && real == 2){mm++;}
-		*/
+                
+
+
+                cout << "PRED ELECTRON: " << pred_e_pos[0] << " " << pred_e_pos[1] << " " << pred_e_pos[2] << endl;
+             
+             */
                 //eBpW 
                 if(rp_hit!=3 && rp_hit!=4){real = 1;}
                 else{real = 2;}
                 if(pp_hit!=3 && pp_hit!=4){pred = 1;}
                 else{pred = 2;}
 
-                if(pred == 1 && real == 1){_hh++;}
-                else if(pred == 1 && real == 2){_hm++;}
-                else if(pred == 2 && real == 1){_mh++;}
-                else if(pred ==2 && real == 2){_mm++;}
+                if(pred == 1 && real == 1){meta.hh++;}
+                else if(pred == 1 && real == 2){meta.hm++;}
+                else if(pred == 2 && real == 1){meta.mh++;}
+                else if(pred ==2 && real == 2){meta.mm++;}
 
                 real = 0;
                 pred = 0;

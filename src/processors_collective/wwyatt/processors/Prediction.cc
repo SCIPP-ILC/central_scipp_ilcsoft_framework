@@ -127,9 +127,9 @@ void Prediction::processEvent( LCEvent * evt ) {
   //I rename the particles just for ease of use. I might take this out later for explicitness.
   fourvec electron=data.electron,
     positron=data.positron,
-    hadronic=data.electronic,
+    hadronic=data.hadronic,
     electronic=data.electronic;
-  fourvec nelectron = fourvec(-data.electronic.x,-data.electronic.y,data.electronic.z,data.electronic.e);
+  //fourvec nelectron = fourvec(-data.electronic.x,-data.electronic.y,data.electronic.z,data.electronic.e);
   //data.hadronic=nelectron;
   double mag=data.mag; //Magnitude of the hadronic vector?
   double electronTheta=getTheta(p.electron); //Angle off of z-axis
