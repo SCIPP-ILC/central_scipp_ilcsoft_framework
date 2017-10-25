@@ -147,17 +147,17 @@ void Prediction::processEvent( LCEvent * evt ) {
   }
 
   double p_mag = getMag(electronic);
-  double e_theta=getTheta(electronic,p.electron);
-  double p_theta=getTheta(electronic,p.positron);
+  double e_theta=getTheta(electron,p.electron);
+  double p_theta=getTheta(positron,p.positron);
   
   _p_theta->Fill(e_theta);
   _e_theta->Fill(p_theta);
   
   //Create position vectors
-  fourvec real_e = getBeamcalPosition(data.electron);
-  fourvec real_p = getBeamcalPosition(data.positron);
-  fourvec pred_e = getBeamcalPosition(p.electron);
-  fourvec pred_p = getBeamcalPosition(p.positron);
+  fourvec real_e = getBeamcalPosition(data.electron,  1);
+  fourvec real_p = getBeamcalPosition(data.positron, -1);
+  fourvec pred_e = getBeamcalPosition(p.electron,  1);
+  fourvec pred_p = getBeamcalPosition(p.positron, -1);
 
   
   //cout << "Will real e pos : " << getTMag(real_e) << endl;
@@ -191,13 +191,13 @@ void Prediction::processEvent( LCEvent * evt ) {
   key[0]="pred_e";key[1]="real_e";key[2]="pred_p";key[3]="real_p";
   vector<fourvec> jane = {meta.pred_e, meta.real_e, meta.pred_p, meta.real_p};
   vector<fourvec> will = {pred_e, real_e, pred_p, real_p};
-  for(unsigned short int i=0; i < jane.size(); ++i){
+  /*for(unsigned short int i=0; i < jane.size(); ++i){
     if(jane[i].x-will[i].x > 0.0 || jane[i].y-will[i].y > 0.0 || jane[i].z-will[i].z > 0.0){
       cout <<endl << "=== "<< key[i] <<" ===" << endl;
       cout << "J " << jane[i].x << " : " << jane[i].y << " : " << jane[i].z << endl;
       cout << "W " << will[i].x << " : " << will[i].y << " : " << will[i].z << endl;
     }
-  }
+    }*/
 
 }
 

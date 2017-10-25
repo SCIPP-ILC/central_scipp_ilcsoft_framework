@@ -43,6 +43,10 @@ namespace Will{
     fourvec operator+(const fourvec& a) const;
     double operator*(const fourvec& a) const;
     fourvec operator+=(const fourvec& a);
+    fourvec operator*=(const double a);
+    fourvec operator*=(const fourvec& a);
+    fourvec operator/=(const double a);
+    fourvec operator/(const double a)const;
     fourvec();
     fourvec(const double,const double);
     fourvec(const double,const double,const double);
@@ -53,11 +57,13 @@ namespace Will{
 
   //This is used to store all the vectors needed in two-photon analysis.
   struct measure{
+    fourvec hadronic_nopseudo;
     fourvec hadronic;
     fourvec electronic;
     fourvec electron;
     fourvec positron;
     fourvec pseudo;
+    
     double mag=0.0;
     bool scattered=false;
     bool p_scatter=false;
@@ -155,13 +161,15 @@ namespace Will{
    measure getMeasure(LCCollection*);
    
    //Returns a position fourvec, of the particle on the face of the beamcal.
-   fourvec getBeamcalPosition(fourvec);
+   fourvec getBeamcalPosition(fourvec, signed short = 0);
 
    //Python version of cout. I don't use these.
    void print(string );
    void print(string , string );
 
    void getJane(LCCollection * );
-
+   // x += 9 <=> x = x+9
+   // 
+   // x + 1
 }
 #endif

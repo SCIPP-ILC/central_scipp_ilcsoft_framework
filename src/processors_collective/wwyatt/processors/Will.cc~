@@ -217,7 +217,7 @@ measure Will::getMeasure(LCCollection* col){
     for(auto particle: hadronic_system){
       fourvec hadron = getFourVector(particle);
       const double angle = 0.5; //Cutting angle
-      if(abs(hadron.z/getMag(hadron)) < angle){
+      if(true || abs(hadron.z/getMag(hadron)) < angle ){
 	++count;
 	//cout << "W iter : "<< getMag(out.hadronic) << endl;
 	out.hadronic+=hadron;
@@ -408,7 +408,7 @@ void Will::getJane(LCCollection* col){
 
                 double hyp = sqrt(pow(mom[0], 2)+pow(mom[1], 2)+pow(mom[2], 2));
                 double cos = mom[2]/hyp;
-                if(abs(cos)<0.5){
+                if(true){
                     //scipp_ilc::transform_to_lab(mom[0], mom[3], mom[0], mom[3]);
                     hadronic[0]+=mom[0];    
                     hadronic[1]+=mom[1];    
@@ -420,7 +420,7 @@ void Will::getJane(LCCollection* col){
             //add balancing particle to hadronic system
             hadronic[0]+=pseudo_x;
             hadronic[1]+=pseudo_y;
-
+	    
             //cut on S
             if(mag>1.0){
                 
