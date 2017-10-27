@@ -13,8 +13,36 @@ fourvec fourvec::operator+(const fourvec& a) const{
 double fourvec::operator*(const fourvec& a) const{
   return a.x*x + a.y*y + a.z*z;
 }
+fourvec fourvec::operator*=(const double a){
+  this->x=this->x*a;
+  this->y=this->y*a;
+  this->z=this->z*a;
+  this->e=this->e*a;
+  this->t=this->t*a;
+  return *this;
+}
+fourvec fourvec::operator*=(const fourvec& a){
+  this->x=this->x*a.x;
+  this->y=this->y*a.y;
+  this->z=this->z*a.z;
+  this->e=this->e*a.e;
+  this->t=this->t*a.t;
+  return *this;
+}
+fourvec fourvec::operator/=(const double a){
+  this->x=this->x/a;
+  this->y=this->y/a;
+  this->z=this->z/a;
+  this->e=this->e/a;
+  this->t=this->t/a;
+  return *this;
+}
+fourvec fourvec::operator/(const double a) const{
+  return fourvec(a/(*this).x,a/(*this).y,a/(*this).z);
+}
+
 fourvec fourvec::operator+=(const fourvec& a){
-  *this=a+*this;
+  *this = *this+a;
   return *this;
 }
 fourvec::fourvec(const double _x,const double _y){x=_x;y=_y;t=getTMag(new double[2]{_x,_y});}
@@ -151,7 +179,7 @@ double Will::getDot(const double* a, const double* b){
   return getDot(fourvec(a,3),fourvec(b,3));
 }
 double Will::getDot(fourvec a, fourvec b){
-  return a.x*b.x+a.y*b.y+a.z*b.z;
+  return a*b;
 }
 
 double Will::getTheta(const double* a, const double* b){
@@ -199,33 +227,36 @@ measure Will::getMeasure(LCCollection* col){
       hadronic_system.push_back(particle);
       out.hadronic+=hadron;
       out.mag += getTMag(hadron);
-
     }
   }
+  out.hadronic_nopseudo=out.hadronic;
   if(out.scattered){
-
     //PSEUDO PARTICLE
     out.pseudo=*(new fourvec(
 		       -(out.hadronic.x+out.electronic.x),
 		       -(out.hadronic.y+out.electronic.y) ));
     out.hadronic.x=0;
     out.hadronic.y=0;
-    //    out.hadronic.z=0;
-    //    out.hadronic.e=0;
-    //    out.hadronic.t=0;
+    out.hadronic.z=0;
+    out.hadronic.e=0;
+    out.hadronic.t=0;
     int count = 0;
+    short n_hadrons = hadronic_system.size();
+    out.mag += getTMag(out.pseudo);    
+    out.pseudo /= n_hadrons;
     for(auto particle: hadronic_system){
       fourvec hadron = getFourVector(particle);
       const double angle = 0.5; //Cutting angle
       if(true || abs(hadron.z/getMag(hadron)) < angle ){
 	++count;
 	//cout << "W iter : "<< getMag(out.hadronic) << endl;
-	out.hadronic+=hadron;
+	out.hadronic += (hadron+=out.pseudo);
+	//out.hadronic += hadron;
       }
     }
     //cout << "W count : " << count << endl;
-    out.hadronic+=out.pseudo;
-    out.mag += getTMag(out.pseudo);
+    //out.hadronic+=out.pseudo;
+    
   }
   //if (out.scattered) cout << "will " << out.hadronic.e << " : " << out.hadronic.z << endl;
   out.scattered ? meta.SCATTERS++ : meta.NOSCATTERS++; //Accounting for later statistical use.
@@ -256,11 +287,14 @@ int Will::get_hitStatus(MCParticle* input){
   return stat;
 }
 
-fourvec Will::getBeamcalPosition(const fourvec input){
+fourvec Will::getBeamcalPosition(const fourvec input, signed short dir){
   fourvec lab = transform_to_lab(input);
   fourvec pos;
   //Positron moves in -z direction
-  double direction = lab.z/abs(lab.z);
+  double direction;
+  if(dir==0) direction = lab.z / abs(lab.z);
+  else direction = dir;
+  
   pos.z = META::BEAMCAL * direction;
   pos.x = lab.x * pos.z / lab.z + pos.z * .007 * (-direction);
   pos.y = lab.y * pos.z / lab.z;

@@ -227,23 +227,22 @@ measure Will::getMeasure(LCCollection* col){
       hadronic_system.push_back(particle);
       out.hadronic+=hadron;
       out.mag += getTMag(hadron);
-
     }
   }
   out.hadronic_nopseudo=out.hadronic;
   if(out.scattered){
-    cout << " hadronic T " << getTMag(out.hadronic) << " : " ;
     //PSEUDO PARTICLE
     out.pseudo=*(new fourvec(
 		       -(out.hadronic.x+out.electronic.x),
 		       -(out.hadronic.y+out.electronic.y) ));
     out.hadronic.x=0;
     out.hadronic.y=0;
-    //out.hadronic.z=0;
-    //out.hadronic.e=0;
-    //out.hadronic.t=0;
+    out.hadronic.z=0;
+    out.hadronic.e=0;
+    out.hadronic.t=0;
     int count = 0;
     short n_hadrons = hadronic_system.size();
+    out.mag += getTMag(out.pseudo);    
     out.pseudo /= n_hadrons;
     for(auto particle: hadronic_system){
       fourvec hadron = getFourVector(particle);
@@ -252,11 +251,12 @@ measure Will::getMeasure(LCCollection* col){
 	++count;
 	//cout << "W iter : "<< getMag(out.hadronic) << endl;
 	out.hadronic += (hadron+=out.pseudo);
+	//out.hadronic += hadron;
       }
     }
     //cout << "W count : " << count << endl;
     //out.hadronic+=out.pseudo;
-    //out.mag += getTMag(out.pseudo);
+    
   }
   //if (out.scattered) cout << "will " << out.hadronic.e << " : " << out.hadronic.z << endl;
   out.scattered ? meta.SCATTERS++ : meta.NOSCATTERS++; //Accounting for later statistical use.
@@ -291,8 +291,12 @@ fourvec Will::getBeamcalPosition(const fourvec input, signed short dir){
   fourvec lab = transform_to_lab(input);
   fourvec pos;
   //Positron moves in -z direction
-  double direction;
-  if(dir==0) direction = lab.z / abs(lab.z);
+  double direction = lab.z / abs(lab.z);
+  if(dir!=direction){
+    //figure out why
+    cout << "dir:direciton  " << dir << ":" << direction << endl;
+    direction = dir;
+  }
   else direction = dir;
   
   pos.z = META::BEAMCAL * direction;
