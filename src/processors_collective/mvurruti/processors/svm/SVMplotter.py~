@@ -1,0 +1,85 @@
+import os
+import ROOT
+from ROOT import TFile, TCanvas, TH1D, gStyle, TPaveText
+
+Outpath = os.environ["ILC"]+"/output/"
+
+Masses_eLpR = [ '39113', '39117', '39121', '39125', '39129', '39133' ]
+Masses_eRpL = [ '39114', '39118', '39122', '39126', '39130', '39134' ]
+
+Plots = [ 
+          #'T']  #true
+          #'DAB'] #detectable
+          'DED' ] #detected
+Mass = {}
+Mass['39113'] = '130'
+Mass['39117'] = '137'
+Mass['39121'] = '142'
+Mass['39125'] = '145'
+Mass['39129'] = '147' 
+Mass['39133'] = '148' 
+Mass['39114'] = '130' 
+Mass['39118'] = '137' 
+Mass['39122'] = '142' 
+Mass['39126'] = '145' 
+Mass['39130'] = '147' 
+Mass['39134'] = '148' 
+
+Plotnames = {}
+Plotnames['T'] = 'True'
+Plotnames['DAB'] = 'Detectable'
+Plotnames['DED'] = 'Detected'
+
+ptype = 'R'
+
+def plot(Masses,left_right):
+    Rootfiles = []
+    for mass in Masses:
+        for p in Plots:
+            Rootfiles.append( TFile(Outpath+"ThrustRazor_."+mass+"._"+p+".root") )
+            print mass
+
+    for plotstring in Plots:
+        print plotstring
+        canvas1 = TCanvas("c1","c1")
+
+        firsthist = True
+        for i,rootfile in enumerate(Rootfiles):
+            exec('plot = rootfile.'+ptype+'_'+plotstring) 
+            if i+1>= 5: plot.SetLineColor(i+2)
+            else : plot.SetLineColor(i+1)
+            plot.SetLineWidth(2)
+            plot.SetLineStyle(1)
+            #if ptype == 'S': plot.SetLineStyle(1)
+            #else: plot.SetLineStyle(2)
+            plot.SetTitle(Mass[Masses[i]])
+            plot.Draw("same")
+
+            if firsthist:
+                plot.SetStats(False)
+                plot.SetXTitle("R")
+                plot.GetXaxis().CenterTitle()
+                plot.SetYTitle("Events")
+                plot.GetYaxis().CenterTitle()
+                plot.GetXaxis().SetRangeUser(-2.25,3)
+                plot.GetYaxis().SetRangeUser(0,7500)
+                firsthist = False
+        #STOP rootfiles loop
+        gStyle.SetOptTitle(0); #turn off default title
+        title = TPaveText(0.25, 0.9, 0.75, 1.0, "brNDC"); 
+        title.AddText(Plotnames[plotstring] + ' Razor');
+        title.Draw("same");
+
+        canvas1.SetGrid(1,0)
+        canvas1.BuildLegend(0.68,0.5,0.85,0.88, "X mass (GeV)")
+        canvas1.SaveAs(Outpath+ptype+'_'+left_right+'_'+plotstring+".png")
+        canvas1.SaveAs(Outpath+ptype+'_'+left_right+'_'+plotstring+".ps")
+#END PLOT
+
+
+
+plot(Masses_eLpR,'eLpR')
+#plot(Masses_eRpL,'eRpL')
+
+
+
