@@ -80,6 +80,7 @@ prediction::prediction(measure input){
   positron.x = -input.hadronic.x;
   positron.y = -input.hadronic.y;
   positron.z = (pow(input.positron.T, 2)-pow(beta, 2))/(2*beta);
+  //during positron deflection this is getting the wrong sign.
   positron.e = 500 - input.hadronic.e + positron.z + input.hadronic.z;
   positron.t = getTMag(positron);
 }
@@ -237,9 +238,9 @@ measure Will::getMeasure(LCCollection* col){
 		       -(out.hadronic.y+out.electronic.y) ));
     out.hadronic.x=0;
     out.hadronic.y=0;
-    out.hadronic.z=0;
-    out.hadronic.e=0;
-    out.hadronic.t=0;
+    //out.hadronic.z=0;
+    //out.hadronic.e=0;
+    //out.hadronic.t=0;
     int count = 0;
     short n_hadrons = hadronic_system.size();
     out.mag += getTMag(out.pseudo);    
@@ -292,9 +293,14 @@ fourvec Will::getBeamcalPosition(const fourvec input, signed short dir){
   fourvec pos;
   //Positron moves in -z direction
   double direction = lab.z / abs(lab.z);
+ 
   if(dir!=direction){
     //figure out why
-    cout << "dir:direciton  " << dir << ":" << direction << endl;
+    meta.err_direction++;
+    //cout << "should:is  " << dir << ":" << direction << endl;
+    //cout << getTMag(input) << " : " << input.z<< endl;
+    
+    //cout << "^^^^ ^^^^" << endl;
     direction = dir;
   }
   else direction = dir;

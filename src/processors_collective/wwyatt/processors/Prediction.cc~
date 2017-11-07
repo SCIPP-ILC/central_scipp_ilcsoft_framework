@@ -81,11 +81,11 @@ void Prediction::init() {
   //usually a good idea to
   //printParameters() ;
   _prediction = new TH2F("predict", "Predicted Angle of Scatter, Correct vs Incorrect Kinematics", 1000, 0.0, 0.01, 1000, 0.0, 0.01);
-  _p_theta = new TH1F("p_theta", "Theta between positron and hadronic system", 360, 0, 3.5);
-  _e_theta = new TH1F("e_theta", "Theta between positron and hadronic system", 360, 0, 3.5);
+  _p_theta = new TH1F("p_theta", "Theta between positron and hadronic system", 360, 0, .1);
+  _e_theta = new TH1F("e_theta", "Theta between positron and hadronic system", 360, 0, .1);
   _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
   zmom=new TH1F("zmom", "Z-Momentum Distribution", 300, 0, 500);
-  tmom=new TH1F("tmom", "T-Momentum Distribution", 300, 0, 300);
+  tmom=new TH1F("tmom", "T-Momentum Distribution", 300, 0, 10);
 
   _nEvt = 0 ;
 }
@@ -115,6 +115,10 @@ void Prediction::processEvent( LCEvent * evt ) {
    *   |=> Transverse momentum means this is the particle that scattered.
    */
   if(!data.scattered || data.mag<=1) return;//If there was no scatter, then there is nothing to see.
+
+  //DEBUG plotting the hadronic transverse momentum sum.
+  tmom->Fill(getTMag(data.hadronic_nopseudo));
+
   prediction p(data); //Store prediction vector as variable 'p';
   /* "prediction" will calculate and return two prediction vectors.
    * - electron 
@@ -149,7 +153,7 @@ void Prediction::processEvent( LCEvent * evt ) {
   double p_mag = getMag(electronic);
   double e_theta=getTheta(electron,p.electron);
   double p_theta=getTheta(positron,p.positron);
-  
+  //cout << "BE " << e_theta << endl;
   _p_theta->Fill(e_theta);
   _e_theta->Fill(p_theta);
   

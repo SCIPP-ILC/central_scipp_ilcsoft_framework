@@ -291,8 +291,12 @@ fourvec Will::getBeamcalPosition(const fourvec input, signed short dir){
   fourvec lab = transform_to_lab(input);
   fourvec pos;
   //Positron moves in -z direction
-  double direction;
-  if(dir==0) direction = lab.z / abs(lab.z);
+  double direction = lab.z / abs(lab.z);
+  if(dir!=direction){
+    //figure out why
+    cout << "dir:direciton  " << dir << ":" << direction << endl;
+    direction = dir;
+  }
   else direction = dir;
   
   pos.z = META::BEAMCAL * direction;

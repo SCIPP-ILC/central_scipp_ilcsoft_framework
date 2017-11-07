@@ -117,7 +117,7 @@ void Prediction::processEvent( LCEvent * evt ) {
   if(!data.scattered || data.mag<=1) return;//If there was no scatter, then there is nothing to see.
 
   //DEBUG plotting the hadronic transverse momentum sum.
-  tmom->Fill(getTMag(data.hadronic_nopseudo));
+  //tmom->Fill(getTMag(data.hadronic_nopseudo)+getTMag(data.electron)+getTMag(data.positron));
 
   prediction p(data); //Store prediction vector as variable 'p';
   /* "prediction" will calculate and return two prediction vectors.
@@ -156,7 +156,7 @@ void Prediction::processEvent( LCEvent * evt ) {
   //cout << "BE " << e_theta << endl;
   _p_theta->Fill(e_theta);
   _e_theta->Fill(p_theta);
-  
+
   //Create position vectors
   fourvec real_e = getBeamcalPosition(data.electron,  1);
   fourvec real_p = getBeamcalPosition(data.positron, -1);
@@ -238,4 +238,6 @@ void Prediction::end(){
   cout << "HM: " << hm2 << endl;
   cout << "MH: " << mh2 << endl;
   cout << "MM: " << mm2 << endl;
+
+  cout << "err_directions " << meta.err_direction << endl;
 }

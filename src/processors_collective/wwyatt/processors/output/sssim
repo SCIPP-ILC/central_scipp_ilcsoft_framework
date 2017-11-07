@@ -1,0 +1,2 @@
+#! /bin/bash
+ddsim --compactFile $lcgeo_DIR/SiD/compact/SiD_o2_v02/SiD_o2_v02.xml --runType batch --enableGun --gun.distribution uniform --gun.particle e-  --gun.energy 15*GeV --gun.thetaMax="1*mrad" --gun.thetaMin="40*mrad" --numberOfEvents 10 --outputFile myElectrons.slcio

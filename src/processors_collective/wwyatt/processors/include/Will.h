@@ -92,6 +92,7 @@ namespace Will{
     double fv[4];
     fourvec* _tmp;
     int hh=0,hm=0,mh=0,mm=0,total=0;
+    int err_direction=0;
     static const int BEAMCAL = 3265; //Distance to beamcal
   };
   static META meta;
