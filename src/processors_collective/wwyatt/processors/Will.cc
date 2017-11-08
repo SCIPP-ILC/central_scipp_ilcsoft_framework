@@ -13,6 +13,10 @@ fourvec fourvec::operator+(const fourvec& a) const{
 double fourvec::operator*(const fourvec& a) const{
   return a.x*x + a.y*y + a.z*z;
 }
+fourvec fourvec::operator*(const double a) const{
+  return fourvec(a*x,a*y,a*z);
+}
+
 fourvec fourvec::operator*=(const double a){
   this->x=this->x*a;
   this->y=this->y*a;
@@ -238,20 +242,21 @@ measure Will::getMeasure(LCCollection* col){
 		       -(out.hadronic.y+out.electronic.y) ));
     out.hadronic.x=0;
     out.hadronic.y=0;
+    double total_energy=out.hadronic.E;
     //out.hadronic.z=0;
     //out.hadronic.e=0;
     //out.hadronic.t=0;
     int count = 0;
     short n_hadrons = hadronic_system.size();
     out.mag += getTMag(out.pseudo);    
-    out.pseudo /= n_hadrons;
+    //out.pseudo /= n_hadrons;
     for(auto particle: hadronic_system){
       fourvec hadron = getFourVector(particle);
       const double angle = 0.5; //Cutting angle
       if(true || abs(hadron.z/getMag(hadron)) < angle ){
 	++count;
 	//cout << "W iter : "<< getMag(out.hadronic) << endl;
-	out.hadronic += (hadron+=out.pseudo);
+	out.hadronic += (hadron+=out.pseudo*(hadron.E/total_energy));
 	//out.hadronic += hadron;
       }
     }
@@ -304,7 +309,7 @@ fourvec Will::getBeamcalPosition(const fourvec input, signed short dir){
     direction = dir;
   }
   else direction = dir;
-  
+  direction=dir;
   pos.z = META::BEAMCAL * direction;
   pos.x = lab.x * pos.z / lab.z + pos.z * .007 * (-direction);
   pos.y = lab.y * pos.z / lab.z;

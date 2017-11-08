@@ -42,6 +42,7 @@ namespace Will{
     union{ double T; double t=0.0; };
     fourvec operator+(const fourvec& a) const;
     double operator*(const fourvec& a) const;
+    fourvec operator*(const double) const;
     fourvec operator+=(const fourvec& a);
     fourvec operator*=(const double a);
     fourvec operator*=(const fourvec& a);
