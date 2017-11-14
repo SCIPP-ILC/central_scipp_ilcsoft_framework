@@ -49,6 +49,8 @@ static TH1F* _p_theta;
 static TH1F* _e_theta;
 static TH1F* zmom;
 static TH1F* tmom;
+static TH1F* amom;
+static TH1F* bmom;
 
 
 static vector<double> spread_e;
@@ -84,8 +86,11 @@ void Prediction::init() {
   _p_theta = new TH1F("p_theta", "Theta between positron and hadronic system", 360, 0, .1);
   _e_theta = new TH1F("e_theta", "Theta between positron and hadronic system", 360, 0, .1);
   _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
-  zmom=new TH1F("zmom", "Z-Momentum Distribution", 300, 0, 500);
-  tmom=new TH1F("tmom", "T-Momentum Distribution", 300, 0, 10);
+  zmom=new TH1F("zmom", "Hadronic system energy", 300, 0, 600);
+  tmom=new TH1F("tmom", "Hadronic z momentum", 300, -500, 500);  
+  amom=new TH1F("amom", "Hadronic energy - z_momentum, ", 500, -100,600);
+  bmom=new TH1F("bmom", "Electon + Positron Energy", 500, 490,510);
+
 
   _nEvt = 0 ;
 }
@@ -101,6 +106,27 @@ void Prediction::processEvent( LCEvent * evt ) {
   // DISCLAIMER: THERE IS MORE DOCUMENTATION IN THE HEADER FILE (Will.h).
   LCCollection* col = evt->getCollection( _colName ) ;
   if( col == NULL )return;
+  int nElements=col->getNumberOfElements();
+  double compEn_e=0,compEn_p=0,tot=0;
+  for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
+    MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
+
+    int id = particle->getPDG();
+    int stat = particle->getGeneratorStatus();
+
+    if(stat==1){
+      tot+=particle->getEnergy();
+      //push all final state particles to separate vector
+      if(id==11){
+	if(particle->getEnergy() > compEn_e){compEn_e=particle->getEnergy();}    
+      }
+      else if(id==-11){
+	if(particle->getEnergy() > compEn_p){compEn_p=particle->getEnergy();}    
+      }
+    }//end final state   
+  }//end for
+  //cout << tot << ":"<< compEn_e << ":" << compEn_p << endl << endl;
+  bmom->Fill(tot);
   //Run janes code for comparison.
   getJane(col);
 
@@ -114,11 +140,16 @@ void Prediction::processEvent( LCEvent * evt ) {
    *   |=> Either the electron or the positron above WITH transverse momentum (e.g. scatter)
    *   |=> Transverse momentum means this is the particle that scattered.
    */
+  
+  
   if(!data.scattered || data.mag<=1) return;//If there was no scatter, then there is nothing to see.
-
+  
   //DEBUG plotting the hadronic transverse momentum sum.
-  //tmom->Fill(getTMag(data.hadronic_nopseudo)+getTMag(data.electron)+getTMag(data.positron));
-
+  fourvec a=data.hadronic;
+  fourvec b=data.electron;
+  fourvec c=data.positron;
+  //tmom->Fill(getTMag(a+b+c));
+  //zmom->Fill(data.hadronic.z);
   prediction p(data); //Store prediction vector as variable 'p';
   /* "prediction" will calculate and return two prediction vectors.
    * - electron 
@@ -126,8 +157,19 @@ void Prediction::processEvent( LCEvent * evt ) {
    * Only one of these will be correct; that can be checked by measure.p_scatter and measure.e_scatter.
    * I will make it easier to get the correct prediction.
    */
+  if(p.beta<0){
+    //cout << data.hadronic.e << endl;
+    //cout << data.hadronic.e - data.hadronic.z << endl << endl;
+    //amom->Fill(data.hadronic.E);
+    //bmom->Fill(data.hadronic.E-data.hadronic.z);
+  }
+  /*
+  zmom->Fill(data.hadronic.e);
+  tmom->Fill(data.hadronic.z);
+  bmom->Fill(data.electron.e+data.positron.e);
+  amom->Fill(data.hadronic.e-data.hadronic.z);
+  */
 
-  
   //I rename the particles just for ease of use. I might take this out later for explicitness.
   fourvec electron=data.electron,
     positron=data.positron,
@@ -157,11 +199,19 @@ void Prediction::processEvent( LCEvent * evt ) {
   _p_theta->Fill(e_theta);
   _e_theta->Fill(p_theta);
 
+  //DEBUG
+  bool dir_pred=p.positron.z>0;
+  bool dir_true=data.positron.z>0;
+  if (false&&dir_pred^dir_true){
+    cout << "electron_z: " << data.electron.z << ":" << p.electron.z << endl;
+    cout << "positron_z: " << data.positron.z << ":" << p.positron.z << endl << endl;
+  }
   //Create position vectors
   fourvec real_e = getBeamcalPosition(data.electron,  1);
+  fourvec pred_p = getBeamcalPosition(p.positron, -1);
   fourvec real_p = getBeamcalPosition(data.positron, -1);
   fourvec pred_e = getBeamcalPosition(p.electron,  1);
-  fourvec pred_p = getBeamcalPosition(p.positron, -1);
+
 
   
   //cout << "Will real e pos : " << getTMag(real_e) << endl;
@@ -219,11 +269,12 @@ void Prediction::end(){
   cout << "Scat:noScat " << meta.SCATTERS << ":" << meta.NOSCATTERS << endl;
   cout << "MSC : " << meta.MSC << endl;
   int sum = ph_th+ph_tm+pm_th+pm_tm;
+  cout << "hh:hm:mh:hh " << ph_th <<":"<< ph_tm <<":"<< pm_th <<":"<< pm_tm << endl;
   double hh=1.0*ph_th/sum;
   double hm=1.0*ph_tm/sum;
   double mh=1.0*pm_th/sum;
   double mm=1.0*pm_tm/sum;
-  
+
   cout << "          | Truth Hit | Truth Miss" << endl;
   cout << setprecision(4) << "Pred Hit  | " << hh << "   |  " << hm << endl;
   cout << setprecision(4) << "Pred Miss | " << mh << "   |  " << mm << endl;

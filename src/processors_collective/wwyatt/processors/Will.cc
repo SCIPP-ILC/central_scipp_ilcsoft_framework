@@ -1,5 +1,6 @@
 #include <Will.h>
 #include "scipp_ilc_globals.h"
+#include <sstream>
 using namespace Will;
 fourvec fourvec::operator+(const fourvec& a) const{
   return fourvec(
@@ -49,6 +50,20 @@ fourvec fourvec::operator+=(const fourvec& a){
   *this = *this+a;
   return *this;
 }
+/*string Will::str(fourvec in){
+  ostringstream strs;
+  strs << in.x;
+  string x_str = strs.str();
+  strs.str(string());
+  strs << in.y;
+  string y_str=strs.str();
+  strs.str(string());
+  strs << in.z;
+  string z_str=strs.str();
+  return "x:y:z " + x_str +":"+ y_str +":"+ z_str + " ";
+  }*/
+
+
 fourvec::fourvec(const double _x,const double _y){x=_x;y=_y;t=getTMag(new double[2]{_x,_y});}
 fourvec::fourvec(const double _x,const double _y,const double _z):fourvec(_x,_y){z=_z;}
 fourvec::fourvec(const double _x,const double _y,const double _z,const double _e):fourvec(_x,_y,_z){e=_e;}
@@ -84,7 +99,9 @@ prediction::prediction(measure input){
   positron.x = -input.hadronic.x;
   positron.y = -input.hadronic.y;
   positron.z = (pow(input.positron.T, 2)-pow(beta, 2))/(2*beta);
-  //during positron deflection this is getting the wrong sign.
+  if (false && beta > 0){
+    cout << input.hadronic.z << endl;
+  }
   positron.e = 500 - input.hadronic.e + positron.z + input.hadronic.z;
   positron.t = getTMag(positron);
 }
@@ -243,9 +260,9 @@ measure Will::getMeasure(LCCollection* col){
     out.hadronic.x=0;
     out.hadronic.y=0;
     double total_energy=out.hadronic.E;
-    //out.hadronic.z=0;
-    //out.hadronic.e=0;
-    //out.hadronic.t=0;
+    out.hadronic.z=0;
+    out.hadronic.e=0;
+    out.hadronic.t=0;
     int count = 0;
     short n_hadrons = hadronic_system.size();
     out.mag += getTMag(out.pseudo);    
