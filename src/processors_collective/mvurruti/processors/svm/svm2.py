@@ -2,32 +2,30 @@ import time
 import argparse
 import ROOT
 
-#parser = argparse.ArgumentParser(description = "plots SVM root files.")
+#list of root files as input
+#loop through input files and plot based of the types (S,V,M)
+#Start w/ vector true alone.
+#plot all true vectors of diff root files in same plot
 
-#parser.add_argument("filename", metavar = "filename", nargs = "?", help = "input a root file name to plot.")
+roots = [
+    "bbsignal.root","bwsignal.root","signal_all.root"
+    ]
 
-#args = parser.parse_args()
-#prefix = args.filename
-#if prefix is None:
- #   raise Exception("Dude, you gotta supply a filename.")
+c = ROOT.TCanvas()
 
-#if ".root" in prefix:
-#    prefix = prefix[-5:]
-#f = ROOT.TFile("%s.root"%prefix)
-#c = ROOT.TCanvas()
-#c.SetLogy()
+for file_name in roots:
+    print file_name
+    file = ROOT.TFile(file_name)
+    name = "V_Tru"
+    graph = file.Get(name)
+    
+    try:
+        graph.Draw("SAME")
+    except ReferenceError:
+        print("Tried to find a graph (%s) in the root file that was not there."%name)
+        print("This is what is in the root file:")
+        file.ls()
+        exit()
 
-#def plot(name): 
- #   graph = f.Get(name)
-  #  graph.GetYaxis().SetTitle("# of Events")
-   # if name == "S" or name == "V":
-    #    graph.GetXaxis().SetTitle("Momentum (GeV)")
-#    if name == "M":
- #       graph.GetXaxis().SetTitle("Mass (GeV)")    
-  #  graph.Draw()
-   # time.sleep(4)
-   # c.SaveAs("./%s_%s.png"%(prefix,name))
-
-#graphs = ["S","V","M"]
-#for g in graphs:
- #   plot(g)
+    
+time.sleep(4)
