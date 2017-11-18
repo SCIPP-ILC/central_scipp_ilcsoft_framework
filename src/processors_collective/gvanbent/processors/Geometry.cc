@@ -80,8 +80,7 @@ void Geometry::processEvent( LCEvent * evt ) {
     // this gets called for every event 
     // usually the working horse ...
     
-    cout << "Event " << _nEvt << endl;
-
+    cout << "Event " << _nEvt++ << endl;
     LCCollection* col = evt->getCollection( _colName ) ;
 
     // this will only be entered if the collection is available
@@ -89,16 +88,16 @@ void Geometry::processEvent( LCEvent * evt ) {
         int nElements = col->getNumberOfElements()  ;
 
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
-      
-
+	  
 	   MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) ); //col->getElementAt() same as  (*col).getElementAt()
            const double* pos = hit->getMomentum();
+	   cout << "particl: " << hit->getPDG() << endl;
            _hitmap->Fill(pos[0],pos[1]);
 	   _energy->Fill(hit->getEnergy());
         } 
     }
 
-    _nEvt ++ ;
+
 }
 
 

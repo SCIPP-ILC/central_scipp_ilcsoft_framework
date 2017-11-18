@@ -57,6 +57,7 @@ void Geometry::init() {
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
     cout << "I have run init" << endl ;
     _rootfile = new TFile("hitmap.root","RECREATE"); //output file
+    _energy = new TH1F("energy", "Energy Distribution", 300.0, 0, 275);
     _hitmap = new TH2F("hitmap","Hit Distribution",300.0,-150.0,150.0,300.0,-150.0,150.0);  //creates scatterplot with name "hitmap", #of bins, xmin, xmax, # of y bins, ymin, ymax
 
     // usually a good idea to
@@ -93,6 +94,7 @@ void Geometry::processEvent( LCEvent * evt ) {
 	   MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) ); //col->getElementAt() same as  (*col).getElementAt()
            const double* pos = hit->getMomentum();
            _hitmap->Fill(pos[0],pos[1]);
+	   _energy->Fill(hit->getEnergy());
         } 
     }
 
