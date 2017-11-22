@@ -218,7 +218,7 @@ void first::init_hitmap(bool lab){
 void first::graphHitStatus(const double*  momentum, int id, bool lab){
   double x = momentum[0];
   double y = momentum[1];
-  switch(scipp_ilc::get_hitStatus(x, y)){
+  /*  switch(scipp_ilc::get_hitStatus(x, y)){
   case(1): //hit beamcal
     if(id == this->ELECTRON){
       info += 10;
@@ -320,7 +320,7 @@ void first::graphHitStatus(const double*  momentum, int id, bool lab){
       positronStore.hm_theta.push_back(getTheta(getPositron(), lab));
       colinearityStore.hm_colinearity.push_back(getColinearity(lab));
     }
-  }
+    }*/
 }
 
 void first::print(string _input){

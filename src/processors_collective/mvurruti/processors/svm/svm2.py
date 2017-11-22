@@ -11,25 +11,28 @@ roots = [
     "bbsignal.root","bwsignal.root","signal_all.root"
     ]
 
-c = ROOT.TCanvas()
+files=[]
+for file_name in roots:
+    files.append(ROOT.TFile(file_name))
 
-name = [V_Tru,V_Dtd,V_Dbl,S_Dtd,S_Dbl,S_Tru,M_Dtd,M_Dbl,M_Tru]
+names = ["V_Tru","V_Dtd","V_Dbl","S_Dtd","S_Dbl","S_Tru","M_Dtd","M_Dbl","M_Tru"]
 
-for graphs in name
-
-    for file_name in roots:
-        print file_name
-        file = ROOT.TFile(file_name)
-        # name = "V_Tru"
-        graph = file.Get(graphs)
+for name in names:
+    c = ROOT.TCanvas()
+    c.SetLogy()
+    i = 2
+    for f in files:
+        f.cd()
+        graph = f.Get(name)
     
         try:
-            graph.Draw("SAME")
+            graph.SetLineColor(i)
+            i+=1
+            graph.Draw("same")
         except ReferenceError:
             print("Tried to find a graph (%s) in the root file that was not there."%name)
             print("This is what is in the root file:")
             file.ls()
             exit()
+    c.SaveAs("./%s.png"%(name))   
 
-    
-time.sleep(4)

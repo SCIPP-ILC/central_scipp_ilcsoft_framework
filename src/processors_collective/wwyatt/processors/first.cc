@@ -62,7 +62,7 @@ static double delta = 0;
 static int delta_count = 0;
 static double d=0;
 static int d_count = 0;
-
+static int _nEvt=0;
 static double vector_sum=0.0;
 
 first::first() : Processor("first") {
@@ -78,7 +78,7 @@ first::first() : Processor("first") {
 
 void first::init() { 
     streamlog_out(DEBUG) << "   init called  " << std::endl ;
-
+    
     cout << "Initialized " << endl;
     _rootfile = new TFile("Phi_Bhabha.root","RECREATE");
     //These initialization are here as reference until I finish rewriting all the code.
@@ -138,13 +138,14 @@ void first::processEvent( LCEvent * evt ) {
     double x_sum=0.0;
     double y_sum=0.0;
     int stat, id =0;
-    if( col != NULL ){
+    cout << "Event " <<     _nEvt ++  << endl;
+    /*    if(false &&( col != NULL ){
         int nElements = col->getNumberOfElements()  ;
         for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
            MCParticle* hit = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );        
             id = hit->getPDG();
             stat = hit->getGeneratorStatus();
-            if(stat==1){
+/            if(stat==1){
 	      //hit is an end particle:
 	      x_sum += hit->getMomentum()[0];
 	      y_sum += hit->getMomentum()[1];
@@ -161,8 +162,7 @@ void first::processEvent( LCEvent * evt ) {
     }
     double vsum=sqrt(x_sum*x_sum + y_sum*y_sum);
     _vsum->Fill(vsum);
-    vector_sum+=vsum;
-    _nEvt ++ ;
+    vector_sum+=vsum;*/
 }
 
 
