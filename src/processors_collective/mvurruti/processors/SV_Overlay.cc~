@@ -116,7 +116,7 @@ void SV_Overlay::processEvent( LCEvent * evt ) {
   double tot_mom[]={0, 0, 0, 0};
   double tot_mag[]={0, 0, 0, 0};
   double S=0,V=0,M=0; 
-  double stat;
+  int stat;
   // this will only be entered if the collection is available
   if( col != NULL ){
     int nElements = col->getNumberOfElements()  ;
@@ -131,7 +131,7 @@ void SV_Overlay::processEvent( LCEvent * evt ) {
     for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
       MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
       stat = particle->getGeneratorStatus();
-      int id, stat;
+      int id;
 
        try{ 
             id = particle->getPDG();
@@ -166,6 +166,9 @@ void SV_Overlay::processEvent( LCEvent * evt ) {
                     id == 16 || id == -16 ||
                     id == 18 || id == -18);
                 bool isForward = ( cos > 0.9 || cos < -0.9);               
+		
+		//cout << "anything u want "<< scalar << endl;
+
                 scalars[0]+=scalar; //true
                 vec[0][0]+=P[0];
                 vec[0][1]+=P[1];
@@ -191,6 +194,8 @@ void SV_Overlay::processEvent( LCEvent * evt ) {
 
  
     }//end for
+
+
 
     // cout << "event "<< _nEvt <<" finished " << endl;
     //all

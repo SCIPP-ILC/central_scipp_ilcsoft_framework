@@ -7,9 +7,7 @@ import ROOT
 #Start w/ vector true alone.
 #plot all true vectors of diff root files in same plot
 
-roots = [
-    "bbsignal.root","bwsignal.root","signal_all.root"
-    ]
+roots = ["bbsignal.root","bwsignal.root","signal_all.root","wbsignal.root","wwsignal.root"]
 
 files=[]
 for file_name in roots:
