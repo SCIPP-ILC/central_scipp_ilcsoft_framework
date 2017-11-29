@@ -79,7 +79,7 @@ void SV_Overlay::init() {
   
     _M_Dtd = new TH1F("M_Dtd","Detected Mass",100,0,150);
     _M_Dbl = new TH1F("M_Dbl","Detectable Mass",100,0,60);
-    _M_Tru = new TH1F("M_Tru","True Mass",100,0,90);
+    _M_Tru = new TH1F("M_Tru","True Mass",100,0,4.0);
   
     //_S = new TH1D("S", "Scalar", 200, 0.0, 23.0);
     //_V = new TH1D("V", "Vector", 1000, 0.0, 1.5); 
@@ -203,7 +203,7 @@ void SV_Overlay::processEvent( LCEvent * evt ) {
     double total_detected_scalar = scalars[1];
     double total_detectable_scalar = scalars[2];
 
-    double total_true_mass_squared = energy[0]+energy[0]-
+    double total_true_mass_squared = energy[0]*energy[0]-
       (vec[0][0]*vec[0][0]+vec[0][1]*vec[0][1]+
        vec[0][2]*vec[0][2]);
     double total_true_mass = sqrt(total_true_mass_squared);

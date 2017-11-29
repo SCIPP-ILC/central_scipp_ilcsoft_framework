@@ -172,10 +172,5 @@ namespace Will{
    //Python version of cout. I don't use these.
    void print(string );
    void print(string , string );
-
-   void getJane(LCCollection * );
-   // x += 9 <=> x = x+9
-   // 
-   // x + 1
 }
 #endif

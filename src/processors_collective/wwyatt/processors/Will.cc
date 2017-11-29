@@ -88,21 +88,20 @@ prediction::prediction(double x,double y){
   positron.y=y;
 }
 prediction::prediction(measure input){
-  alpha=(500-input.hadronic.E - input.hadronic.z);
-  beta=(500-input.hadronic.E + input.hadronic.z);
+  //const double ENERGY=input.electron.e+input.positron.e+input.hadronic.e;
+  const double ENERGY=500;
+  alpha=(ENERGY-input.hadronic.E - input.hadronic.z);
+  beta=(ENERGY-input.hadronic.E + input.hadronic.z);
   electron.x = -input.hadronic.x;
   electron.y = -input.hadronic.y;
   electron.z = -(pow(input.electron.T, 2)-pow(alpha, 2))/(2*alpha);
-  electron.e = 500 - input.hadronic.e - electron.z - input.hadronic.z;
+  electron.e = ENERGY - input.hadronic.e - electron.z - input.hadronic.z;
   electron.t = getTMag(electron);
 
   positron.x = -input.hadronic.x;
   positron.y = -input.hadronic.y;
   positron.z = (pow(input.positron.T, 2)-pow(beta, 2))/(2*beta);
-  if (false && beta > 0){
-    cout << input.hadronic.z << endl;
-  }
-  positron.e = 500 - input.hadronic.e + positron.z + input.hadronic.z;
+  positron.e = ENERGY - input.hadronic.e + positron.z + input.hadronic.z;
   positron.t = getTMag(positron);
 }
 
@@ -208,7 +207,11 @@ double Will::getTheta(const double* a, const double* b){
   return getTheta(fourvec(a,3),fourvec(b,3));
 }
 double Will::getTheta(fourvec a, fourvec b){
-  return acos( a*b / (getMag(a)*getMag(b)) );
+  //If acos(-1) it returns 0;
+  double theta=a*b/(getMag(a)*getMag(b));
+  double val=acos(theta);
+  if(val!=val) return 0;
+  return val;
 }
 
 measure Will::getMeasure(LCCollection* col){
@@ -342,252 +345,3 @@ void Will::print(string input, string input2){
 }
 
 META Will::getMETA(){return meta;}
-
-void Will::getJane(LCCollection* col){
-    //vector<MyParticle*> particles;
-    vector<MCParticle*> final_system;
-    vector<MCParticle*> had;
-    int stat, id =0;
-    bool scatter;
-
-    double compEn_e=0;
-    double compEn_p=0;
-
-    double mom[4];
-    double real_e[4];
-    double real_p[4];
-    double pred_e[4];
-    double pred_p[4];
-
-    double eT, pT, mag=0;
-    double hadronic[] = {0, 0, 0, 0};
-    double electronic[] = {0, 0, 0, 0};
-
-    int real, pred;
-
-    srand(time(NULL));
-    // this will only be entered if the collection is available
-    if( col != NULL ){
-        int nElements = col->getNumberOfElements()  ;
-
-        scatter = false;
-
-//****************************************************INITIAL*****PASS******************************************************************************
-        for(int hitIndex = 0; hitIndex < nElements ; hitIndex++){
-            MCParticle* particle = dynamic_cast<MCParticle*>( col->getElementAt(hitIndex) );
-
-            id = particle->getPDG();
-            stat = particle->getGeneratorStatus();
-
-            if(stat==1){
-                //push all final state particles to separate vector
-                final_system.push_back(particle); 
-                if(id==11){
-                    if(particle->getEnergy() > compEn_e){compEn_e=particle->getEnergy();}    
-                }
-                else if(id==-11){
-                    if(particle->getEnergy() > compEn_p){compEn_p=particle->getEnergy();}    
-                }
-            }//end final state   
-        }//end for
-
-//****************************************************SECOND*****PASS******************************************************************************
-        for(MCParticle* particle : final_system){
-            id = particle->getPDG();
-
-            //BEAM ELECTRON
-            if(particle->getEnergy()==compEn_e){
-                real_e[0]=particle->getMomentum()[0];    
-                real_e[1]=particle->getMomentum()[1];    
-                real_e[2]=particle->getMomentum()[2];
-                real_e[3]=particle->getEnergy();
-                eT = sqrt(pow(real_e[0], 2)+pow(real_e[1], 2));
-                
-                //if deflected, add to electronic
-                if(abs(real_e[0])!=0||abs(real_e[1])!=0){
-                    scatter = true;
-                    electronic[0]+=real_e[0];    
-                    electronic[1]+=real_e[1];    
-                    electronic[2]+=real_e[2];    
-                    electronic[3]+=real_e[3];    
-                }
-            }
-                
-            //BEAM POSITRON
-            else if(particle->getEnergy()==compEn_p){
-                real_p[0]=particle->getMomentum()[0];    
-                real_p[1]=particle->getMomentum()[1];    
-                real_p[2]=particle->getMomentum()[2];
-                real_p[3]=particle->getEnergy();
-                pT = sqrt(pow(real_p[0], 2)+pow(real_p[1], 2));
-                
-                //if deflected, add to electronic
-                if(abs(real_p[0])!=0||abs(real_p[1])!=0){
-                    scatter = true;
-                    electronic[0]+=real_p[0];    
-                    electronic[1]+=real_p[1];    
-                    electronic[2]+=real_p[2];    
-                    electronic[3]+=real_p[3];    
-                }    
-            }
-
-            //HADRONIC SYSTEM
-            else{
-                had.push_back(particle);
-                mom[0]=particle->getMomentum()[0];    
-                mom[1]=particle->getMomentum()[1];    
-                mom[2]=particle->getMomentum()[2];
-                mom[3]=particle->getEnergy();
-
-                double tmag = sqrt(pow(mom[0], 2)+pow(mom[1], 2));
-                mag+=tmag;
-                
-                //scipp_ilc::transform_to_lab(mom[0], mom[3], mom[0], mom[3]);
-                hadronic[0]+=mom[0];    
-                hadronic[1]+=mom[1];    
-                hadronic[2]+=mom[2];    
-                hadronic[3]+=mom[3];    
-            }//end hadronic system    
-        }//end for
-
-        if(scatter==true){
-       
-	  //create balancing particle
-            double x = hadronic[0] + electronic[0];
-            double y = hadronic[1] + electronic[1];
-
-            double pseudo_x = -x;
-            double pseudo_y = -y;
-
-            double p_mag = sqrt(pow(pseudo_x, 2)+pow(pseudo_y, 2));
-            mag+=p_mag;
-
-            hadronic[0]=0;
-            hadronic[1]=0;
-
-            //refill hadronic system with cuts and balancing particle
-            for(MCParticle* particle : had){
-                mom[0]=particle->getMomentum()[0];    
-                mom[1]=particle->getMomentum()[1];    
-                mom[2]=particle->getMomentum()[2];
-                mom[3]=particle->getEnergy();
-
-                double hyp = sqrt(pow(mom[0], 2)+pow(mom[1], 2)+pow(mom[2], 2));
-                double cos = mom[2]/hyp;
-                if(true){
-                    //scipp_ilc::transform_to_lab(mom[0], mom[3], mom[0], mom[3]);
-                    hadronic[0]+=mom[0];    
-                    hadronic[1]+=mom[1];    
-                    hadronic[2]+=mom[2];    
-                    hadronic[3]+=mom[3];    
-                }
-            }
-
-            //add balancing particle to hadronic system
-            hadronic[0]+=pseudo_x;
-            hadronic[1]+=pseudo_y;
-	    
-            //cut on S
-            if(mag>1.0){
-                
-                meta.total++;
-                //create prediction vectors
-                pred_e[0] = -hadronic[0];
-                pred_e[1] = -hadronic[1];
-                pred_p[0] = -hadronic[0];
-                pred_p[1] = -hadronic[1];
-
-                double alpha = 500 - hadronic[3] - hadronic[2];
-                double beta = 500 - hadronic[3] + hadronic[2];
-                
-
-                pred_e[2] = -(pow(eT, 2)-pow(alpha, 2))/(2*alpha);
-                pred_e[3] = 500 - hadronic[3] - pred_e[2] - hadronic[2];
-                pred_p[2] = (pow(pT, 2)-pow(beta, 2))/(2*beta);
-                pred_p[3] = 500 - hadronic[3] + pred_p[2] + hadronic[2];
-               
-                //Lorentz transform - frome center of mass to lab frame 
-                scipp_ilc::transform_to_lab(real_e[0], real_e[3], real_e[0], real_e[3]);
-                scipp_ilc::transform_to_lab(real_p[0], real_p[3], real_p[0], real_p[3]);
-                scipp_ilc::transform_to_lab(pred_e[0], pred_e[3], pred_e[0], pred_e[3]);
-                scipp_ilc::transform_to_lab(pred_p[0], pred_p[3], pred_p[0], pred_p[3]);
-               
-                //create position vector
-                double real_e_pos[3];
-                double real_p_pos[3];
-                double pred_e_pos[3];
-                double pred_p_pos[3];
-
-
-
-                //set z-positions as beamcal face
-                real_e_pos[2] = 3265;
-                real_p_pos[2] = -3265;
-                pred_e_pos[2] = 3265;
-                pred_p_pos[2] = -3265;
-
-                //extrapolate transverse positions from mom vector
-                real_e_pos[0] = real_e[0]*real_e_pos[2]/real_e[2];
-                real_e_pos[1] = real_e[1]*real_e_pos[2]/real_e[2];
-                real_p_pos[0] = real_p[0]*real_p_pos[2]/real_p[2];
-                real_p_pos[1] = real_p[1]*real_p_pos[2]/real_p[2];
-                
-                pred_e_pos[0] = pred_e[0]*pred_e_pos[2]/pred_e[2];
-                pred_e_pos[1] = pred_e[1]*pred_e_pos[2]/pred_e[2];
-                pred_p_pos[0] = pred_p[0]*pred_p_pos[2]/pred_p[2];
-                pred_p_pos[1] = pred_p[1]*pred_p_pos[2]/pred_p[2];
-           
-                 
-                //transform to BeamCal frame
-                real_e_pos[0] = real_e_pos[0] - real_e_pos[2]*0.007;
-                real_p_pos[0] = real_p_pos[0] + real_p_pos[2]*0.007;
-                pred_e_pos[0] = pred_e_pos[0] - pred_e_pos[2]*0.007;
-                pred_p_pos[0] = pred_p_pos[0] + pred_p_pos[2]*0.007;
-                
-		meta.pred_e=fourvec(pred_e_pos[0], pred_e_pos[1], pred_e_pos[2]);
-		meta.real_e=fourvec(real_e_pos[0], real_e_pos[1], real_e_pos[2]);
-		meta.real_p=fourvec(real_p_pos[0], real_p_pos[1], real_p_pos[2]);
-		meta.pred_p=fourvec(pred_p_pos[0], pred_p_pos[1], pred_p_pos[2]);
-
-                //get hit status
-                int re_hit = scipp_ilc::get_hitStatus(real_e_pos[0], real_e_pos[1], real_e_pos[2]);
-                int rp_hit = scipp_ilc::get_hitStatus(real_p_pos[0], real_p_pos[1], real_p_pos[2]);
-                int pe_hit = scipp_ilc::get_hitStatus(pred_e_pos[0], pred_e_pos[1], pred_e_pos[2]);
-                int pp_hit = scipp_ilc::get_hitStatus(pred_p_pos[0], pred_p_pos[1], pred_p_pos[2]);
-
-               /* 
-                //eWpB 
-                if(re_hit!=3 && re_hit!=4){real = 1;}
-                else{real = 2;}
-                if(pe_hit!=3 && pe_hit!=4){pred = 1;}
-                else{pred = 2;}
-
-                if(pred == 1 && real == 1){hh++;}
-                else if(pred == 1 && real == 2){hm++;}
-                else if(pred == 2 && real == 1){mh++;}
-                else if(pred == 2 && real == 2){mm++;}
-                
-
-
-                cout << "PRED ELECTRON: " << pred_e_pos[0] << " " << pred_e_pos[1] << " " << pred_e_pos[2] << endl;
-             
-             */
-                //eBpW 
-                if(rp_hit!=3 && rp_hit!=4){real = 1;}
-                else{real = 2;}
-                if(pp_hit!=3 && pp_hit!=4){pred = 1;}
-                else{pred = 2;}
-
-                if(pred == 1 && real == 1){meta.hh++;}
-                else if(pred == 1 && real == 2){meta.hm++;}
-                else if(pred == 2 && real == 1){meta.mh++;}
-                else if(pred ==2 && real == 2){meta.mm++;}
-
-                real = 0;
-                pred = 0;
-            }
-
-
-        }//end if scatter
-    }//end collection
-}

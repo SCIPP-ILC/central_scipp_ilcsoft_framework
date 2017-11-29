@@ -11,6 +11,7 @@
 #include <map>
 #include <iostream>
 #include <cmath>
+#include <sstream>
 
 #include <TFile.h>
 #include <TH2D.h>
@@ -106,6 +107,9 @@ namespace Will{
    map<int,double> maxEnergy(LCCollection*, 
 			     initializer_list<int> ids, 
 			     vector<MCParticle*>& final_state);
+   
+   //Returns string in x:y:z format
+   //string str(fourvec in);
 
    //Gets momentum vector as non constant
    double* getVector(MCParticle*);

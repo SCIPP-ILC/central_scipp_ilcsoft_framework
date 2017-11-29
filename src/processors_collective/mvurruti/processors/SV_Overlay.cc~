@@ -68,18 +68,18 @@ SV_Overlay::SV_Overlay() : Processor("SV_Overlay") {
 void SV_Overlay::init() { 
   streamlog_out(DEBUG) << "   init called  " << std::endl ;
   _rootfile = new TFile("SV_Overlay.root","RECREATE");
-    _V_Dtd = new TH1F("V_Dtd","Detected Vector",100,0,10);
-    _V_Dbl = new TH1F("V_Dbl","Detectable Vector",100,0,10);
-    _V_Tru = new TH1F("V_Tru","True Vector",100,0,10);
+    _V_Dtd = new TH1F("V_Dtd","Detected Vector",100,0,150);
+    _V_Dbl = new TH1F("V_Dbl","Detectable Vector",100,0,200);
+    _V_Tru = new TH1F("V_Tru","True Vector",100,0,150);
 
-    _S_Dtd = new TH1F("S_Dtd","Detected Scalar",100,0,10);
-    _S_Dbl = new TH1F("S_Dbl","Detectable Scalar",100,0,10);
-    _S_Tru = new TH1F("S_Tru","True Scalar",100,0,10);
+    _S_Dtd = new TH1F("S_Dtd","Detected Scalar",100,0,200);
+    _S_Dbl = new TH1F("S_Dbl","Detectable Scalar",100,0,200);
+    _S_Tru = new TH1F("S_Tru","True Scalar",100,0,200);
  
   
-    _M_Dtd = new TH1F("M_Dtd","Detected Mass",100,0,10);
-    _M_Dbl = new TH1F("M_Dbl","Detectable Mass",100,0,10);
-    _M_Tru = new TH1F("M_Tru","True Mass",100,0,10);
+    _M_Dtd = new TH1F("M_Dtd","Detected Mass",100,0,150);
+    _M_Dbl = new TH1F("M_Dbl","Detectable Mass",100,0,60);
+    _M_Tru = new TH1F("M_Tru","True Mass",100,0,90);
   
     //_S = new TH1D("S", "Scalar", 200, 0.0, 23.0);
     //_V = new TH1D("V", "Vector", 1000, 0.0, 1.5); 
