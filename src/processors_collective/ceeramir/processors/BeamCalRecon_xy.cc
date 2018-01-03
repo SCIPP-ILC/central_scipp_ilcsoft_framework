@@ -252,7 +252,7 @@ void BeamCalRecon_xy::PrintRadiusThetaTable(string key){//, ofstream fout){//str
     double div = 0.0;
     double one = 1.0;
 
-    
+
     ofstream fout;
     fout.open("output.txt");
     if (fout.fail()){
@@ -260,20 +260,22 @@ void BeamCalRecon_xy::PrintRadiusThetaTable(string key){//, ofstream fout){//str
       exit(-1);
     }
 
-    fout.close();
-      
+
     //    fout << "average = " << average << endl;
     //    s
 
     for(int i = 0; i < height; i++){
         if(i==0){
 	    cout << "\t  ";
+	    fout << "\t  ";
 	    for(int row = 0; row < width; row++){
 	        if(row==0){
 		  cout << "\t";
+		  fout << "\t";
 		}
 		if(key!="wDiv"){
 		  cout << setw(3) << phi_array[row] << " " ;
+		  fout << setw(3) << phi_array[row] << " " ;
 		//		printf ("%\*d", 3,phi_array[row]);
 		//		cout << phi_array[row] << " ";
 
@@ -283,20 +285,25 @@ void BeamCalRecon_xy::PrintRadiusThetaTable(string key){//, ofstream fout){//str
 		}
 		else{
 		  cout << setw(5) << phi_array[row] << " " ;
+		  fout << setw(5) << phi_array[row] << " " ;
 		}
 	    }
 	    cout << endl;
+	    fout << endl;
 	}
 	//	cout << "[" << rad_array[i] << "]: \t" ;
 	cout << "[" << setw(6) << rad_array[i] << "]: \t" ;
+	fout << "[" << setw(6) << rad_array[i] << "]: \t" ;
 
 	for(int j = 0; j < width; j++){
 	  //	  double div = 0.0;
 	    if(key=="wCut"){
   	        cout << setw(3) << _RadTheta_wCut[j][i] << " " ;
+  	        fout << setw(3) << _RadTheta_wCut[j][i] << " " ;
 	    }
 	    if(key=="wBgd"){
   	        cout << setw(3) << _RadTheta_wBgd[j][i] << " " ;
+  	        fout << setw(3) << _RadTheta_wBgd[j][i] << " " ;
 	    }
 	    if(key=="wDiv"){
 	      /*
@@ -312,19 +319,26 @@ void BeamCalRecon_xy::PrintRadiusThetaTable(string key){//, ofstream fout){//str
 		  div = ((double(_RadTheta_wBgd[j][i])) / (double(_RadTheta_wCut[j][i])));
 		  if(div==1.0){
 		    cout << setw(5) << "1.0";
+		    fout << setw(5) << "1.0";
 		  }
 		  else{
 		  printf ("%4.3f",div);
+		  //		  printf (append("%4.3f",div));
+		  fout << "N/A";
 		  }
 	        }
 	      else{
 		  cout << setw(5) << "0.0";
+		  fout << setw(5) << "0.0";
 		}
 	      cout << " ";
+	      fout << " ";
 	    }
 	}
 	cout << endl;
+	fout << endl;
     }
+        fout.close();
 }
 
 void BeamCalRecon_xy::init() { 
@@ -626,6 +640,15 @@ void BeamCalRecon_xy::end(){
     PrintRadiusThetaTable("wCut");
     PrintRadiusThetaTable("wBgd");
     PrintRadiusThetaTable("wDiv");
+
+
+    cout  << "CollectionName: " << _colName << endl;
+    cout << "BeamcalGeometryFile: " << _beamcal_geometry_file_name << endl;
+    cout << "BackgroundEventList: " << _background_event_list << endl;
+    cout << "BackgroundEventsToRead: " << _num_bgd_events_to_read << endl;
+    cout << "RootOutputName: " << _root_file_name << endl;
+
+
 
 			  //    fout.close();
 
