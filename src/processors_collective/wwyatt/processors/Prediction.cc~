@@ -51,6 +51,7 @@ static TH1F* zmom;
 static TH1F* tmom;
 static TH1F* amom;
 static TH1F* bmom;
+static TH1F* cmom;
 
 
 static vector<double> spread_e;
@@ -90,8 +91,9 @@ void Prediction::init() {
   _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
   zmom=new TH1F("zmom", "Hadronic system energy", 300, 0, 600);
   tmom=new TH1F("tmom", "Hadronic z momentum", 300, -500, 500);  
-  amom=new TH1F("amom", "Energy cuts on Efficiency", 500, 0,.005);
-  bmom=new TH1F("bmom", "Electron +Positron  Energy", 300, 475,510);
+  amom=new TH1F("amom", "Distribution of Deltatheta", 500, 0,.006);
+  bmom=new TH1F("bmom", "Distribution of Deltatheta", 500, 0,.006);
+  cmom=new TH1F("cmom", "Distribution of Deltatheta", 500, 0,.006);
   _nEvt = 0 ;
 }
 
@@ -216,19 +218,26 @@ void Prediction::end(){
   cout << "TOTAL Final Events: " << total << endl; 
   cout << "Misc data: " << meta.MSC << endl;
   //Analyze spread.
-  for(int i =1; i < 50; ++i){
+  for(int i=1; i < 10; ++i){
     //amom
-    double CUT=500/i;
+    double CUT=500.0/(i*i);
     double eff=0.0;
     int _eff=0;
+    if(i==2)cout << "cut on amom " << CUT << endl;
+    if(i==5)cout << "cut on bmom " << CUT << endl;
+    if(i==9)cout << "cut on cmom " << CUT << endl;
     for(auto hit: spread){
       if(abs(hit.first-500) < CUT){
 	eff+=hit.second;
 	++_eff;
+	if(i==2) amom->Fill(hit.second);
+	else if(i==5) bmom->Fill(hit.second);
+	else if(i==9) cmom->Fill(hit.second);
       }
     }
-    cout << "CUT #"<< _eff << "(" << CUT << "): " << eff/_eff <<endl;
-    amom->Fill(eff/_eff);
+    cout << "CUT [" << 500.0-CUT << ", "<< CUT+500.0<< "]: " << eff/_eff <<endl;
+    
+    //amom->Fill(eff/_eff);
   }
   //Efficency
   cout << "Angle Efficiency:" << acc/_acc << " (" << acc/_acc*180/3.14159265 << "deg)"<< endl;

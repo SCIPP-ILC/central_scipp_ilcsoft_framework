@@ -53,7 +53,6 @@ static TH1F* amom;
 static TH1F* bmom;
 static TH1F* cmom;
 
-
 static vector<double> spread_e;
 static vector<double> spread_p;
 static vector<pair<double,double>> spread;
@@ -89,8 +88,8 @@ void Prediction::init() {
   _p_theta = new TH1F("p_theta", "Theta between positron and hadronic system", 360, 0, .1);
   _e_theta = new TH1F("e_theta", "Theta between positron and hadronic system", 360, 0, .1);
   _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
-  zmom=new TH1F("zmom", "Hadronic system energy", 300, 0, 600);
-  tmom=new TH1F("tmom", "Hadronic z momentum", 300, -500, 500);  
+  zmom=new TH1F("zmom", "Hadronic system energy", 300, 490, 500);
+  tmom=new TH1F("tmom", "Theta Distribution", 500, 0, .006);  
   amom=new TH1F("amom", "Distribution of Deltatheta", 500, 0,.006);
   bmom=new TH1F("bmom", "Distribution of Deltatheta", 500, 0,.006);
   cmom=new TH1F("cmom", "Distribution of Deltatheta", 500, 0,.006);
@@ -217,7 +216,17 @@ void Prediction::end(){
   cout << setprecision(4) << "Pred Miss | " << mh << "   |  " << mm << endl;
   cout << "TOTAL Final Events: " << total << endl; 
   cout << "Misc data: " << meta.MSC << endl;
+
+
+
   //Analyze spread.
+  for(auto hit: spread){
+    //The main plot we use is the theta districution (second)
+    tmom->Fill(hit.second);
+    if(abs(hit.first-500)<10){
+      zmom->Fill(hit.first);
+    }
+  }
   for(int i=1; i < 10; ++i){
     //amom
     double CUT=500.0/(i*i);
