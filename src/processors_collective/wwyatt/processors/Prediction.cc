@@ -53,6 +53,9 @@ static TH1F* amom;
 static TH1F* bmom;
 static TH1F* cmom;
 
+static vector<Bundle> results;
+static vector<fourvec> actual;
+static vector<fourvec> predicted;
 static vector<double> spread_e;
 static vector<double> spread_p;
 static vector<pair<double,double>> spread;
@@ -88,11 +91,11 @@ void Prediction::init() {
   _p_theta = new TH1F("p_theta", "Theta between positron and hadronic system", 360, 0, .1);
   _e_theta = new TH1F("e_theta", "Theta between positron and hadronic system", 360, 0, .1);
   _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
-  zmom=new TH1F("zmom", "Hadronic system energy", 300, 490, 500);
+  zmom=new TH1F("zmom", "Hadronic system energy", 500, 400, 530);
   tmom=new TH1F("tmom", "Theta Distribution", 500, 0, .006);  
-  amom=new TH1F("amom", "Distribution of Deltatheta", 500, 0,.006);
-  bmom=new TH1F("bmom", "Distribution of Deltatheta", 500, 0,.006);
-  cmom=new TH1F("cmom", "Distribution of Deltatheta", 500, 0,.006);
+  amom=new TH1F("amom", "Distribution of Theta Energy Above 0", 500, 0,.1);
+  bmom=new TH1F("bmom", "Distribution of Theta Energy Above 480", 500, 0,.1);
+  cmom=new TH1F("cmom", "Distribution of Theta Energy Above 493", 500, 0,.1);
   _nEvt = 0 ;
 }
 
@@ -121,8 +124,11 @@ void Prediction::processEvent( LCEvent * evt ) {
    */
 
 
-
-  if(!data.scattered || data.mag<=1) return;//If there was no scatter, then there is nothing to see.
+  //If there was no scatter, then there is nothing to see.
+  //Also excludes small magnitude events.
+  if(!data.scattered || data.mag<=1) return;
+  //if(!data.scattered) return;
+  
   prediction p(data); //Store prediction vector as variable 'p';
   /* "prediction" will calculate and return two prediction vectors.
    * - electron 
@@ -141,57 +147,16 @@ void Prediction::processEvent( LCEvent * evt ) {
   double electronTheta=getTheta(p.electron); //Angle off of z-axis
   double positronTheta=getTheta(p.positron);
 
-  if(mag>1.0) _prediction->Fill(electronTheta,positronTheta);//Idk what this is.
-
-  //Plotting angles.
-  double p_mag = getMag(electronic);
-  double e_theta=getTheta(electron,p.electron);
-  double p_theta=getTheta(positron,p.positron);
-  //cout << acc << ":" << e_theta << ":" << p_theta<< endl;
-  //Energy cut for testing efficiency
-  double ENERGY=data.positron.e+data.electron.e;
-  //if(abs(500-ENERGY)>.5)return;
+  Bundle bundle;
+  bundle.system_energy=data.positron.e+data.electron.e; //No hadronic energy
   if(data.p_scatter){
-    acc+=p_theta;
-    spread.push_back(pair<double,double>(ENERGY,p_theta));
-    ++_acc;
+    bundle.actual=positron;
+    bundle.predicted=p.positron;
   }else if(data.e_scatter){
-    acc+=e_theta;
-    spread.push_back(pair<double,double>(ENERGY,e_theta));
-    ++_acc;
+    bundle.actual=electron;
+    bundle.predicted=p.electron;
   }
-  _p_theta->Fill(e_theta);
-  _e_theta->Fill(p_theta);
-
-  //Create position vectors
-  fourvec real_e = getBeamcalPosition(data.electron,  1);
-  fourvec pred_p = getBeamcalPosition(p.positron, -1);
-  fourvec real_p = getBeamcalPosition(data.positron, -1);
-  fourvec pred_e = getBeamcalPosition(p.electron,  1);
-
-  //The following is a for a hit miss table to test efficiancy.
-  //These booleans are true if the particle had hit.
-  bool actual_electron=get_hitStatus(real_e)<3;
-  bool actual_positron=get_hitStatus(real_p)<3;
-  bool predicted_electron=get_hitStatus(pred_e)<3;
-  bool predicted_positron=get_hitStatus(pred_p)<3;
-  ++total;
-  if(data.p_scatter){
-    if(actual_positron&&predicted_positron)ph_th++;
-    else if( actual_positron && !predicted_positron)pm_th++;
-    else if(!actual_positron &&  predicted_positron)ph_tm++;
-    else if(!actual_positron && !predicted_positron)pm_tm++;
-    p_scatter++;
-  }else if(data.e_scatter){
-    if(actual_electron&&predicted_electron)ph_th++;
-    else if( actual_electron && !predicted_electron)pm_th++;
-    else if(!actual_electron &&  predicted_electron)ph_tm++;
-    else if(!actual_electron && !predicted_electron)pm_tm++;	
-    e_scatter++;
-  }else{
-    cout << "ERROR 42: Particle broke god." << endl;
-  }
-
+  results.push_back(bundle);
 }
 
 void Prediction::check( LCEvent * evt ) { 
@@ -202,53 +167,54 @@ void Prediction::check( LCEvent * evt ) {
 
 void Prediction::end(){ 
   Will::META meta = Will::getMETA();
-  cout << "Predicted Z-Direction Errors:" << meta.err_direction << endl;
-  cout << "Scatter Ratios:"<<endl;
-  cout << "(positrons:electrons)\t= " << p_scatter << ":"<<e_scatter<<endl;
-  cout << "(scattered:not-scattered)\t= " << meta.SCATTERS << ":" << meta.NOSCATTERS << endl;
-  int sum = ph_th+ph_tm+pm_th+pm_tm;
-  double hh=1.0*ph_th/sum;
-  double hm=1.0*ph_tm/sum;
-  double mh=1.0*pm_th/sum;
-  double mm=1.0*pm_tm/sum;
-  cout << "          | Truth Hit | Truth Miss" << endl;
-  cout << setprecision(4) << "Pred Hit  | " << hh << "   |  " << hm << endl;
-  cout << setprecision(4) << "Pred Miss | " << mh << "   |  " << mm << endl;
-  cout << "TOTAL Final Events: " << total << endl; 
-  cout << "Misc data: " << meta.MSC << endl;
-
-
-
-  //Analyze spread.
-  for(auto hit: spread){
-    //The main plot we use is the theta districution (second)
-    tmom->Fill(hit.second);
-    if(abs(hit.first-500)<10){
-      zmom->Fill(hit.first);
-    }
-  }
-  for(int i=1; i < 10; ++i){
-    //amom
-    double CUT=500.0/(i*i);
-    double eff=0.0;
-    int _eff=0;
-    if(i==2)cout << "cut on amom " << CUT << endl;
-    if(i==5)cout << "cut on bmom " << CUT << endl;
-    if(i==9)cout << "cut on cmom " << CUT << endl;
-    for(auto hit: spread){
-      if(abs(hit.first-500) < CUT){
-	eff+=hit.second;
-	++_eff;
-	if(i==2) amom->Fill(hit.second);
-	else if(i==5) bmom->Fill(hit.second);
-	else if(i==9) cmom->Fill(hit.second);
-      }
-    }
-    cout << "CUT [" << 500.0-CUT << ", "<< CUT+500.0<< "]: " << eff/_eff <<endl;
+  /*
     
-    //amom->Fill(eff/_eff);
+    cout << "Scatter Ratios:"<<endl;
+    cout << "(positrons:electrons)\t= " << p_scatter << ":"<<e_scatter<<endl;
+    cout << "Misc data: " << meta.MSC << endl;
+  */
+  //General Analysis
+  cout << "Predicted Z-Direction Errors:" << meta.err_direction << endl;
+
+  cout << "(scattered:not-scattered)\t= " << meta.SCATTERS << ":" << meta.NOSCATTERS << endl;  
+  cout << "Bundles Collected:" << results.size() << endl;
+  cout << endl;
+  cout << "Energy Above " << 0 << endl;
+  printHMGrid(results);
+  cout << endl;
+  cout << "Energy Above " << 480 << endl;
+  printHMGrid(results, 480);
+  cout << endl;
+  cout << "Energy Above " << 493 << endl;
+  printHMGrid(results, 493);
+  for(Bundle bundle: results){
+    if(bundle.system_energy > 0)
+      amom->Fill(getTheta(bundle.actual, bundle.predicted));
+    if(bundle.system_energy > 480)
+      bmom->Fill(getTheta(bundle.actual, bundle.predicted));
+    if(bundle.system_energy > 493)
+      cmom->Fill(getTheta(bundle.actual, bundle.predicted));
   }
-  //Efficency
-  cout << "Angle Efficiency:" << acc/_acc << " (" << acc/_acc*180/3.14159265 << "deg)"<< endl;
+
+  //HM Grids
+  //This for loop will find out when the algorithm becomes very accurate
+  //The sweet spot is somewhere between 480 and 493.8 GeV
+  /*
+  int len=10;
+  double start = 480;
+  double end = 492;
+  double step=(end-start)/len;
+  for(int i=0; i < len; ++i){
+    double current_cut=start+step*i;
+    cout << "Energy above "<< current_cut << endl;
+    printHMGrid(results, current_cut);
+  }
+  */
+
+  //Get energy Distribution
+  for(Bundle bundle:results){
+    zmom->Fill(bundle.system_energy);
+  }
+  
   _rootfile->Write();
 }

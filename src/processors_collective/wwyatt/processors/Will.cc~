@@ -297,6 +297,7 @@ fourvec Will::transform_to_lab(fourvec input){
   return out;
 }
 
+
 fourvec Will::transform_to_lab(MCParticle* input){
   return transform_to_lab(getFourVector(input));
 }
@@ -345,3 +346,19 @@ void Will::print(string input, string input2){
 }
 
 META Will::getMETA(){return meta;}
+
+hmgrid Will::calculateHM(vector<fourvec> predicted, vector<fourvec> actual){
+  hmgrid output;
+  //Create position vectors
+  for(int i=0; i < predicted.size(); ++i){
+    fourvec real=getBeamcalPosition(actual[i]);
+    fourvec pred=getBeamcalPosition(predicted[i]);
+    bool hit_real=get_hitStatus(real)<3;
+    bool hit_pred=get_hitStatus(pred)<3;
+    if     (  hit_real &&  hit_pred )output.hh++;
+    else if( !hit_real &&  hit_pred )output.mh++;
+    else if(  hit_real && !hit_pred )output.hm++;
+    else if( !hit_real && !hit_pred )output.mm++;
+  }
+  return output;
+}

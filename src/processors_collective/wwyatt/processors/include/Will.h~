@@ -82,7 +82,20 @@ namespace Will{
     prediction( measure );
   };
   
+  struct hmgrid{
+    int hh=0;
+    int hm=0;
+    int mh=0;
+    int mm=0;
+  }
 
+  //In order to plot a HM grid I need an indexed set of all predicted and actual particles.
+  struct hminput{
+    vector<fourvec> predicted_positron;
+    vector<fourvec> predicted_electron;
+    vector<fourvec> actual_positron;
+    vector<fourvec> actual_electron;
+  }
   //Keep track of numbers for debugging.
   struct META{
     int SCATTERS=0;
@@ -169,13 +182,10 @@ namespace Will{
    //Returns a position fourvec, of the particle on the face of the beamcal.
    fourvec getBeamcalPosition(fourvec, signed short = 0);
 
+   hmgrid calculateHM(vector<fourvec>, vector<fourvec>){
+
    //Python version of cout. I don't use these.
    void print(string );
    void print(string , string );
-
-   void getJane(LCCollection * );
-   // x += 9 <=> x = x+9
-   // 
-   // x + 1
 }
 #endif

@@ -1,6 +1,10 @@
 #include <Will.h>
 #include "scipp_ilc_globals.h"
 #include <sstream>
+#include <iostream>
+#include <TFile.h>
+#include <TH1F.h>
+
 using namespace Will;
 fourvec fourvec::operator+(const fourvec& a) const{
   return fourvec(
@@ -269,22 +273,19 @@ measure Will::getMeasure(LCCollection* col){
     int count = 0;
     short n_hadrons = hadronic_system.size();
     out.mag += getTMag(out.pseudo);    
-    //out.pseudo /= n_hadrons;
     for(auto particle: hadronic_system){
       fourvec hadron = getFourVector(particle);
       const double angle = 0.5; //Cutting angle
+      int id=particle->getPDG();
+      //if(id==12||id==14||id==16||id==18|| (id>=1000001 && id<=1000039))continue;
       if(true || abs(hadron.z/getMag(hadron)) < angle ){
 	++count;
-	//cout << "W iter : "<< getMag(out.hadronic) << endl;
 	out.hadronic += (hadron+=out.pseudo*(hadron.E/total_energy));
 	//out.hadronic += hadron;
       }
     }
-    //cout << "W count : " << count << endl;
     //out.hadronic+=out.pseudo;
-    
   }
-  //if (out.scattered) cout << "will " << out.hadronic.e << " : " << out.hadronic.z << endl;
   out.scattered ? meta.SCATTERS++ : meta.NOSCATTERS++; //Accounting for later statistical use.
   return out;
 }
@@ -296,6 +297,7 @@ fourvec Will::transform_to_lab(fourvec input){
   fourvec out(px,input.y,input.z,e);
   return out;
 }
+
 
 fourvec Will::transform_to_lab(MCParticle* input){
   return transform_to_lab(getFourVector(input));
@@ -318,18 +320,10 @@ fourvec Will::getBeamcalPosition(const fourvec input, signed short dir){
   fourvec pos;
   //Positron moves in -z direction
   double direction = lab.z / abs(lab.z);
- 
-  if(dir!=direction){
-    //figure out why
+  if(dir != 0 && dir != direction){
     meta.err_direction++;
-    //cout << "should:is  " << dir << ":" << direction << endl;
-    //cout << getTMag(input) << " : " << input.z<< endl;
-    
-    //cout << "^^^^ ^^^^" << endl;
     direction = dir;
   }
-  else direction = dir;
-  direction=dir;
   pos.z = META::BEAMCAL * direction;
   pos.x = lab.x * pos.z / lab.z + pos.z * .007 * (-direction);
   pos.y = lab.y * pos.z / lab.z;
@@ -345,3 +339,60 @@ void Will::print(string input, string input2){
 }
 
 META Will::getMETA(){return meta;}
+
+hmgrid Will::getHMGrid(vector<fourvec> predicted, vector<fourvec> actual){
+  hmgrid output;
+  //Create position vectors
+  for(unsigned int i=0; i < predicted.size(); ++i){
+    recordHMValue(output, predicted[i], actual[i]);
+  }
+  return output;
+}
+
+//Calculates a HM grid with the option of an energy cut.
+hmgrid Will::getHMGrid(vector<Bundle> input, double energy_cut){
+  hmgrid output;
+  for(Bundle bundle: input){
+    if(bundle.system_energy>energy_cut)
+      recordHMValue(output, bundle.predicted, bundle.actual);
+  }
+  return output;
+}
+//Sees if the predicted and actual vector hit the beamcal, records the results in a hmgrid object.
+void Will::recordHMValue(hmgrid &output, fourvec predicted, fourvec actual){
+  fourvec real=getBeamcalPosition(actual);
+  fourvec pred=getBeamcalPosition(predicted);
+  bool hit_real=get_hitStatus(real)<3;
+  bool hit_pred=get_hitStatus(pred)<3;
+  if     (  hit_pred &&  hit_real )output.hh++;
+  else if( !hit_pred &&  hit_real )output.mh++;
+  else if(  hit_pred && !hit_real )output.hm++;
+  else if( !hit_pred && !hit_real )output.mm++;
+}
+void Will::printHMGrid(vector<fourvec> pred, vector<fourvec> actual){
+  printHMGrid(getHMGrid(pred,actual));
+}
+void Will::printHMGrid(vector<Bundle> input, double energy_cut){
+  printHMGrid(getHMGrid(input, energy_cut));
+}
+
+void Will::printHMGrid(hmgrid input){
+  double sum=input.hh+input.hm+input.mh+input.mm;
+  cout << "Total Events in HM Grid: " << sum << endl;
+  cout << "          | Truth Hit | Truth Miss" << endl;
+  cout << "Pred Hit  | " << input.hh/sum << "   |  " << input.hm/sum << endl;
+  cout << "Pred Miss | " << input.mh/sum << "   |  " << input.mm/sum << endl;
+}
+
+TH1F* Will::getDistribution(string name,vector<Bundle> input, double energy_cut, double upper_bound){
+  stringstream strs;
+  strs << energy_cut;
+  string cut = strs.str();
+  string title="Theta Distribution Above "+cut;
+  TH1F* output=new TH1F(name.c_str(),title.c_str(),300,0.0,upper_bound);
+  for(Bundle bundle: input){
+    if(bundle.system_energy > energy_cut)
+      output->Fill(getTheta(bundle.actual, bundle.predicted));
+  }
+  return output;
+}

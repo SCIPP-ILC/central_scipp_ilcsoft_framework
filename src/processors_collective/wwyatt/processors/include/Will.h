@@ -56,6 +56,14 @@ namespace Will{
     fourvec(const double,const double,const double,const double,const double);
     fourvec(const double*,const unsigned short SIZE);
   };
+  
+  //Used for analyzing efficency
+  //This object makes analyzing energy cuts easy.
+  struct Bundle{
+    fourvec predicted;
+    fourvec actual;
+    double system_energy;
+  };
 
   //This is used to store all the vectors needed in two-photon analysis.
   struct measure{
@@ -82,6 +90,14 @@ namespace Will{
     prediction( measure );
   };
   
+  //Used to store data about a HM Grid
+  //This is an analysis tool.
+  struct hmgrid{
+    int hh=0;
+    int hm=0;
+    int mh=0;
+    int mm=0;
+  };
 
   //Keep track of numbers for debugging.
   struct META{
@@ -168,6 +184,22 @@ namespace Will{
    
    //Returns a position fourvec, of the particle on the face of the beamcal.
    fourvec getBeamcalPosition(fourvec, signed short = 0);
+
+   //Calculates a HM Grid and stores it in a hmgrid object.
+   hmgrid getHMGrid(vector<fourvec> predicted, vector<fourvec> actual);
+   void printHMGrid(vector<fourvec> predicted, vector<fourvec> actual);
+   void printHMGrid(hmgrid);
+
+   //Calculates a HM grid with the option of an energy cut.
+   hmgrid getHMGrid(vector<Bundle> input, double energy_cut=0.0);   
+   void printHMGrid(vector<Bundle> input, double energy_cut=0.0);
+   
+   //Helper function when calculating the HM Grid,
+   //this is the code that checks to see if the particle hit the beamcal.
+   void recordHMValue(hmgrid &output, fourvec predicted, fourvec actual);
+
+   //Gets a graph of the angle distribution.
+   TH1F* getDistribution(string name,vector<Bundle> input, double energy_cut=0.0, double upper_bound=0.006);
 
    //Python version of cout. I don't use these.
    void print(string );
