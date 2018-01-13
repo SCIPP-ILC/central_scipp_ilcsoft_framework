@@ -91,7 +91,7 @@ void Prediction::init() {
   _p_theta = new TH1F("p_theta", "Theta between positron and hadronic system", 360, 0, .1);
   _e_theta = new TH1F("e_theta", "Theta between positron and hadronic system", 360, 0, .1);
   _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
-  zmom=new TH1F("zmom", "Hadronic system energy", 500, 400, 530);
+  zmom=new TH1F("zmom", "Hadronic system energy", 500, 499, 501);
   tmom=new TH1F("tmom", "Theta Distribution", 500, 0, .006);  
   amom=new TH1F("amom", "Distribution of Theta Energy Above 0", 500, 0,.1);
   bmom=new TH1F("bmom", "Distribution of Theta Energy Above 480", 500, 0,.1);
@@ -148,7 +148,7 @@ void Prediction::processEvent( LCEvent * evt ) {
   double positronTheta=getTheta(p.positron);
 
   Bundle bundle;
-  bundle.system_energy=data.positron.e+data.electron.e; //No hadronic energy
+  bundle.system_energy=data.positron.e+data.electron.e+data.hadronic_nopseudo.e; //No hadronic energy
   if(data.p_scatter){
     bundle.actual=positron;
     bundle.predicted=p.positron;
