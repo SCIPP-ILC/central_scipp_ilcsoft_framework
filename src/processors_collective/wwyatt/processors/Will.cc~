@@ -275,14 +275,14 @@ measure Will::getMeasure(LCCollection* col){
     out.mag += getTMag(out.pseudo);    
     for(auto particle: hadronic_system){
       fourvec hadron = getFourVector(particle);
-      const double angle = 0.5; //Cutting angle
-      int id=particle->getPDG();
+      ++count;
+      out.hadronic += (hadron+=out.pseudo*(hadron.E/total_energy));
+      //int id=particle->getPDG();
+      //const double angle = 0.5; //Cutting angle
       //if(id==12||id==14||id==16||id==18|| (id>=1000001 && id<=1000039))continue;
-      if(true || abs(hadron.z/getMag(hadron)) < angle ){
-	++count;
-	out.hadronic += (hadron+=out.pseudo*(hadron.E/total_energy));
+      //      if(true || abs(hadron.z/getMag(hadron)) < angle ){
 	//out.hadronic += hadron;
-      }
+      //}
     }
     //out.hadronic+=out.pseudo;
   }
@@ -320,10 +320,12 @@ fourvec Will::getBeamcalPosition(const fourvec input, signed short dir){
   fourvec pos;
   //Positron moves in -z direction
   double direction = lab.z / abs(lab.z);
-  if(dir != 0 && dir != direction){
+  /*  if(dir != 0 && dir != direction){
     meta.err_direction++;
     direction = dir;
-  }
+  }else{
+
+  }*/
   pos.z = META::BEAMCAL * direction;
   pos.x = lab.x * pos.z / lab.z + pos.z * .007 * (-direction);
   pos.y = lab.y * pos.z / lab.z;

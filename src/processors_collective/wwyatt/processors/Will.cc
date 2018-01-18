@@ -259,33 +259,33 @@ measure Will::getMeasure(LCCollection* col){
     }
   }
   out.hadronic_nopseudo=out.hadronic;
-  if(out.scattered){
-    //PSEUDO PARTICLE
-    out.pseudo=*(new fourvec(
-		       -(out.hadronic.x+out.electronic.x),
-		       -(out.hadronic.y+out.electronic.y) ));
-    out.hadronic.x=0;
-    out.hadronic.y=0;
-    double total_energy=out.hadronic.E;
-    out.hadronic.z=0;
-    out.hadronic.e=0;
-    out.hadronic.t=0;
-    int count = 0;
-    short n_hadrons = hadronic_system.size();
-    out.mag += getTMag(out.pseudo);    
-    for(auto particle: hadronic_system){
-      fourvec hadron = getFourVector(particle);
-      ++count;
-      out.hadronic += (hadron+=out.pseudo*(hadron.E/total_energy));
-      //int id=particle->getPDG();
-      //const double angle = 0.5; //Cutting angle
-      //if(id==12||id==14||id==16||id==18|| (id>=1000001 && id<=1000039))continue;
-      //      if(true || abs(hadron.z/getMag(hadron)) < angle ){
-	//out.hadronic += hadron;
-      //}
-    }
-    //out.hadronic+=out.pseudo;
+ 
+  //PSEUDO PARTICLE
+  out.pseudo=*(new fourvec(
+			   -(out.hadronic.x+out.positron.x+out.electron.y),
+			   -(out.hadronic.y+out.positron.y+out.electron.y) ));
+  out.hadronic.x=0;
+  out.hadronic.y=0;
+  double total_energy=out.hadronic.E;
+  out.hadronic.z=0;
+  out.hadronic.e=0;
+  out.hadronic.t=0;
+  int count = 0;
+  short n_hadrons = hadronic_system.size();
+  out.mag += getTMag(out.pseudo);    
+  for(auto particle: hadronic_system){
+    fourvec hadron = getFourVector(particle);
+    ++count;
+    out.hadronic += (hadron+=out.pseudo*(hadron.E/total_energy));
+    //int id=particle->getPDG();
+    //const double angle = 0.5; //Cutting angle
+    //if(id==12||id==14||id==16||id==18|| (id>=1000001 && id<=1000039))continue;
+    //      if(true || abs(hadron.z/getMag(hadron)) < angle ){
+    //out.hadronic += hadron;
+    //}
   }
+  //out.hadronic+=out.pseudo;
+ 
   out.scattered ? meta.SCATTERS++ : meta.NOSCATTERS++; //Accounting for later statistical use.
   return out;
 }
@@ -320,12 +320,7 @@ fourvec Will::getBeamcalPosition(const fourvec input, signed short dir){
   fourvec pos;
   //Positron moves in -z direction
   double direction = lab.z / abs(lab.z);
-  /*  if(dir != 0 && dir != direction){
-    meta.err_direction++;
-    direction = dir;
-  }else{
-
-  }*/
+  if(dir != 0 && dir != direction) meta.err_direction++;
   pos.z = META::BEAMCAL * direction;
   pos.x = lab.x * pos.z / lab.z + pos.z * .007 * (-direction);
   pos.y = lab.y * pos.z / lab.z;
@@ -355,7 +350,7 @@ hmgrid Will::getHMGrid(vector<fourvec> predicted, vector<fourvec> actual){
 hmgrid Will::getHMGrid(vector<Bundle> input, double energy_cut){
   hmgrid output;
   for(Bundle bundle: input){
-    if(bundle.system_energy>energy_cut)
+    if(bundle.system_energy>=energy_cut)
       recordHMValue(output, bundle.predicted, bundle.actual);
   }
   return output;

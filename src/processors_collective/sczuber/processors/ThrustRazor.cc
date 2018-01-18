@@ -1,19 +1,6 @@
 #undef _GLIBCXX_USE_CXX11_ABI
 #define _GLIBCXX_USE_CXX11_ABI 0
 /* 
- * Ok, so I like C++11. Unfortunately,
- * Marlin is built with ansi C, so the processor
- * constructor freaks out about the string that is
- * passed to it as an argument. The above two lines
- * fix that issue, allowing our code to be compatible
- * with ansi C class declarations.
- * Big thanks to Daniel Bittman for helping me fix this.
- */
-
-/*
- * author Christopher Milke
- * April 5, 2016
- *
  * author Summer Zuber 
  * January 18, 2017 
  *

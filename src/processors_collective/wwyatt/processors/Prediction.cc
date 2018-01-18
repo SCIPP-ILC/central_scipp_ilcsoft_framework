@@ -1,4 +1,4 @@
-#undef _GLIBCXX_USE_CXX11_ABI
+B1;95;0c#undef _GLIBCXX_USE_CXX11_ABI
 #define _GLIBCXX_USE_CXX11_ABI 0
 /* 
  * Ok, so I like C++11. Unfortunately,
@@ -67,8 +67,9 @@ static int ph_tm = 0;
 static int pm_th = 0;
 static int pm_tm = 0;
 static int total = 0;
-static double acc = 0.0;
-static int _acc=0;
+
+static int photons=0;
+static int nphotons=0;
 Prediction::Prediction() : Processor("Prediction") {
   // modify processor description
   _description = "Protype Processor" ;
@@ -92,7 +93,7 @@ void Prediction::init() {
   _e_theta = new TH1F("e_theta", "Theta between positron and hadronic system", 360, 0, .1);
   _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
   zmom=new TH1F("zmom", "Hadronic system energy", 500, 499, 501);
-  tmom=new TH1F("tmom", "Theta Distribution", 500, 0, .006);  
+  tmom=new TH1F("tmom", "Photon Energy Distribution", 500, 0, 100);  
   amom=new TH1F("amom", "Distribution of Theta Energy Above 0", 500, 0,.1);
   bmom=new TH1F("bmom", "Distribution of Theta Energy Above 480", 500, 0,.1);
   cmom=new TH1F("cmom", "Distribution of Theta Energy Above 493", 500, 0,.1);
@@ -126,9 +127,28 @@ void Prediction::processEvent( LCEvent * evt ) {
 
   //If there was no scatter, then there is nothing to see.
   //Also excludes small magnitude events.
-  if(!data.scattered || data.mag<=1) return;
+  if(data.mag<=1) return;
   //if(!data.scattered) return;
-  
+  MCParticle* max_photon=NULL;
+  for(int i=0; i < col->getNumberOfElements(); ++i){
+    MCParticle* particle=dynamic_cast<MCParticle*>(col->getElementAt(i));
+    int pid=particle->getPDG();
+    if(pid==22){
+      photons++;
+      vector<MCParticle *> parents=particle->getParents();
+      for(auto parent:parents){
+	if(parent->getPDG()==111){
+	  nphotons++;
+	  continue;
+	}
+	if(max_photon==NULL || max_photon->getEnergy()<particle->getEnergy())
+	  max_photon=particle;
+      }
+    }
+  }
+  if(max_photon!=NULL)
+    tmom->Fill(max_photon->getEnergy());
+
   prediction p(data); //Store prediction vector as variable 'p';
   /* "prediction" will calculate and return two prediction vectors.
    * - electron 
@@ -174,6 +194,8 @@ void Prediction::end(){
     cout << "Misc data: " << meta.MSC << endl;
   */
   //General Analysis
+  cout << "total photons: " << photons << endl;
+  cout << "Photons with pi-0 parent: " << nphotons << endl;
   cout << "Predicted Z-Direction Errors:" << meta.err_direction << endl;
 
   cout << "(scattered:not-scattered)\t= " << meta.SCATTERS << ":" << meta.NOSCATTERS << endl;  
@@ -181,19 +203,8 @@ void Prediction::end(){
   cout << endl;
   cout << "Energy Above " << 0 << endl;
   printHMGrid(results);
-  cout << endl;
-  cout << "Energy Above " << 480 << endl;
-  printHMGrid(results, 480);
-  cout << endl;
-  cout << "Energy Above " << 493 << endl;
-  printHMGrid(results, 493);
   for(Bundle bundle: results){
-    if(bundle.system_energy > 0)
       amom->Fill(getTheta(bundle.actual, bundle.predicted));
-    if(bundle.system_energy > 480)
-      bmom->Fill(getTheta(bundle.actual, bundle.predicted));
-    if(bundle.system_energy > 493)
-      cmom->Fill(getTheta(bundle.actual, bundle.predicted));
   }
 
   //HM Grids
