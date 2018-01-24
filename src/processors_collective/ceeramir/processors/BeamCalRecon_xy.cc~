@@ -252,7 +252,16 @@ void BeamCalRecon_xy::PrintRadiusThetaTable(string key){//, ofstream fout){//str
     double div = 0.0;
     double one = 1.0;
 
+    // ************************************************************************************************
+    char buffer [100];
+    int cx;
 
+    //    cx = snprintf ( buffer, 100, "The half of %d is %f", 60, 61.0/2 );
+    //    if (cx>=0 && cx<100)      // check returned value
+    //      snprintf ( buffer+cx, 100-cx, ", and the half of that is %f.", 61.0/2/2 );
+    //    puts (buffer);
+
+    // ************************************************************************************************
     ofstream fout;
     fout.open("output.txt");
     if (fout.fail()){
@@ -324,7 +333,11 @@ void BeamCalRecon_xy::PrintRadiusThetaTable(string key){//, ofstream fout){//str
 		  else{
 		  printf ("%4.3f",div);
 		  //		  printf (append("%4.3f",div));
-		  fout << "N/A";
+		  //		  fout << "N/A";
+		  cx = snprintf ( buffer, 100, "%4.3f",div);
+		  //		  puts (buffer);
+		  fout << buffer;
+
 		  }
 	        }
 	      else{
@@ -642,26 +655,11 @@ void BeamCalRecon_xy::end(){
     PrintRadiusThetaTable("wDiv");
 
 
-
-
-
-    registerInputCollection( LCIO::MCPARTICLE, "CollectionName" , "Name of the MCParticle collection"  , _colName , std::string("MCParticle") );
-    registerProcessorParameter( "BeamcalGeometryFile" , "input file"  , _beamcal_geometry_file_name , std::string("input.xml") ) ;
-    registerProcessorParameter( "BackgroundEventList" , "input file"  , _background_event_list , std::string("input.xml") ) ;
-    registerProcessorParameter( "BackgroundEventsToRead" , "number"  , _num_bgd_events_to_read , 10 ) ;
-    registerProcessorParameter( "RootOutputName" , "output file"  , _root_file_name , std::string("output.root") );
-
-
-
-
-    cout << _colName << endl;
-    cout << _beamcal_geometry_file_name << endl;
-    cout << _background_event_list << endl;
-    cout << _num_bgd_events_to_read << endl;
-    cout << _root_file_name << endl;
-
-
-
+    cout  << "CollectionName: " << _colName << endl;
+    cout << "BeamcalGeometryFile: " << _beamcal_geometry_file_name << endl;
+    cout << "BackgroundEventList: " << _background_event_list << endl;
+    cout << "BackgroundEventsToRead: " << _num_bgd_events_to_read << endl;
+    cout << "RootOutputName: " << _root_file_name << endl;
 
 
 

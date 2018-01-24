@@ -68,8 +68,8 @@ class JetRazor : public Processor {
         /** Called after data processing for clean up.
         */
         virtual void end() ;
-        JetFinder(Double_t ycut = 0.);
-        virtual ~JetFinder();
+        JetRazor(Double_t ycut = 0.); //changed from JetFinder 
+        virtual ~JetRazor(); // changed from JetFinder 
 
         void setPartList(TObjArray* e);    // Input the particle 4(3)-vector list
         // e: 4-vector  TLorentzVector ..(px,py,pz,E) or
@@ -119,24 +119,25 @@ class JetRazor : public Processor {
 
         /** Input collection name.
         */
+        int _typeofJetFinder; 
+        int _jetDetectability; 
+        
         std::string _colName ;
         std::string _root_file_name;
-        int TassoThrustRazor();
-        int JetsetJetRazor();
         double sign(double a,double b);
         double min(double a,double b);
 
         /** Input collection name.
         */
-        std::string partMomCheck;
+        std::string parpCheck;
         std::string betaCheck;
 
-        bool partMom1;
-        bool partMom0; 
+        bool parp1;
+        bool parp0; 
 
         float _min,_max;
         LCCollection* _inParVec;
-        std::vector<Hep3Vector> _partMom;
+        std::vector<Hep3Vector> _parp;
         std::string filename;
         RanluxEngine myrnd;
 
@@ -145,7 +146,7 @@ class JetRazor : public Processor {
 
         TObjArray* m_4vec;
 
-        ClassDef(JetFinder,1) // Jetfinder base class   
+        //ClassDef(JetFinder,1) // Jetfinder base class   
 };
 
 #endif

@@ -251,7 +251,8 @@ void BeamCalRecon_xy::PrintRadiusThetaTable(string key){//, ofstream fout){//str
     int width = _arr_width;
     double div = 0.0;
     double one = 1.0;
-
+    char buffer [100];
+    int cx;
 
     ofstream fout;
     fout.open("output.txt");
@@ -324,7 +325,11 @@ void BeamCalRecon_xy::PrintRadiusThetaTable(string key){//, ofstream fout){//str
 		  else{
 		  printf ("%4.3f",div);
 		  //		  printf (append("%4.3f",div));
-		  fout << "N/A";
+		  //		  fout << "N/A";
+		  cx = snprintf ( buffer, 100, "%4.3f",div);
+		  //		  puts (buffer);
+		  fout << buffer;
+
 		  }
 	        }
 	      else{
