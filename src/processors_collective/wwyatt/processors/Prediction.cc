@@ -1,4 +1,4 @@
-B1;95;0c#undef _GLIBCXX_USE_CXX11_ABI
+#undef _GLIBCXX_USE_CXX11_ABI
 #define _GLIBCXX_USE_CXX11_ABI 0
 /* 
  * Ok, so I like C++11. Unfortunately,
@@ -32,8 +32,6 @@ B1;95;0c#undef _GLIBCXX_USE_CXX11_ABI
 // ----- include for verbosity dependend logging ---------
 #include "marlin/VerbosityLevels.h"
 
-
-
 using namespace lcio;
 using namespace marlin;
 using namespace std;
@@ -44,6 +42,7 @@ Prediction Prediction;
 
 static TFile* _rootfile;
 static TH2F* _prediction;
+static TH2F* _observe;
 static TH1F* _vector;
 static TH1F* _p_theta;
 static TH1F* _e_theta;
@@ -89,14 +88,14 @@ void Prediction::init() {
   //usually a good idea to
   //printParameters() ;
   _prediction = new TH2F("predict", "Predicted Angle of Scatter, Correct vs Incorrect Kinematics", 1000, 0.0, 0.01, 1000, 0.0, 0.01);
+  _observe = new TH2F("energy", "B vs System Energy", 1000, 0.0, 10, 1000, 0.0, 525);
   _p_theta = new TH1F("p_theta", "Theta between positron and hadronic system", 360, 0, .1);
   _e_theta = new TH1F("e_theta", "Theta between positron and hadronic system", 360, 0, .1);
   _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
-  zmom=new TH1F("zmom", "Hadronic system energy", 500, 499, 501);
-  tmom=new TH1F("tmom", "Photon Energy Distribution", 500, 0, 100);  
+  zmom=new TH1F("zmom", "Hadronic system energy", 500, 300, 550);
+  tmom=new TH1F("tmom", "B=P/E for Hadronic System", 500, 0, 10);
   amom=new TH1F("amom", "Distribution of Theta Energy Above 0", 500, 0,.1);
   bmom=new TH1F("bmom", "Distribution of Theta Energy Above 480", 500, 0,.1);
-  cmom=new TH1F("cmom", "Distribution of Theta Energy Above 493", 500, 0,.1);
   _nEvt = 0 ;
 }
 
@@ -146,8 +145,7 @@ void Prediction::processEvent( LCEvent * evt ) {
       }
     }
   }
-  if(max_photon!=NULL)
-    tmom->Fill(max_photon->getEnergy());
+    
 
   prediction p(data); //Store prediction vector as variable 'p';
   /* "prediction" will calculate and return two prediction vectors.
@@ -177,6 +175,14 @@ void Prediction::processEvent( LCEvent * evt ) {
     bundle.predicted=p.electron;
   }
   results.push_back(bundle);
+  if(max_photon!=NULL){
+    tmom->Fill(max_photon->getEnergy());
+    double tot_energy= data.electron.e+data.positron.e+data.hadronic.e;
+    double b=getMag(data.hadronic)/data.hadronic.e;
+    _observe->Fill(b, tot_energy);
+    zmom->Fill(tot_energy);
+    tmom->Fill(b);
+  }
 }
 
 void Prediction::check( LCEvent * evt ) { 
@@ -224,7 +230,7 @@ void Prediction::end(){
 
   //Get energy Distribution
   for(Bundle bundle:results){
-    zmom->Fill(bundle.system_energy);
+
   }
   
   _rootfile->Write();

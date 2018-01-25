@@ -1,0 +1,19 @@
+need to input TObjArray of 
+TLorentzVector to setPartList
+
+processEvent:
+    loop through particles:
+        create the list _parp of particle momentum's for either ded, dab, tru
+
+    need to find two jets based on _parp
+    
+    
+    
+    
+    
+findParDetectability:
+    finds the detectability of the particle
+    returns 0,1 or 2
+    
+
+better to keep JetFinder in own file.    

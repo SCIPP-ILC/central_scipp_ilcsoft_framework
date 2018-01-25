@@ -68,7 +68,7 @@ class JetRazor : public Processor {
         /** Called after data processing for clean up.
         */
         virtual void end() ;
-        JetRazor(Double_t ycut = 0.); //changed from JetFinder 
+        //JetRazor(Double_t ycut = 0.); //changed from JetFinder 
         virtual ~JetRazor(); // changed from JetFinder 
 
         void setPartList(TObjArray* e);    // Input the particle 4(3)-vector list
@@ -150,6 +150,3 @@ class JetRazor : public Processor {
 };
 
 #endif
-
-
-
