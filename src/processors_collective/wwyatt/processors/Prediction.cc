@@ -88,12 +88,12 @@ void Prediction::init() {
   //usually a good idea to
   //printParameters() ;
   _prediction = new TH2F("predict", "Predicted Angle of Scatter, Correct vs Incorrect Kinematics", 1000, 0.0, 0.01, 1000, 0.0, 0.01);
-  _observe = new TH2F("energy", "B vs System Energy", 1000, 0.0, 10, 1000, 0.0, 525);
+  _observe = new TH2F("energy", "B vs System Energy", 1000, 0.0, 1.5, 1000, 0.0, 525);
   _p_theta = new TH1F("p_theta", "Theta between positron and hadronic system", 360, 0, .1);
   _e_theta = new TH1F("e_theta", "Theta between positron and hadronic system", 360, 0, .1);
   _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
-  zmom=new TH1F("zmom", "Hadronic system energy", 500, 300, 550);
-  tmom=new TH1F("tmom", "B=P/E for Hadronic System", 500, 0, 10);
+  zmom=new TH1F("zmom", "Hadronic system energy", 500, 450, 550);
+  tmom=new TH1F("tmom", "B=P/E for Hadronic System", 500, 0, 1.5);
   amom=new TH1F("amom", "Distribution of Theta Energy Above 0", 500, 0,.1);
   bmom=new TH1F("bmom", "Distribution of Theta Energy Above 480", 500, 0,.1);
   _nEvt = 0 ;
@@ -176,12 +176,13 @@ void Prediction::processEvent( LCEvent * evt ) {
   }
   results.push_back(bundle);
   if(max_photon!=NULL){
-    tmom->Fill(max_photon->getEnergy());
     double tot_energy= data.electron.e+data.positron.e+data.hadronic.e;
-    double b=getMag(data.hadronic)/data.hadronic.e;
+    double b=getMag(data.hadronic_nopseudo)/data.hadronic_nopseudo.e;
+      tmom->Fill(b);
+
     _observe->Fill(b, tot_energy);
     zmom->Fill(tot_energy);
-    tmom->Fill(b);
+
   }
 }
 
