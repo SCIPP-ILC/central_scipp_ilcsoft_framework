@@ -28,7 +28,7 @@
 // #include <CLHEP/Vector/ThreeVector.h>
 // #include <CLHEP/Random/RanluxEngine.h>
 
-#include <TLorentzVector.h>
+//#include <TLorentzVector.h>
 #include <TObjArray.h>
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCIO.h>
@@ -53,7 +53,7 @@ static TH1F* _MR_DAB;
 static TH1F* _MR_DED; 
 
 Razor Razor;
-JetFinder jetFinder; 
+JetFinder JetFinder; 
 
 Razor::Razor() : Processor("Razor") {
     // modify processor description
@@ -183,7 +183,7 @@ void Razor::processEvent( LCEvent * evt ) {
   
 
     // JetFinder stuff -----------------
-    jetFinder.setPartList(_parp);
+    //jetFinder.setPartList(_parp);
     
     //reset variables for output   
     _principleRazorValue = -1;

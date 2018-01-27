@@ -1,6 +1,14 @@
 #ifndef JETFINDER_H
 #define JETFINDER_H
+#include <vector> // me
+#include "marlin/Processor.h" // me 
+#include "lcio.h" // me 
+#include <iostream> // me 
 
+namespace CLHEP{} // me 
+using namespace CLHEP;  // me 
+using namespace lcio;  // me
+using namespace marlin; // me 
 // Virtual JetFinder base class
 //
 // V0.0 Mar 01/99 : R. Shanks  Derived from Java routines written by G.Bower. 
@@ -75,7 +83,7 @@ class JetFinder {
     protected:  
         TObjArray* m_4vec;
 
-        ClassDef(JetFinder,1) // Jetfinder base class	    
+        ClassDef(JetFinder,1); // Jetfinder base class	    
 };       
 
 

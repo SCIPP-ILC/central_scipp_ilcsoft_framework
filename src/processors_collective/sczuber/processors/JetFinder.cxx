@@ -20,9 +20,19 @@
 //                             Add setDURHAM, setJADE, or setJADEE. 
 //                             Now we can cange algorithms by one of them.
 //
+#undef _GLIBCXX_USE_CXX11_ABI  //me -2018
+#define _GLIBCXX_USE_CXX11_ABI 0 // me -2018
 
 #include "JetFinder.h"
 
+
+#include "TLorentzVector.h"
+#include "TVector3.h"
+#include "TObjArray.h"
+#include "TArrayI.h"
+#include "TClass.h"
+
+#include <iostream> // me -2018
 //_____________________________________________________________________
 //  ------------------
 //   JetFinder Class
@@ -261,4 +271,4 @@ Double_t JetFinder::calcinvmass(const TLorentzVector& jet1,
   printf(" Strange Algorithm!!!! \n");
   return 0.;
 
-};
+}
