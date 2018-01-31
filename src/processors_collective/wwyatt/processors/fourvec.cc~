@@ -1,0 +1,80 @@
+fourvec fourvec::operator+(const fourvec& a) const{
+  return fourvec(
+		 a.x+x,
+		 a.y+y,
+		 a.z+z,
+		 a.e+e,
+		 sqrt(pow(a.x+x,2)+pow(a.y+y,2))
+		 );
+}
+double fourvec::operator*(const fourvec& a) const{
+  return a.x*x + a.y*y + a.z*z;
+}
+fourvec fourvec::operator*(const double a) const{
+  return fourvec(a*x,a*y,a*z);
+}
+
+fourvec fourvec::operator*=(const double a){
+  this->x=this->x*a;
+  this->y=this->y*a;
+  this->z=this->z*a;
+  this->e=this->e*a;
+  this->t=this->t*a;
+  return *this;
+}
+fourvec fourvec::operator*=(const fourvec& a){
+  this->x=this->x*a.x;
+  this->y=this->y*a.y;
+  this->z=this->z*a.z;
+  this->e=this->e*a.e;
+  this->t=this->t*a.t;
+  return *this;
+}
+fourvec fourvec::operator/=(const double a){
+  this->x=this->x/a;
+  this->y=this->y/a;
+  this->z=this->z/a;
+  this->e=this->e/a;
+  this->t=this->t/a;
+  return *this;
+}
+fourvec fourvec::operator/(const double a) const{
+  return fourvec(a/(*this).x,a/(*this).y,a/(*this).z);
+}
+
+fourvec fourvec::operator+=(const fourvec& a){
+  *this = *this+a;
+  return *this;
+}
+/*string Will::str(fourvec in){
+  ostringstream strs;
+  strs << in.x;
+  string x_str = strs.str();
+  strs.str(string());
+  strs << in.y;
+  string y_str=strs.str();
+  strs.str(string());
+  strs << in.z;
+  string z_str=strs.str();
+  return "x:y:z " + x_str +":"+ y_str +":"+ z_str + " ";
+  }*/
+
+
+fourvec::fourvec(const double _x,const double _y){x=_x;y=_y;t=getTMag(new double[2]{_x,_y});}
+fourvec::fourvec(const double _x,const double _y,const double _z):fourvec(_x,_y){z=_z;}
+fourvec::fourvec(const double _x,const double _y,const double _z,const double _e):fourvec(_x,_y,_z){e=_e;}
+fourvec::fourvec(const double _x,const double _y,const double _z,const double _e,const double _t):fourvec(_x,_y,_z,_e){t=_t;}
+fourvec::fourvec():fourvec(0,0,0,0,0){}
+fourvec::fourvec(const double* input,const unsigned short SIZE){
+  switch(SIZE){
+  case 4:
+    e=input[3];
+  case 3:
+    z=input[2];
+  case 2:
+    t=getTMag(new double[2]{input[0], input[1]});
+    y=input[1];
+  case 1:
+    x=input[0];
+  }
+}

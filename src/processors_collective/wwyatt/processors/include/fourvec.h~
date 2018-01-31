@@ -1,0 +1,25 @@
+
+
+
+
+  struct fourvec{
+    union{ double X; double x=0.0; };
+    union{ double Y; double y=0.0; };
+    union{ double Z; double z=0.0; };
+    union{ double E; double e=0.0; };
+    union{ double T; double t=0.0; };
+    fourvec operator+(const fourvec& a) const;
+    double operator*(const fourvec& a) const;
+    fourvec operator*(const double) const;
+    fourvec operator+=(const fourvec& a);
+    fourvec operator*=(const double a);
+    fourvec operator*=(const fourvec& a);
+    fourvec operator/=(const double a);
+    fourvec operator/(const double a)const;
+    fourvec();
+    fourvec(const double,const double);
+    fourvec(const double,const double,const double);
+    fourvec(const double,const double,const double,const double);
+    fourvec(const double,const double,const double,const double,const double);
+    fourvec(const double*,const unsigned short SIZE);
+  };
