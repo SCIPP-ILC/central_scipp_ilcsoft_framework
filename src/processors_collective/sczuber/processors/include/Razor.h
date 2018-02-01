@@ -1,5 +1,6 @@
 #ifndef Razor_h
 #define Razor_h 1
+
 #include <vector>
 #include "marlin/Processor.h"
 #include "TLorentzVector.h"
@@ -11,6 +12,7 @@
 
 #include <CLHEP/Vector/ThreeVector.h>
 #include <CLHEP/Random/RanluxEngine.h>
+#include "JetFinder.h"
 
 namespace CLHEP{}    // declare namespace CLHEP for backward compatibility
 using namespace CLHEP ;

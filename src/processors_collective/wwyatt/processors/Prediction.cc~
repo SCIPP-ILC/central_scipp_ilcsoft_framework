@@ -36,7 +36,7 @@ using namespace lcio;
 using namespace marlin;
 using namespace std;
 using namespace Will;
-
+using namespace TwoPhoton;
 Prediction Prediction;
 
 
@@ -52,7 +52,7 @@ static TH1F* amom;
 static TH1F* bmom;
 static TH1F* cmom;
 
-static vector<Bundle> results;
+static vector<Result> results;
 static vector<fourvec> actual;
 static vector<fourvec> predicted;
 static vector<double> spread_e;
@@ -112,9 +112,9 @@ void Prediction::processEvent( LCEvent * evt ) {
   //Run janes code for comparison.
   //getJane(col);
 
-  Will::measure data = Will::getMeasure(col);  
-  /* "getMeasure(LCCollection)" Takes the collection, calculates the hadronic system.
-   * A measure is a struct with several fourvectors in it:
+  TwoPhoton::bundle data = TwoPhoton::getHadronicSystem(col);  
+  /* "getHadronicSystem(LCCollection)" Takes the collection, calculates the hadronic system.
+   * A bundle is a struct with several fourvectors in it:
    * - electron - Highest energy final state electron
    * - positron - Highest energy final state positron
    * - hadronic - Calculated from all non final state high energy electron/positron
@@ -151,30 +151,24 @@ void Prediction::processEvent( LCEvent * evt ) {
   /* "prediction" will calculate and return two prediction vectors.
    * - electron 
    * - positron
-   * Only one of these will be correct; that can be checked by measure.p_scatter and measure.e_scatter.
+   * Only one of these will be correct; that can be checked by bundle.p_scatter and bundle.e_scatter.
    * I will make it easier to get the correct prediction.
    */
-  //I rename the particles just for ease of use. I might take this out later for explicitness.
-  fourvec electron=data.electron,
-    positron=data.positron,
-    hadronic=data.hadronic,
-    electronic=data.electronic;
-  //fourvec nelectron = fourvec(-data.electronic.x,-data.electronic.y,data.electronic.z,data.electronic.e);
-  //data.hadronic=nelectron;
+
   double mag=data.mag; //Magnitude of the hadronic vector?
   double electronTheta=getTheta(p.electron); //Angle off of z-axis
   double positronTheta=getTheta(p.positron);
 
-  Bundle bundle;
-  bundle.system_energy=data.positron.e+data.electron.e+data.hadronic_nopseudo.e; //No hadronic energy
+  Result result;
+  result.system_energy=data.positron.e+data.electron.e+data.hadronic_nopseudo.e; //No hadronic energy
   if(data.p_scatter){
-    bundle.actual=positron;
-    bundle.predicted=p.positron;
+    result.actual=data.positron;
+    result.predicted=p.positron;
   }else if(data.e_scatter){
-    bundle.actual=electron;
-    bundle.predicted=p.electron;
+    result.actual=data.electron;
+    result.predicted=p.electron;
   }
-  results.push_back(bundle);
+  results.push_back(result);
   if(max_photon!=NULL){
     double tot_energy= data.electron.e+data.positron.e+data.hadronic.e;
     double b=getMag(data.hadronic_nopseudo)/data.hadronic_nopseudo.e;
@@ -206,12 +200,12 @@ void Prediction::end(){
   cout << "Predicted Z-Direction Errors:" << meta.err_direction << endl;
 
   cout << "(scattered:not-scattered)\t= " << meta.SCATTERS << ":" << meta.NOSCATTERS << endl;  
-  cout << "Bundles Collected:" << results.size() << endl;
+  cout << "Results Collected:" << results.size() << endl;
   cout << endl;
   cout << "Energy Above " << 0 << endl;
   printHMGrid(results);
-  for(Bundle bundle: results){
-      amom->Fill(getTheta(bundle.actual, bundle.predicted));
+  for(Result result: results){
+      amom->Fill(getTheta(result.actual, result.predicted));
   }
 
   //HM Grids
@@ -230,7 +224,7 @@ void Prediction::end(){
   */
 
   //Get energy Distribution
-  for(Bundle bundle:results){
+  for(Result result:results){
 
   }
   

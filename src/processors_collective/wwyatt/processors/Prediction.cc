@@ -69,6 +69,10 @@ static int total = 0;
 
 static int photons=0;
 static int nphotons=0;
+
+static int n_events=0;
+static int i_events=0;
+
 Prediction::Prediction() : Processor("Prediction") {
   // modify processor description
   _description = "Protype Processor" ;
@@ -109,6 +113,7 @@ void Prediction::processEvent( LCEvent * evt ) {
   // DISCLAIMER: THERE IS MORE DOCUMENTATION IN THE HEADER FILE (Will.h).
   LCCollection* col = evt->getCollection( _colName ) ;
   if( col == NULL )return;
+  n_events++;
   //Run janes code for comparison.
   //getJane(col);
 
@@ -128,6 +133,7 @@ void Prediction::processEvent( LCEvent * evt ) {
   //Also excludes small magnitude events.
   if(data.mag<=1) return;
   //if(!data.scattered) return;
+  i_events++;
   MCParticle* max_photon=NULL;
   for(int i=0; i < col->getNumberOfElements(); ++i){
     MCParticle* particle=dynamic_cast<MCParticle*>(col->getElementAt(i));
@@ -164,7 +170,7 @@ void Prediction::processEvent( LCEvent * evt ) {
   if(data.p_scatter){
     result.actual=data.positron;
     result.predicted=p.positron;
-  }else if(data.e_scatter){
+  }else{
     result.actual=data.electron;
     result.predicted=p.electron;
   }
@@ -195,11 +201,12 @@ void Prediction::end(){
     cout << "Misc data: " << meta.MSC << endl;
   */
   //General Analysis
-  cout << "total photons: " << photons << endl;
-  cout << "Photons with pi-0 parent: " << nphotons << endl;
+  //cout << "total photons: " << photons << endl;
+  //cout << "Photons with pi-0 parent: " << nphotons << endl;
+  cout << "==== " << n_events << " Events ====" << endl;
+  cout << "==== " << i_events << " Counted Events (mag>1) ====" << endl;
   cout << "Predicted Z-Direction Errors:" << meta.err_direction << endl;
-
-  cout << "(scattered:not-scattered)\t= " << meta.SCATTERS << ":" << meta.NOSCATTERS << endl;  
+  //cout << "(scattered:not-scattered)\t= " << meta.SCATTERS << ":" << meta.NOSCATTERS << endl;  
   cout << "Results Collected:" << results.size() << endl;
   cout << endl;
   cout << "Energy Above " << 0 << endl;

@@ -78,8 +78,9 @@ void example::processEvent( LCEvent * evt ) {
     for(int i=0; i < col->getNumberOfElements(); ++i){
       MCParticle* particle=dynamic_cast<MCParticle*>(col->getElementAt(i));
       int pid=particle->getPDG();
-
+      cout << "Particle found: " << pid << endl;
     }
+    cout << " +++ " << endl;
 }
 
 

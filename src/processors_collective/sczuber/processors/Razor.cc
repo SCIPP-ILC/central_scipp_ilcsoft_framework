@@ -1,6 +1,7 @@
 #undef _GLIBCXX_USE_CXX11_ABI
 #define _GLIBCXX_USE_CXX11_ABI 0
 /* 
+ * Razor.cc
  * author Summer Zuber 
  * January 24, 2017 
  *
@@ -8,7 +9,7 @@
  */
 
 #include "Razor.h"
-#include "JetFinder.h"
+//#include "JetFinder.cxx"
 #include "scipp_ilc_utilities.h"
 
 #include <EVENT/LCCollection.h>
@@ -53,7 +54,7 @@ static TH1F* _MR_DAB;
 static TH1F* _MR_DED; 
 
 Razor Razor;
-JetFinder JetFinder; 
+//JetFinder JetFinder; 
 
 Razor::Razor() : Processor("Razor") {
     // modify processor description

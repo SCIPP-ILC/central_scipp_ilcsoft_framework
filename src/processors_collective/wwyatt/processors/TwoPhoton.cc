@@ -4,7 +4,7 @@ using namespace TwoPhoton;
 using namespace Will;
 fourvec TwoPhoton::transform_to_lab(fourvec input){
   double px=input.x;
-  double e = input.e;
+  double e=input.e;
   scipp_ilc::transform_to_lab(px,e,px,e);
   fourvec out(px,input.y,input.z,e);
   return out;
@@ -193,6 +193,7 @@ hmgrid TwoPhoton::getHMGrid(vector<Result> input, double energy_cut){
 void TwoPhoton::recordHMValue(hmgrid &output, fourvec predicted, fourvec actual){
   fourvec real=getBeamcalPosition(actual);
   fourvec pred=getBeamcalPosition(predicted);
+
   bool hit_real=get_hitStatus(real)<3;
   bool hit_pred=get_hitStatus(pred)<3;
   if     (  hit_pred &&  hit_real )output.hh++;
