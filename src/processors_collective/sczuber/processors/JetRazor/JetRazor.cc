@@ -1,16 +1,13 @@
 #undef _GLIBCXX_USE_CXX11_ABI
 #define _GLIBCXX_USE_CXX11_ABI 0
 /* 
- * Razor.cc
  * author Summer Zuber 
- * January 24, 2017 
+ * January 18, 2017 
  *
- * Copied from ThurstRazor.cc. Will use the JetFinder utility (translated to C++/ROOT by M. Iwasaki) to identify jets for use in the Razor variables. 
+ * Using FastJet
  */
 
-#include <stdlib.h>
-#include "Razor.h"
-
+#include "JetRazor.h"
 #include "scipp_ilc_utilities.h"
 
 #include <EVENT/LCCollection.h>
@@ -30,8 +27,6 @@
 // #include <CLHEP/Vector/ThreeVector.h>
 // #include <CLHEP/Random/RanluxEngine.h>
 
-//#include <TLorentzVector.h>
-#include <TObjArray.h>
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCIO.h>
 #include <EVENT/MCParticle.h>
@@ -39,10 +34,12 @@
 #include <IMPL/ReconstructedParticleImpl.h>
 #include <IMPL/LCTOOLS.h>
 
+#include "fastjet/ClusteringSequence.hh"
 
 using namespace lcio;
 using namespace marlin;
 using namespace std;
+using namespace fastjet;
 
 
 static TFile* _rootfile;
@@ -54,10 +51,9 @@ static TH1F* _MR_T;
 static TH1F* _MR_DAB;
 static TH1F* _MR_DED; 
 
-Razor Razor;
-//JetFinder JetFinder; 
+JetRazor JetRazor;
 
-Razor::Razor() : Processor("Razor") {
+JetRazor::JetRazor() : Processor("JetRazor") {
     // modify processor description
     _description = "Protype Processor" ;
 
@@ -65,9 +61,9 @@ Razor::Razor() : Processor("Razor") {
     registerInputCollection( LCIO::MCPARTICLE, "CollectionName" , "Name of the MCParticle collection"  , _colName , std::string("MCParticle") );
 
     registerProcessorParameter( "RootOutputName" , "output file"  , _root_file_name , std::string("output.root") );
-    registerProcessorParameter( "typeOfRazorFinder" ,
+    registerProcessorParameter( "typeOfJetRazorFinder" ,
             "Type of thrust reconstruction algorithm to be used:\n#\t1 : Tasso algorithm\n#\t2 : JetSet algorithm"  ,
-            _typeOfRazorFinder , 2 ) ;
+            _typeOfJetRazorFinder , 2 ) ;
     registerProcessorParameter( "thrustDetectability",
             "Detectability of the Thrust Axis/Value to be used:\n#\t0 : True \n#t1 : Detectable \n#t2 : Detected" ,
             _thrustDetectability, 2 );
@@ -75,23 +71,23 @@ Razor::Razor() : Processor("Razor") {
 
 
 
-void Razor::init() { 
+void JetRazor::init() { 
     streamlog_out(DEBUG)  << "   init called  " << std::endl ;
     cout << "initialized" << endl;
-    if(_thrustDetectability==0){_rootfile = new TFile("Razor_.39133._T.root","RECREATE");
+    if(_thrustDetectability==0){_rootfile = new TFile("JetRazor_.39133._T.root","RECREATE");
         _R_T = new TH1F("R_T", "R =MTR/MR",130,-3,10);
         _MR_T = new TH1F("MR_T","MR", 100, 0 ,10); 
     }
-    if(_thrustDetectability==1){_rootfile = new TFile("Razor_.39133._DAB.root","RECREATE");
+    if(_thrustDetectability==1){_rootfile = new TFile("JetRazor_.39133._DAB.root","RECREATE");
         _MR_DAB = new TH1F("MR_DAB","MR", 100, 0 ,10); 
         _R_DAB = new TH1F("R_DAB", "R =MTR/MR",130,-3,10);
     }
-    if(_thrustDetectability==2){_rootfile = new TFile("Razor_.39133._DED.root","RECREATE");
+    if(_thrustDetectability==2){_rootfile = new TFile("JetRazor_.39133._DED.root","RECREATE");
         _MR_DED = new TH1F("MR_DED","MR", 100, 0 ,10); 
         _R_DED = new TH1F("R_DED", "R =MTR/MR",130,-3,10);
     }
     
-    freopen( "Razor.log", "w", stdout );
+    freopen( "JetRazor.log", "w", stdout );
     // irameters() ;
 
     // config ranlux 
@@ -111,27 +107,26 @@ void Razor::init() {
         myrnd.showStatus();
     } // if file not existusually a good idea to
     //printParameters() ;
-  
     _nEvt = 0 ;
 }
 
-void Razor::processRunHeader( LCRunHeader* run) { 
+void JetRazor::processRunHeader( LCRunHeader* run) { 
     //run->parameters().setValue("thrust",12300321);
     //    _nRun++ ;
 } 
 
-void Razor::processEvent( LCEvent * evt ) { 
+void JetRazor::processEvent( LCEvent * evt ) { 
     // this gets called for every event 
-    parp1 = false;
-    parp0 = false;  
+    partMom1 = false;
+    partMom0 = false;  
     // usually the working horse ...
     cout << "EVENT: " << _nEvt << endl; 
     _inParVec = evt->getCollection( _colName) ;
     cout << "num of elements " << _inParVec->getNumberOfElements() << endl;
-    //if (!_parp.empty()) _parp.clear(); NEED TO REPLACE! 
+    if (!_partMom.empty()) _partMom.clear();
 
     int id, stat;
-   
+    cout << "loop #1"<< endl; 
     for (int n=0;n<_inParVec->getNumberOfElements() ;n++)
     {
 
@@ -144,13 +139,12 @@ void Razor::processEvent( LCEvent * evt ) {
             cout << "exception caught with message " << e.what() << "\n";
         }
 
-        const double* parp = aPart->getMomentum();
-        double parpMag = sqrt(parp[0]*parp[0]+parp[1]*parp[1]+parp[2]*parp[2]);
-        double par4p[4];
-        par4p[0] += aPart->getEnergy();
-        _parp->SetOwner(kTRUE); 
-        if(stat==1){ 
-           
+        const double* partMom = aPart->getMomentum();
+        double partMomMag = sqrt(partMom[0]*partMom[0]+partMom[1]*partMom[1]+partMom[2]*partMom[2]);
+
+        if(stat==1){
+            cout << "id: " << id<< endl;
+            cout << "mom: "<< partMom[0]<<" "<< partMom[1]<<" "<<partMom[2]<<endl;
             bool isDarkMatter = (id == 1000022);
             bool isNeutrino = (
                     id == 12 || id == -12 ||
@@ -158,97 +152,91 @@ void Razor::processEvent( LCEvent * evt ) {
                     id == 16 || id == -16 ||
                     id == 18 || id == -18);
 
-            double cos = parp[2]/parpMag;
+            double cos = partMom[2]/partMomMag;
             bool isForward = ( cos > 0.9 || cos < - 0.9);
             bool isDetectable = (!isDarkMatter && !isNeutrino);
             bool isDetected = (isDetectable &&  !isForward  );
             if(_thrustDetectability == 0){
                 if(!isDarkMatter){
-                    TLorentzVector* v = new TLorentzVector(parp[0], parp[1], parp[2], par4p[0]);
-                    _parp->Add(v);
-                    //cout << _parp->getName();
-                    //_parp.Add(TLorentzVector(parp[0], parp[1], parp[2], par4p[0])) ;
+                    _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) );
                 }
             }
-            /*if(_thrustDetectability == 1){
+            if(_thrustDetectability == 1){
                 if(isDetectable){
-                    _parp.Add( TLorentzVector(parp[0], parp[1], parp[2], par4p[0]) );
+                    _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) );
                 }
             }
 
             if(_thrustDetectability == 2){ 
                 if(isDetected){ 
-                    _parp.Add( TLorentzVector(parp[0], parp[1], parp[2], par4p[0]) ); 
+                    _partMom.push_back( Hep3Vector(partMom[0], partMom[1], partMom[2]) ); 
                 }
-            }*/
+            }
         } // stat = 1
     } // for particle 
-  
+    cout << "end loop #1"<<endl;
 
-    // JetFinder stuff -----------------
-    //jetFinder.setPartList(_parp);
-    
     //reset variables for output   
-    _principleRazorValue = -1;
-    _majorRazorValue     = -1;
-    _minorRazorValue     = -1;
-    _principleRazorAxis.set(0,0,0);
-    _majorRazorAxis.set(0,0,0);
-    _minorRazorAxis.set(0,0,0);
+    _principleJetRazorValue = -1;
+    _majorJetRazorValue     = -1;
+    _minorJetRazorValue     = -1;
+    _principleJetRazorAxis.set(0,0,0);
+    _majorJetRazorAxis.set(0,0,0);
+    _minorJetRazorAxis.set(0,0,0);
 
     // Switch to the desired type of thrust finder
-    if (_typeOfRazorFinder == 1)
+    if (_typeOfJetRazorFinder == 1)
     {
         cout << "type of Thrust Razor Finder = 1 : Tasso Thrust Razor " << endl; 
-        TassoRazor();
+        TassoJetRazor();
         cout << "type of Thrust Razor Finder = 1 : Tasso Thrust Razor" << endl;
     }
-    else if (_parp->GetEntries()<=1) // edited for TObjArray function GetEntries()
+    else if (_partMom.size()<=1)
     {
-        parpCheck += " ";
-        parpCheck += std::to_string(_nEvt);
-        parpCheck += " ";  
-        TassoRazor();
+        partMomCheck += " ";
+        partMomCheck += std::to_string(_nEvt);
+        partMomCheck += " ";  
+        TassoJetRazor();
     }
-    else if (_typeOfRazorFinder == 2)
+    else if (_typeOfJetRazorFinder == 2)
     {
         cout << "type of Thrust Razor Finder = 2 : Jetset Thrust Razor" << endl; 
-        JetsetRazor();
+        JetsetJetRazor();
     }
     // ###write
-    //    evt->parameters().setValue("thrust",_principleRazorValue);
+    //    evt->parameters().setValue("thrust",_principleJetRazorValue);
 
     FloatVec thrax;
     thrax.clear();
-    thrax.push_back(_principleRazorAxis.x());
-    thrax.push_back(_principleRazorAxis.y());
-    thrax.push_back(_principleRazorAxis.z());
+    thrax.push_back(_principleJetRazorAxis.x());
+    thrax.push_back(_principleJetRazorAxis.y());
+    thrax.push_back(_principleJetRazorAxis.z());
 
-    _inParVec->parameters().setValue("principleRazorValue",_principleRazorValue);
-    _inParVec->parameters().setValues("principleRazorAxis",thrax);
+    _inParVec->parameters().setValue("principleJetRazorValue",_principleJetRazorValue);
+    _inParVec->parameters().setValues("principleJetRazorAxis",thrax);
 
-    if (_typeOfRazorFinder == 2)
+    if (_typeOfJetRazorFinder == 2)
     {
         thrax.clear();
-        thrax.push_back(_majorRazorAxis.x());
-        thrax.push_back(_majorRazorAxis.y());
-        thrax.push_back(_majorRazorAxis.z());
+        thrax.push_back(_majorJetRazorAxis.x());
+        thrax.push_back(_majorJetRazorAxis.y());
+        thrax.push_back(_majorJetRazorAxis.z());
 
-        _inParVec->parameters().setValue("majorRazorValue",_majorRazorValue);
-        _inParVec->parameters().setValues("majorRazorAxis",thrax);
+        _inParVec->parameters().setValue("majorJetRazorValue",_majorJetRazorValue);
+        _inParVec->parameters().setValues("majorJetRazorAxis",thrax);
 
         thrax.clear();
-        thrax.push_back(_minorRazorAxis.x());
-        thrax.push_back(_minorRazorAxis.y());
-        thrax.push_back(_minorRazorAxis.z());
+        thrax.push_back(_minorJetRazorAxis.x());
+        thrax.push_back(_minorJetRazorAxis.y());
+        thrax.push_back(_minorJetRazorAxis.z());
 
-        _inParVec->parameters().setValue("minorRazorValue",_minorRazorValue);
-        _inParVec->parameters().setValues("minorRazorAxis",thrax);
+        _inParVec->parameters().setValue("minorJetRazorValue",_minorJetRazorValue);
+        _inParVec->parameters().setValues("minorJetRazorAxis",thrax);
 
         float Oblateness;
-        Oblateness = _majorRazorValue - _minorRazorValue;
+        Oblateness = _majorJetRazorValue - _minorJetRazorValue;
         _inParVec->parameters().setValue("Oblateness",Oblateness);
-        if ( (_majorRazorValue < 0) || (_minorRazorValue < 0) )
+        if ( (_majorJetRazorValue < 0) || (_minorJetRazorValue < 0) )
         {
             _inParVec->parameters().setValue("Oblateness",-1);
         }
@@ -256,25 +244,25 @@ void Razor::processEvent( LCEvent * evt ) {
 
 
     // these are the final values:
-    streamlog_out( DEBUG4 ) << " thrust: " << _principleRazorValue << " TV: " << _principleRazorAxis << endl;
-    streamlog_out( DEBUG4 ) << "  major: " << _majorRazorValue << " TV: " << _majorRazorAxis << endl;
-    streamlog_out( DEBUG4 ) << "  minor: " << _minorRazorValue << " TV: " << _minorRazorAxis << endl;
+    streamlog_out( DEBUG4 ) << " thrust: " << _principleJetRazorValue << " TV: " << _principleJetRazorAxis << endl;
+    streamlog_out( DEBUG4 ) << "  major: " << _majorJetRazorValue << " TV: " << _majorJetRazorAxis << endl;
+    streamlog_out( DEBUG4 ) << "  minor: " << _minorJetRazorValue << " TV: " << _minorJetRazorAxis << endl;
     //cout << "EVENT: " << _nEvt << endl;
-    cout << " thrust: " << _principleRazorValue << " TV: " << _principleRazorAxis << endl;
-    cout <<"                       "<< _principleRazorAxis.x()<<","<< _principleRazorAxis.y()<< ","<<_principleRazorAxis.z()<<endl;
-    cout << "  major: " << _majorRazorValue << " TV: " << _majorRazorAxis << endl;
-    cout << "  minor: " << _minorRazorValue << " TV: " << _minorRazorAxis << endl;
+    cout << " thrust: " << _principleJetRazorValue << " TV: " << _principleJetRazorAxis << endl;
+    cout <<"                       "<< _principleJetRazorAxis.x()<<","<< _principleJetRazorAxis.y()<< ","<<_principleJetRazorAxis.z()<<endl;
+    cout << "  major: " << _majorJetRazorValue << " TV: " << _majorJetRazorAxis << endl;
+    cout << "  minor: " << _minorJetRazorValue << " TV: " << _minorJetRazorAxis << endl;
 
-    double ptaX = _principleRazorAxis.x();
-    double ptaY = _principleRazorAxis.y();
-    double ptaZ = _principleRazorAxis.z();
+    double ptaX = _principleJetRazorAxis.x();
+    double ptaY = _principleJetRazorAxis.y();
+    double ptaZ = _principleJetRazorAxis.z();
 
     double vec[2][3][4]; // jet 1, jet 2 : true detectable, detected : energy, momx, momy, momz
     double Rvec[3][4]; // true, detectable, detected : energy, px, py, pz 
     int d = _thrustDetectability;
     double R;
     double beta2;
-    if(_principleRazorValue==-1){
+    if(_principleJetRazorValue==-1){
         R = -1; 
     }
     else{
@@ -293,19 +281,19 @@ void Razor::processEvent( LCEvent * evt ) {
             }
 
             if(stat==1){
-                const double* parp = aPart->getMomentum();
-                double par4p[4];
+                const double* partMom = aPart->getMomentum();
+                double part4mom[4];
 
-                par4p[0] = aPart->getEnergy(); 
-                par4p[1] = parp[0];
-                par4p[2] = parp[1]; 
-                par4p[3] = parp[2];   
+                part4mom[0] = aPart->getEnergy(); 
+                part4mom[1] = partMom[0];
+                part4mom[2] = partMom[1]; 
+                part4mom[3] = partMom[2];   
                 double pta[3] = {ptaX, ptaY, ptaZ};
 
                 cout << "id      : " << id << endl;  
-                cout << "Momentum: " << parp[0] <<" "<< parp[1] <<" "<< parp[2]<< endl;
+                cout << "Momentum: " << partMom[0] <<" "<< partMom[1] <<" "<< partMom[2]<< endl;
                 cout << "Thrust A: " << ptaX << " "<< ptaY << " " << ptaZ << endl;
-                double dot = ptaX*parp[0]+ptaY*parp[1]+ptaZ*parp[2];
+                double dot = ptaX*partMom[0]+ptaY*partMom[1]+ptaZ*partMom[2];
                 cout << "dot " << dot << endl;
 
                 // need momentum and energy of entire jet 
@@ -316,7 +304,7 @@ void Razor::processEvent( LCEvent * evt ) {
                         id == 14 || id == -14 ||
                         id == 16 || id == -16 ||
                         id == 18 || id == -18);
-                double cos = parp[2]/(sqrt(parp[0]*parp[0]+parp[1]*parp[1]+parp[2]*parp[2]));
+                double cos = partMom[2]/(sqrt(partMom[0]*partMom[0]+partMom[1]*partMom[1]+partMom[2]*partMom[2]));
                 bool isForward = ( cos > 0.9 || cos < - 0.9);
                 int i; // jet #
                 cout << "dot: " <<dot << endl; 
@@ -324,20 +312,20 @@ void Razor::processEvent( LCEvent * evt ) {
                 if(dot<0){i=1;}
                 if (!isDarkMatter){
                     cout << "i: "<< i << endl;  
-                    vec[i][0][0]+= par4p[0]; 
-                    vec[i][0][1]+= par4p[1];
-                    vec[i][0][2]+= par4p[2];
-                    vec[i][0][3]+= par4p[3];
+                    vec[i][0][0]+= part4mom[0]; 
+                    vec[i][0][1]+= part4mom[1];
+                    vec[i][0][2]+= part4mom[2];
+                    vec[i][0][3]+= part4mom[3];
                     if (!isNeutrino){
-                        vec[i][1][0]+= par4p[0];
-                        vec[i][1][1]+= par4p[1];
-                        vec[i][1][2]+= par4p[2];
-                        vec[i][1][3]+= par4p[3];
+                        vec[i][1][0]+= part4mom[0];
+                        vec[i][1][1]+= part4mom[1];
+                        vec[i][1][2]+= part4mom[2];
+                        vec[i][1][3]+= part4mom[3];
                         if(!isForward){
-                            vec[i][2][0]+= par4p[0];
-                            vec[i][2][1]+= par4p[1];
-                            vec[i][2][2]+= par4p[2];
-                            vec[i][2][3]+= par4p[3];
+                            vec[i][2][0]+= part4mom[0];
+                            vec[i][2][1]+= part4mom[1];
+                            vec[i][2][2]+= part4mom[2];
+                            vec[i][2][3]+= part4mom[3];
                         }
                     }
                 }       
@@ -352,7 +340,7 @@ void Razor::processEvent( LCEvent * evt ) {
         for (int n=0;n<_inParVec->getNumberOfElements() ;n++){
 
             MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
-            const double* parp = aPart->getMomentum();
+            const double* partMom = aPart->getMomentum();
 
             try{
                 id = aPart->getPDG();
@@ -361,7 +349,7 @@ void Razor::processEvent( LCEvent * evt ) {
             catch(const std::exception& e){
                 cout << "exception caught with message " << e.what() << "\n";
             }
-            double part4Vec[4] = {aPart->getEnergy(), parp[0], parp[1], parp[2] };
+            double part4Vec[4] = {aPart->getEnergy(), partMom[0], partMom[1], partMom[2] };
             double R4Vec[4] = {gamma*part4Vec[0]-gamma*beta*part4Vec[3], part4Vec[1], part4Vec[2], 
                 -gamma*beta*part4Vec[0]+gamma*part4Vec[3] }; 
             bool isDarkMatter = (id == 1000022);
@@ -371,13 +359,13 @@ void Razor::processEvent( LCEvent * evt ) {
                     id == 14 || id == -14 ||
                     id == 16 || id == -16 ||
                     id == 18 || id == -18);
-            double cos = parp[2]/(sqrt(parp[0]*parp[0]+parp[1]*parp[1]+parp[2]*parp[2]));
+            double cos = partMom[2]/(sqrt(partMom[0]*partMom[0]+partMom[1]*partMom[1]+partMom[2]*partMom[2]));
             bool isForward = (cos > 0.9 || cos < - 0.9);
             bool isDetectable = (!isDarkMatter && !isNeutrino);
             bool isDetected = (isDetectable && !isForward); 
             if(stat ==1){
             cout << "id: "<<id<<endl;
-            cout << parp<< endl;
+            cout << partMom<< endl;
                 if(_thrustDetectability == 0){
                     if(!isDarkMatter){
                         Rvec[d][0]+=R4Vec[0];
@@ -422,10 +410,10 @@ void Razor::processEvent( LCEvent * evt ) {
         if(d==0){_R_T->Fill(R);}
         if(d==1){_R_DAB->Fill(R);}
         if(d==2){_R_DED->Fill(R);}
-        if(parp1){
+        if(partMom1){
             cout << "there are valid beta events that have only 1 particle" << endl; 
         }
-        if(!parp1){
+        if(!partMom1){
             cout << "there are valid beta events that have not only 1 particle" <<endl; 
         }
     }
@@ -434,15 +422,15 @@ void Razor::processEvent( LCEvent * evt ) {
         if(d==1){_R_DAB->Fill(-2);}
         if(d==2){_R_DED->Fill(-2);}
         
-        if(parp1){
+        if(partMom1){
             cout << "there are inval beta events that have only 1 particle"<< endl;
         }
-        if(!parp1){
+        if(!partMom1){
             cout << "there are inval beta events that have not only 1 particle"<< endl;
-            if(parp0){
+            if(partMom0){
                 cout <<" zero particles" << endl;
             }
-            if(!parp0){
+            if(!partMom0){
                 cout << "not zero particles"<< endl;
             }
         }
@@ -452,8 +440,8 @@ void Razor::processEvent( LCEvent * evt ) {
         betaCheck += " ";  
     } 
 
-    if (_principleRazorValue >= _max) _max = _principleRazorValue;
-    if (_principleRazorValue <= _min) _min = _principleRazorValue;
+    if (_principleJetRazorValue >= _max) _max = _principleJetRazorValue;
+    if (_principleJetRazorValue <= _min) _min = _principleJetRazorValue;
     cout << "End EVENT "<< _nEvt<< endl;
 
     _nEvt ++ ; // different from original-moved out of for loop - summer 
@@ -462,15 +450,15 @@ void Razor::processEvent( LCEvent * evt ) {
 
 
 
-void Razor::check( LCEvent * evt ) { 
+void JetRazor::check( LCEvent * evt ) { 
     // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
 
 
 
-void Razor::end(){ 
+void JetRazor::end(){ 
     _rootfile->Write();
-    cout << parpCheck << endl;
+    cout << partMomCheck << endl;
     cout << betaCheck << endl; 
 }
 

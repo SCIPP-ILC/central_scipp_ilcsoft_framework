@@ -1,10 +1,7 @@
-#ifndef Razor_h
-#define Razor_h 1
-
+#ifndef JetRazor_h
+#define JetRazor_h 1
 #include <vector>
 #include "marlin/Processor.h"
-#include "TLorentzVector.h"
-//#include "TObjArray.h"
 #include "lcio.h"
 #include <iostream>
 #include <string>
@@ -12,7 +9,6 @@
 
 #include <CLHEP/Vector/ThreeVector.h>
 #include <CLHEP/Random/RanluxEngine.h>
-//#include "JetFinder.h" removed for now 
 
 namespace CLHEP{}    // declare namespace CLHEP for backward compatibility
 using namespace CLHEP ;
@@ -34,17 +30,17 @@ using namespace marlin ;
  * @param CollectionName Name of the MCParticle collection
  * 
  * @author F. Gaede, DESY
- * @version $Id: Razor.h,v 1.4 2005-10-11 12:57:39 gaede Exp $ 
+ * @version $Id: JetRazor.h,v 1.4 2005-10-11 12:57:39 gaede Exp $ 
  */
 
-class Razor : public Processor {
+class JetRazor : public Processor {
 
     public:
 
-        virtual Processor*  newProcessor() { return new Razor ; }
+        virtual Processor*  newProcessor() { return new JetRazor ; }
 
 
-        Razor() ;
+        JetRazor() ;
 
         /** Called at the begin of the job before anything is read.
          * Use to initialize the processor, e.g. book histograms.
@@ -73,30 +69,30 @@ class Razor : public Processor {
         */
         std::string _colName ;
         std::string _root_file_name;
-        int TassoRazor();
-        int JetsetRazor();
+        int TassoJetRazor();
+        int JetsetJetRazor();
         double sign(double a,double b);
         double min(double a,double b);
 
       /** Input collection name.
        */
-        std::string parpCheck;
+        std::string partMomCheck;
         std::string betaCheck;
 
-        bool parp1;
-        bool parp0; 
+        bool partMom1;
+        bool partMom0; 
 
-        int _typeOfRazorFinder;
+        int _typeOfJetRazorFinder;
         int _thrustDetectability;
-        float _principleRazorValue;
-        float _majorRazorValue;
-        float _minorRazorValue;
-        Hep3Vector _principleRazorAxis;
-        Hep3Vector _majorRazorAxis;
-        Hep3Vector _minorRazorAxis;
+        float _principleJetRazorValue;
+        float _majorJetRazorValue;
+        float _minorJetRazorValue;
+        Hep3Vector _principleJetRazorAxis;
+        Hep3Vector _majorJetRazorAxis;
+        Hep3Vector _minorJetRazorAxis;
         float _min,_max;
         LCCollection* _inParVec;
-        TObjArray* _parp;
+        std::vector<Hep3Vector> _partMom;
         std::string filename;
         RanluxEngine myrnd;
 
