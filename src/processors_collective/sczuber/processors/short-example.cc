@@ -1,4 +1,4 @@
-#include "fastjet/ClusterSequence.hh"
+#include "/cvmfs/ilc.desy.de/sw/x86_64_gcc44_sl6/v01-17-09/FastJet/3.1.2/include/fastjet/ClusterSequence.hh"
 #include <iostream>
 using namespace fastjet;
 using namespace std;

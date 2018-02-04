@@ -169,20 +169,6 @@ void BeamCalRecon_xy::PlotTH2F(TH2F* graph, stringstream& stream, string title, 
     const char* ExpTitle = stream.str().c_str();
     graph->SetTitle(ExpTitle);
 
-    //  _c1->SetStatX(0.15);
-    //  graph->SetTheta(90);
-    /* 
-       gStyle->SetOptStat(1111111);            // Set stat options
-       gStyle->SetStatY(0.9);                  // Set y-position (fraction of pad size)
-       gStyle->SetStatX(0.9);                  // Set x-position (fraction of pad size)
-       gStyle->SetStatW(0.4);                  // Set width of stat-box (fraction of pad size)
-       gStyle->SetStatH(0.2);                  // Set height of stat-box (fraction of pad size)
-    */
-    //  graph->SetPhi(60);
-    //  TPaveStats *st = (TPaveStats*)graph->FindObject("stats");
-    //  st->SetX1NDC(0.0);
-    //  st->SetX2NDC(0.0);
-    //    gStyle->SetOptStat(0);
 }
 
 
@@ -252,7 +238,8 @@ void BeamCalRecon_xy::PrintRadiusThetaTable(string key){//, ofstream fout){//str
     double div = 0.0;
     double one = 1.0;
 
-    
+    char buffer [100];
+    int cx;
     ofstream fout;
     fout.open("output.txt");
     if (fout.fail()){
@@ -260,20 +247,21 @@ void BeamCalRecon_xy::PrintRadiusThetaTable(string key){//, ofstream fout){//str
       exit(-1);
     }
 
-    fout.close();
-      
     //    fout << "average = " << average << endl;
     //    s
 
     for(int i = 0; i < height; i++){
         if(i==0){
 	    cout << "\t  ";
+	    fout << "\t  ";
 	    for(int row = 0; row < width; row++){
 	        if(row==0){
 		  cout << "\t";
+		  fout << "\t";
 		}
 		if(key!="wDiv"){
 		  cout << setw(3) << phi_array[row] << " " ;
+		  fout << setw(3) << phi_array[row] << " " ;
 		//		printf ("%\*d", 3,phi_array[row]);
 		//		cout << phi_array[row] << " ";
 
@@ -283,20 +271,25 @@ void BeamCalRecon_xy::PrintRadiusThetaTable(string key){//, ofstream fout){//str
 		}
 		else{
 		  cout << setw(5) << phi_array[row] << " " ;
+		  fout << setw(5) << phi_array[row] << " " ;
 		}
 	    }
 	    cout << endl;
+	    fout << endl;
 	}
 	//	cout << "[" << rad_array[i] << "]: \t" ;
 	cout << "[" << setw(6) << rad_array[i] << "]: \t" ;
+	fout << "[" << setw(6) << rad_array[i] << "]: \t" ;
 
 	for(int j = 0; j < width; j++){
 	  //	  double div = 0.0;
 	    if(key=="wCut"){
   	        cout << setw(3) << _RadTheta_wCut[j][i] << " " ;
+  	        fout << setw(3) << _RadTheta_wCut[j][i] << " " ;
 	    }
 	    if(key=="wBgd"){
   	        cout << setw(3) << _RadTheta_wBgd[j][i] << " " ;
+  	        fout << setw(3) << _RadTheta_wBgd[j][i] << " " ;
 	    }
 	    if(key=="wDiv"){
 	      /*
@@ -312,19 +305,27 @@ void BeamCalRecon_xy::PrintRadiusThetaTable(string key){//, ofstream fout){//str
 		  div = ((double(_RadTheta_wBgd[j][i])) / (double(_RadTheta_wCut[j][i])));
 		  if(div==1.0){
 		    cout << setw(5) << "1.0";
+		    fout << setw(5) << "1.0";
 		  }
 		  else{
 		  printf ("%4.3f",div);
+		  //		  printf (append("%4.3f",div));
+		  cx = snprintf ( buffer, 100, "%4.3f",div);
+		  fout << buffer;
 		  }
 	        }
 	      else{
 		  cout << setw(5) << "0.0";
+		  fout << setw(5) << "0.0";
 		}
 	      cout << " ";
+	      fout << " ";
 	    }
 	}
 	cout << endl;
+	fout << endl;
     }
+        fout.close();
 }
 
 void BeamCalRecon_xy::init() { 
@@ -626,6 +627,15 @@ void BeamCalRecon_xy::end(){
     PrintRadiusThetaTable("wCut");
     PrintRadiusThetaTable("wBgd");
     PrintRadiusThetaTable("wDiv");
+
+
+    cout  << "CollectionName: " << _colName << endl;
+    cout << "BeamcalGeometryFile: " << _beamcal_geometry_file_name << endl;
+    cout << "BackgroundEventList: " << _background_event_list << endl;
+    cout << "BackgroundEventsToRead: " << _num_bgd_events_to_read << endl;
+    cout << "RootOutputName: " << _root_file_name << endl;
+
+
 
 			  //    fout.close();
 
