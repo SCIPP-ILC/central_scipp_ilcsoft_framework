@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 #include <IMPL/ReconstructedParticleImpl.h>
+#include "fastjet/ClusterSequence.hh"
 
 #include <CLHEP/Vector/ThreeVector.h>
 #include <CLHEP/Random/RanluxEngine.h>
@@ -14,6 +15,7 @@ namespace CLHEP{}    // declare namespace CLHEP for backward compatibility
 using namespace CLHEP ;
 using namespace lcio ;
 using namespace marlin ;
+using namespace fastjet ;
 
 
 /**  Example processor for marlin.
@@ -76,11 +78,11 @@ class JetRazor : public Processor {
 
       /** Input collection name.
        */
-        std::string partMomCheck;
+        std::string parpCheck;
         std::string betaCheck;
 
-        bool partMom1;
-        bool partMom0; 
+        bool parp1;
+        bool parp0; 
 
         int _typeOfJetRazorFinder;
         int _thrustDetectability;
@@ -92,7 +94,8 @@ class JetRazor : public Processor {
         Hep3Vector _minorJetRazorAxis;
         float _min,_max;
         LCCollection* _inParVec;
-        std::vector<Hep3Vector> _partMom;
+        //std::vector<Hep3Vector> _parp;
+        std::vector<PseudoJet> _parp;
         std::string filename;
         RanluxEngine myrnd;
 

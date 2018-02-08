@@ -32,11 +32,14 @@
 // ----- include for verbosity dependend logging ---------
 #include "marlin/VerbosityLevels.h"
 
+
 using namespace lcio;
 using namespace marlin;
 using namespace std;
 using namespace Will;
 using namespace TwoPhoton;
+
+
 Prediction Prediction;
 
 
@@ -51,8 +54,10 @@ static TH1F* tmom;
 static TH1F* amom;
 static TH1F* bmom;
 static TH1F* cmom;
+static TH1F* dmom;
 
-static vector<Result> results;
+static vector<Result> positron_results;
+static vector<Result> electron_results;
 static vector<fourvec> actual;
 static vector<fourvec> predicted;
 static vector<double> spread_e;
@@ -96,11 +101,14 @@ void Prediction::init() {
   _p_theta = new TH1F("p_theta", "Theta between positron and hadronic system", 360, 0, .1);
   _e_theta = new TH1F("e_theta", "Theta between positron and hadronic system", 360, 0, .1);
   _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
-  zmom=new TH1F("zmom", "Hadronic system energy", 500, 450, 550);
-  tmom=new TH1F("tmom", "B=P/E for Hadronic System", 500, 0, 1.5);
-  amom=new TH1F("amom", "Distribution of Theta Energy Above 0", 500, 0,.1);
-  bmom=new TH1F("bmom", "Distribution of Theta Energy Above 480", 500, 0,.1);
+  zmom=new TH1F("zmom", "System energy", 500, 450, 550);
+  tmom=new TH1F("tmom", "Eletron system energy", 500, 450, 550);
+  amom=new TH1F("amom", "Distribution of Electron Theta", 500, 0,.1);
+  bmom=new TH1F("bmom", "Distribution of Positron Theta", 500, 0,.1);
+  cmom=new TH1F("cmom", "Distribution of Electron Theta", 500, 0,.1);
+  dmom=new TH1F("dmom", "Distribution of Positron Theta", 500, 0,.1);
   _nEvt = 0 ;
+
 }
 
 
@@ -165,24 +173,24 @@ void Prediction::processEvent( LCEvent * evt ) {
   double electronTheta=getTheta(p.electron); //Angle off of z-axis
   double positronTheta=getTheta(p.positron);
 
-  Result result;
-  result.system_energy=data.positron.e+data.electron.e+data.hadronic_nopseudo.e; //No hadronic energy
-  if(data.p_scatter){
-    result.actual=data.positron;
-    result.predicted=p.positron;
-  }else{
-    result.actual=data.electron;
-    result.predicted=p.electron;
-  }
-  results.push_back(result);
+  //Collecting Data for Analysis
+  Result positron_result;
+  Result electron_result;
+  positron_result.system_energy=data.positron.e+data.electron.e+data.hadronic_nopseudo.e; //No hadronic energy
+  electron_result.system_energy=data.positron.e+data.electron.e+data.hadronic_nopseudo.e; //No hadronic energy
+
+  positron_result.actual=data.positron;
+  positron_result.predicted=p.positron;
+  electron_result.actual=data.electron;
+  electron_result.predicted=p.electron;
+
+  positron_results.push_back(positron_result);
+  electron_results.push_back(electron_result);
+
   if(max_photon!=NULL){
     double tot_energy= data.electron.e+data.positron.e+data.hadronic.e;
     double b=getMag(data.hadronic_nopseudo)/data.hadronic_nopseudo.e;
-      tmom->Fill(b);
-
     _observe->Fill(b, tot_energy);
-    zmom->Fill(tot_energy);
-
   }
 }
 
@@ -207,12 +215,26 @@ void Prediction::end(){
   cout << "==== " << i_events << " Counted Events (mag>1) ====" << endl;
   cout << "Predicted Z-Direction Errors:" << meta.err_direction << endl;
   //cout << "(scattered:not-scattered)\t= " << meta.SCATTERS << ":" << meta.NOSCATTERS << endl;  
-  cout << "Results Collected:" << results.size() << endl;
+  cout << "Electron Results Collected:" << electron_results.size() << endl;
+  cout << "Positron Results Collected:" << positron_results.size() << endl;
   cout << endl;
-  cout << "Energy Above " << 0 << endl;
-  printHMGrid(results);
-  for(Result result: results){
+  cout << "Electron HM Grid: " << endl;
+  printHMGrid(electron_results);
+  cout << endl;
+  cout << "Positron  HM Grid: " << endl;
+  printHMGrid(positron_results);
+
+  double cut=494;
+  for(Result result: electron_results){
       amom->Fill(getTheta(result.actual, result.predicted));
+      if(result.system_energy > cut)
+	cmom->Fill(getTheta(result.actual, result.predicted));
+  }
+  for(Result result: positron_results){
+    zmom->Fill(result.system_energy);
+      bmom->Fill(getTheta(result.actual, result.predicted));
+      if(result.system_energy > cut)
+	dmom->Fill(getTheta(result.actual, result.predicted));
   }
 
   //HM Grids
@@ -229,11 +251,6 @@ void Prediction::end(){
     printHMGrid(results, current_cut);
   }
   */
-
-  //Get energy Distribution
-  for(Result result:results){
-
-  }
   
   _rootfile->Write();
 }

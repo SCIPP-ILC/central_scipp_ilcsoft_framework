@@ -1,0 +1,2 @@
+this stuff is pointless. I made this to try to include FastJet in my JetRazor program but instead we managed to include FastJet in the master CMake file. so this is all 
+unncessary.  
