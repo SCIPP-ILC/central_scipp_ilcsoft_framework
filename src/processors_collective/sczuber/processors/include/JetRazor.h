@@ -41,7 +41,6 @@ class JetRazor : public Processor {
 
         virtual Processor*  newProcessor() { return new JetRazor ; }
 
-
         JetRazor() ;
 
         /** Called at the begin of the job before anything is read.
@@ -59,7 +58,6 @@ class JetRazor : public Processor {
 
         virtual void check( LCEvent * evt ) ; 
 
-
         /** Called after data processing for clean up.
         */
         virtual void end() ;
@@ -70,11 +68,7 @@ class JetRazor : public Processor {
         /** Input collection name.
         */
         std::string _colName ;
-        std::string _root_file_name;
-        int TassoJetRazor();
-        int JetsetJetRazor();
-        double sign(double a,double b);
-        double min(double a,double b);
+        std::string _root_file_name; 
 
       /** Input collection name.
        */
@@ -84,15 +78,14 @@ class JetRazor : public Processor {
         bool parp1;
         bool parp0; 
 
-        int _typeOfJetRazorFinder;
-        int _thrustDetectability;
-        float _principleJetRazorValue;
-        float _majorJetRazorValue;
-        float _minorJetRazorValue;
-        Hep3Vector _principleJetRazorAxis;
-        Hep3Vector _majorJetRazorAxis;
-        Hep3Vector _minorJetRazorAxis;
-        float _min,_max;
+        //int _typeOfJetRazorFinder;
+        int _jetDetectability; 
+        double _JetRParameter;     
+    
+     
+    
+   
+  
         LCCollection* _inParVec;
         //std::vector<Hep3Vector> _parp;
         std::vector<PseudoJet> _parp;

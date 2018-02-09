@@ -34,16 +34,10 @@
 #include <IMPL/ReconstructedParticleImpl.h>
 #include <IMPL/LCTOOLS.h>
 
-
-//#include "fastjet/ClusterSequence.hh"
-//#include "fastjet_util/fastjet_util.hh"
-
-
 using namespace lcio;
 using namespace marlin;
 using namespace fastjet;
 using namespace std;
-
 
 static TFile* _rootfile;
 
@@ -54,6 +48,10 @@ static TH1F* _MR_T;
 static TH1F* _MR_DAB;
 static TH1F* _MR_DED; 
 
+static TH1F* _NJ_T; // histogram of the number of jets using TRUE jets
+static TH1F* _NJ_DAB; // histogram of the number of jets using DAB jets
+static TH1F* _NJ_DED; // histogram of the number of jets using DED jets
+
 JetRazor JetRazor;
 
 JetRazor::JetRazor() : Processor("JetRazor") {
@@ -62,11 +60,12 @@ JetRazor::JetRazor() : Processor("JetRazor") {
 
     // register steering parameters: name, description, class-variable, default value
     registerInputCollection( LCIO::MCPARTICLE, "CollectionName" , "Name of the MCParticle collection"  , _colName , std::string("MCParticle") );
-
+    registerProcessorParameter( "JetRParameter", 
+            "the R parameter goes into the Jet Algorithm (FastJet) determining the angular reach", _JetRParameter, 1.0);
     registerProcessorParameter( "RootOutputName" , "output file"  , _root_file_name , std::string("output.root") ); 
-    registerProcessorParameter( "thrustDetectability",
+    registerProcessorParameter( "jetDetectability",
             "Detectability of the Thrust Axis/Value to be used:\n#\t0 : True \n#t1 : Detectable \n#t2 : Detected" ,
-            _thrustDetectability, 0 );
+            _jetDetectability, 0 );
 }
 
 
@@ -74,20 +73,21 @@ JetRazor::JetRazor() : Processor("JetRazor") {
 void JetRazor::init() { 
     streamlog_out(DEBUG)  << "   init called  " << std::endl ;
     cout << "initialized" << endl;
-    if(_thrustDetectability==0){_rootfile = new TFile("JetRazor_.39133._T.root","RECREATE");
+    if(_jetDetectability==0){_rootfile = new TFile("JetRazor_.39113._T1.0.root","RECREATE");
         _R_T = new TH1F("R_T", "R =MTR/MR",130,-3,10);
-        _MR_T = new TH1F("MR_T","MR", 100, 0 ,10); 
+        _MR_T = new TH1F("MR_T","MR", 100, 0 ,10);
+        _NJ_T = new TH1F("NJ_T","NJ",20, 0, 20); 
     }
-    if(_thrustDetectability==1){_rootfile = new TFile("JetRazor_.39133._DAB.root","RECREATE");
+    if(_jetDetectability==1){_rootfile = new TFile("JetRazor_.39133._DAB.root","RECREATE");
         _MR_DAB = new TH1F("MR_DAB","MR", 100, 0 ,10); 
         _R_DAB = new TH1F("R_DAB", "R =MTR/MR",130,-3,10);
     }
-    if(_thrustDetectability==2){_rootfile = new TFile("JetRazor_.39133._DED.root","RECREATE");
+    if(_jetDetectability==2){_rootfile = new TFile("JetRazor_.39133._DED.root","RECREATE");
         _MR_DED = new TH1F("MR_DED","MR", 100, 0 ,10); 
         _R_DED = new TH1F("R_DED", "R =MTR/MR",130,-3,10);
     }
 
-    freopen( "JetRazor.log", "w", stdout );
+    freopen( "JetRazor.log", "w", stdout ); // what to do with log file name?
     // irameters() ;
 
     // config ranlux 
@@ -126,7 +126,7 @@ void JetRazor::processEvent( LCEvent * evt ) {
     if (!_parp.empty()) _parp.clear();
 
     int id, stat;
-    cout << "loop #1"<< endl; 
+
     for (int n=0;n<_inParVec->getNumberOfElements() ;n++)
     {
 
@@ -141,10 +141,10 @@ void JetRazor::processEvent( LCEvent * evt ) {
 
         const double* parp = aPart->getMomentum();
 
-        double parpMag = sqrt(parp[0]*parp[0]+parp[1]*parp[1]+parp[2]*parp[2]);
+        double parp_mag = sqrt(parp[0]*parp[0]+parp[1]*parp[1]+parp[2]*parp[2]);
 
         if(stat==1){
-            cout << "id: " << id<< endl;
+            cout << "id: " << id << endl;
             cout << "parp: "<< parp[0]<<" "<< parp[1]<<" "<<parp[2]<<endl;
             double penergy = aPart->getEnergy(); 
             bool isDarkMatter = (id == 1000022);
@@ -154,34 +154,30 @@ void JetRazor::processEvent( LCEvent * evt ) {
                     id == 16 || id == -16 ||
                     id == 18 || id == -18);
 
-            double cos = parp[2]/parpMag;
+            double cos = parp[2]/parp_mag;
             bool isForward = ( cos > 0.9 || cos < - 0.9);
             bool isDetectable = (!isDarkMatter && !isNeutrino);
             bool isDetected = (isDetectable &&  !isForward  );
-            if(_thrustDetectability == 0){
-                if(!isDarkMatter){
-            
+            if(_jetDetectability == 0){
+                if(!isDarkMatter){ 
                     _parp.push_back( PseudoJet(parp[0], parp[1], parp[2], penergy) );
                 }
             }
-            if(_thrustDetectability == 1){
-                if(isDetectable){
-                 
+            if(_jetDetectability == 1){
+                if(isDetectable){ 
                     _parp.push_back( PseudoJet(parp[0], parp[1], parp[2], penergy) );
                 }
             }
 
-            if(_thrustDetectability == 2){ 
-                if(isDetected){ 
-                 
+            if(_jetDetectability == 2){ 
+                if(isDetected){  
                     _parp.push_back( PseudoJet(parp[0], parp[1], parp[2], penergy) ); 
                 }
             }
         } // stat = 1
     } // for particle  
-
-    double R = 0.1; // the R parameter for the Jet Algorithm
-    JetDefinition jet_def(antikt_algorithm, R);
+    
+    JetDefinition jet_def(antikt_algorithm, _JetRParameter);
     // run the clustering, extract the jets
     ClusterSequence cs(_parp, jet_def);
     vector<PseudoJet> jets = sorted_by_pt(cs.inclusive_jets());
@@ -199,10 +195,14 @@ void JetRazor::processEvent( LCEvent * evt ) {
     }
 
 
+    _NJ_T->Fill(jets.size());
+    //_R_DAB->Fill(R);
+    //_R_DED->Fill(R);
+
     double vec[2][3][4]; // jet 1, jet 2 : true detectable, detected : energy, momx, momy, momz
     double Rvec[3][4]; // true, detectable, detected : energy, px, py, pz 
-    int d = _thrustDetectability;
-    //double R;
+    int d = _jetDetectability;
+    double R;
     double beta2;
 
         //int id, stat;
@@ -264,7 +264,7 @@ void JetRazor::processEvent( LCEvent * evt ) {
                 }       
             }
         }
-        cout << "end loop 3 "<< endl; 
+        
         //int d = _thrustDetectability;
         double beta = (vec[0][d][0]-vec[1][d][0])/(vec[0][d][3]-vec[1][d][3]); // beta using right particles 
         //double beta2 = pow(beta,2);
@@ -299,7 +299,7 @@ void JetRazor::processEvent( LCEvent * evt ) {
             if(stat ==1){
                 cout << "id: "<<id<<endl;
                 cout << parp<< endl;
-                if(_thrustDetectability == 0){
+                if(_jetDetectability == 0){
                     if(!isDarkMatter){
                         Rvec[d][0]+=R4Vec[0];
                         Rvec[d][1]+=R4Vec[1];
@@ -307,7 +307,7 @@ void JetRazor::processEvent( LCEvent * evt ) {
                         Rvec[d][3]+=R4Vec[3];
                     }
                 }
-                if(_thrustDetectability ==1){
+                if(_jetDetectability ==1){
                     if(isDetectable){
                         Rvec[d][0]+=R4Vec[0];
                         Rvec[d][1]+=R4Vec[1];
@@ -315,7 +315,7 @@ void JetRazor::processEvent( LCEvent * evt ) {
                         Rvec[d][3]+=R4Vec[3];
                     }
                 }
-                if(_thrustDetectability == 2){
+                if(_jetDetectability == 2){
                     if(isDetected){
                         Rvec[d][0]+=R4Vec[0];
                         Rvec[d][1]+=R4Vec[1];
@@ -371,10 +371,7 @@ void JetRazor::processEvent( LCEvent * evt ) {
         betaCheck += " ";
         betaCheck += std::to_string(_nEvt);
         betaCheck += " ";  
-    } 
-
-    if (_principleJetRazorValue >= _max) _max = _principleJetRazorValue;
-    if (_principleJetRazorValue <= _min) _min = _principleJetRazorValue;
+    }  
     cout << "End EVENT "<< _nEvt<< endl;
 
     _nEvt ++ ; // different from original-moved out of for loop - summer 

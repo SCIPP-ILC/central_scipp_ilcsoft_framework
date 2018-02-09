@@ -72,7 +72,7 @@ ThrustRazor::ThrustRazor() : Processor("ThrustRazor") {
 void ThrustRazor::init() { 
     streamlog_out(DEBUG)  << "   init called  " << std::endl ;
     cout << "initialized" << endl;
-    if(_thrustDetectability==0){_rootfile = new TFile("ThrustRazor_.39133._T.root","RECREATE");
+    if(_thrustDetectability==0){_rootfile = new TFile("ThrustRazor_.39113._T.root","RECREATE");
         _R_T = new TH1F("R_T", "R =MTR/MR",130,-3,10);
         _MR_T = new TH1F("MR_T","MR", 100, 0 ,10); 
     }
