@@ -101,14 +101,13 @@ void Prediction::init() {
   _p_theta = new TH1F("p_theta", "Theta between positron and hadronic system", 360, 0, .1);
   _e_theta = new TH1F("e_theta", "Theta between positron and hadronic system", 360, 0, .1);
   _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
-  zmom=new TH1F("zmom", "Hadronic system energy", 500, 450, 550);
-  tmom=new TH1F("tmom", "B=P/E for Hadronic System", 500, 0, 1.5);
+  zmom=new TH1F("zmom", "System energy", 500, 450, 550);
+  tmom=new TH1F("tmom", "Eletron system energy", 500, 450, 550);
   amom=new TH1F("amom", "Distribution of Electron Theta", 500, 0,.1);
   bmom=new TH1F("bmom", "Distribution of Positron Theta", 500, 0,.1);
   cmom=new TH1F("cmom", "Distribution of Electron Theta", 500, 0,.1);
   dmom=new TH1F("dmom", "Distribution of Positron Theta", 500, 0,.1);
   _nEvt = 0 ;
-
 }
 
 
@@ -140,7 +139,7 @@ void Prediction::processEvent( LCEvent * evt ) {
   //If there was no scatter, then there is nothing to see.
   //Also excludes small magnitude events.
   if(data.mag<=1) return;
-  //if(!data.scattered) return;
+  if(!data.scattered) return;
   i_events++;
   MCParticle* max_photon=NULL;
   for(int i=0; i < col->getNumberOfElements(); ++i){
@@ -174,23 +173,23 @@ void Prediction::processEvent( LCEvent * evt ) {
   double positronTheta=getTheta(p.positron);
 
   //Collecting Data for Analysis
-  Result positron_result,electron_result;
-  positron_result.system_energy=electron_result.system_energy=data.positron.e+data.electron.e+data.hadronic_nopseudo.e; //No hadronic energy
+  Result positron_result;
+  Result electron_result;
+  positron_result.system_energy=data.positron.e+data.electron.e+data.hadronic_nopseudo.e; //No hadronic energy
+  electron_result.system_energy=data.positron.e+data.electron.e+data.hadronic_nopseudo.e; //No hadronic energy
+
   positron_result.actual=data.positron;
   positron_result.predicted=p.positron;
   electron_result.actual=data.electron;
   electron_result.predicted=p.electron;
+
   positron_results.push_back(positron_result);
   electron_results.push_back(electron_result);
 
   if(max_photon!=NULL){
     double tot_energy= data.electron.e+data.positron.e+data.hadronic.e;
     double b=getMag(data.hadronic_nopseudo)/data.hadronic_nopseudo.e;
-      tmom->Fill(b);
-
     _observe->Fill(b, tot_energy);
-    zmom->Fill(tot_energy);
-
   }
 }
 
@@ -223,17 +222,23 @@ void Prediction::end(){
   cout << endl;
   cout << "Positron  HM Grid: " << endl;
   printHMGrid(positron_results);
+
+  double cut=494;
   for(Result result: electron_results){
-      amom->Fill(getTheta(result.actual, result.predicted));
-      if(result.system_energy > 480)
-	cmom->Fill(getTheta(result.actual, result.predicted));
+    tmom->Fill(result.system_energy);
+    amom->Fill(getTheta(result.actual, result.predicted));
+    if(result.system_energy > cut)
+      cmom->Fill(getTheta(result.actual, result.predicted));
   }
   for(Result result: positron_results){
-      bmom->Fill(getTheta(result.actual, result.predicted));
-      if(result.system_energy > 480)
-	dmom->Fill(getTheta(result.actual, result.predicted));
+    zmom->Fill(result.system_energy);
+    bmom->Fill(getTheta(result.actual, result.predicted));
+    if(result.system_energy > cut)
+      dmom->Fill(getTheta(result.actual, result.predicted));
   }
-
+  
+  
+  
   //HM Grids
   //This for loop will find out when the algorithm becomes very accurate
   //The sweet spot is somewhere between 480 and 493.8 GeV

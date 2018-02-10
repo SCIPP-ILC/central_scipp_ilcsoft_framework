@@ -27,11 +27,6 @@ int TwoPhoton::get_hitStatus(MCParticle* input){
   return stat;
 }
 
-
-prediction::prediction(double x,double y){
-  electron.x=x;
-  positron.y=y;
-}
 prediction::prediction(bundle input){
   //const double ENERGY=input.electron.e+input.positron.e+input.hadronic.e;
   const double ENERGY=500;
@@ -96,6 +91,8 @@ bundle TwoPhoton::getHadronicSystem(LCCollection* col){
    * The sketchy thing I did was have it return a vector with final state particles (genStat==1)
    * That is what the all_particles thing is.
    */
+  //I am not proud of using the all_particles vector, but I did. It was efficient code, but confusing to read.
+
   int hits = 0;
   out.mag=0;
   //Checks for scatter in electron or positron.
@@ -108,7 +105,6 @@ bundle TwoPhoton::getHadronicSystem(LCCollection* col){
       out.electron=getFourVector(particle);
       if(getTMag(out.electron)!=0.0){
 	out.e_scatter=out.scattered=true;
-	out.electronic=out.electron;
       }
     }else if(particle->getEnergy()==max[-11]){
       ++hits;
@@ -116,7 +112,6 @@ bundle TwoPhoton::getHadronicSystem(LCCollection* col){
       out.positron=getFourVector(particle);
       if(getTMag(out.positron)!=0.0){
 	out.p_scatter=out.scattered=true;
-	out.electronic=out.positron;
       }    
     }else{
       //HADRONIC
@@ -132,9 +127,9 @@ bundle TwoPhoton::getHadronicSystem(LCCollection* col){
   out.pseudo=*(new fourvec(
 			   -(out.hadronic.x+out.positron.x+out.electron.y),
 			   -(out.hadronic.y+out.positron.y+out.electron.y) ));
+  double total_energy=out.hadronic.E;
   out.hadronic.x=0;
   out.hadronic.y=0;
-  double total_energy=out.hadronic.E;
   out.hadronic.z=0;
   out.hadronic.e=0;
   int count = 0;
@@ -144,6 +139,7 @@ bundle TwoPhoton::getHadronicSystem(LCCollection* col){
     fourvec hadron = getFourVector(particle);
     ++count;
     out.hadronic += (hadron+=out.pseudo*(hadron.E/total_energy));
+    //To remove unobservable particles.
     //int id=particle->getPDG();
     //const double angle = 0.5; //Cutting angle
     //if(id==12||id==14||id==16||id==18|| (id>=1000001 && id<=1000039))continue;

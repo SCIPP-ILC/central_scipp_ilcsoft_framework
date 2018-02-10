@@ -102,7 +102,7 @@ namespace TwoPhoton{
    // 2 - outside Beamcal radius
    // 3 - outgoing beampipe hole
    // 4 - incoming beampipe hole
-   int get_hitStatus(const fourvec, const bool=true);
+   int get_hitStatus(const fourvec, const bool=false);
    int get_hitStatus(MCParticle*);
    
    //Like the ilc version but it supports MCParticle and fourvectors. 
