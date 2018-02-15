@@ -1,0 +1,10 @@
+void ez(){
+  TCanvas c;
+  c.SetLogy();
+  az->Draw();
+  ez->SetLineColor(2);
+  ez->Draw("SAME");
+  auto l=new TLegend(0,.2,0,.2);
+  l->AddEntry(az);
+  l->AddEntry(ez);
+}

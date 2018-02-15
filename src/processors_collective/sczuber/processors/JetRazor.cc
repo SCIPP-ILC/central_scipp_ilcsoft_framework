@@ -22,7 +22,8 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <cstdio> // trying to creat log file 
+#include <cstdio> // trying to creat log file
+//#include <map> 
 
 #include <CLHEP/Vector/ThreeVector.h>
 // #include <CLHEP/Random/RanluxEngine.h>
@@ -63,28 +64,30 @@ JetRazor::JetRazor() : Processor("JetRazor") {
     registerProcessorParameter( "RootOutputName" , "output file"  , _root_file_name , std::string("output.root") ); 
     registerProcessorParameter( "jetDetectability",
             "Detectability of the Thrust Axis/Value to be used:\n#\t0 : True \n#t1 : Detectable \n#t2 : Detected" ,
-            _jetDetectability, 0 );
+            _jetDetectability, 1 );
 }
 
 
 void JetRazor::init() { 
     streamlog_out(DEBUG)  << "   init called  " << std::endl ;
-    cout << "initialized" << endl;
-    if(_jetDetectability==0){_rootfile = new TFile("JetRazor_.39133._T11.0.root","RECREATE");
+
+    if(_jetDetectability==0){_rootfile = new TFile("JetRazor_.39133._T8.0.root","RECREATE");
         _R_T = new TH1F("R_T", "R =MTR/MR",130,-3,10);
         _MR_T = new TH1F("MR_T","MR", 100, 0 ,10);
         _NJ_T = new TH1F("NJ_T","NJ",20, 0, 20); 
     }
-    if(_jetDetectability==1){_rootfile = new TFile("JetRazor_.39133._DAB.root","RECREATE");
+    if(_jetDetectability==1){_rootfile = new TFile("JetRazor_.39113._DAB0.5.root","RECREATE");
         _MR_DAB = new TH1F("MR_DAB","MR", 100, 0 ,10); 
         _R_DAB = new TH1F("R_DAB", "R =MTR/MR",130,-3,10);
+        _NJ_DAB = new TH1F("NJ_DAB","NJ",20,0,20);
     }
     if(_jetDetectability==2){_rootfile = new TFile("JetRazor_.39133._DED.root","RECREATE");
         _MR_DED = new TH1F("MR_DED","MR", 100, 0 ,10); 
         _R_DED = new TH1F("R_DED", "R =MTR/MR",130,-3,10);
     }
-
-    freopen( "JetRazor_.39133._T11.0.log", "w", stdout ); // what to do with log file name?
+    if(_jetDetectability==0){ freopen( "JetRazor_.39133._T8.0.log", "w", stdout ); }
+    if(_jetDetectability==1){ freopen( "JetRazor_.39113._DAB0.5.log", "w", stdout ); }
+    if(_jetDetectability==2){ freopen( "JetRazor_.39133._DED8.0.log", "w", stdout ); }
     // irameters() ;
 
     // config ranlux 
@@ -104,7 +107,23 @@ void JetRazor::init() {
         myrnd.showStatus();
     } // if file not existusually a good idea to
     //printParameters() ;
-    _nEvt = 0 ;
+    _nEvt = 0 ; 
+
+    pname[11  ]="              electron";
+    pname[12  ]="     electron neutrino";
+    pname[-12 ]="anti electron neutrino";
+    pname[13  ]="                  muon";
+    pname[-13 ]="             anti muon";
+    pname[14  ]="         muon neutrino";
+    pname[-14 ]="    anti muon neutrino";
+    pname[15  ]="                   tau";
+    pname[16  ]="          tau neutrino";
+    pname[-16 ]="     anti tau neutrino";
+    pname[22  ]="                photon";
+    pname[1000022]="              X10";
+    pname[211 ]="                   pi+";
+    pname[-211]="                   pi-";
+
 }
 
 void JetRazor::processRunHeader( LCRunHeader* run) { 
@@ -113,7 +132,8 @@ void JetRazor::processRunHeader( LCRunHeader* run) {
 } 
 
 void JetRazor::processEvent( LCEvent * evt ) { 
-    // this gets called for every event 
+
+
     parp1 = false;
     parp0 = false;  
     // usually the working horse ...
@@ -124,6 +144,7 @@ void JetRazor::processEvent( LCEvent * evt ) {
 
     int id, stat;
 
+
     for (int n=0;n<_inParVec->getNumberOfElements() ;n++)
     {
 
@@ -131,6 +152,7 @@ void JetRazor::processEvent( LCEvent * evt ) {
         try{
             id = aPart->getPDG();
             stat = aPart->getGeneratorStatus();
+
         }
         catch(const std::exception& e){
             cout << "exception caught with message " << e.what() << "\n";
@@ -141,8 +163,8 @@ void JetRazor::processEvent( LCEvent * evt ) {
         double parp_mag = sqrt(parp[0]*parp[0]+parp[1]*parp[1]+parp[2]*parp[2]);
 
         if(stat==1){
-            cout << "id: " << id << endl;
-            cout << "parp: "<< parp[0]<<" "<< parp[1]<<" "<<parp[2]<<endl;
+            cout << "id: " << id << " " << pname[id] <<endl;
+            //cout << "parp: "<< parp[0]<<" "<< parp[1]<<" "<<parp[2]<<endl;
             double penergy = aPart->getEnergy(); 
             bool isDarkMatter = (id == 1000022);
             bool isNeutrino = (
@@ -173,7 +195,7 @@ void JetRazor::processEvent( LCEvent * evt ) {
             }
         } // stat = 1
     } // for particle  
-    
+
     JetDefinition jet_def(antikt_algorithm,   _JetRParameter   ); 
     // run the clustering, extract the jets
     ClusterSequence cs(_parp, jet_def);
@@ -192,7 +214,9 @@ void JetRazor::processEvent( LCEvent * evt ) {
     }
 
 
-    _NJ_T->Fill(jets.size());
+    //_NJ_T->Fill(jets.size());
+    _NJ_DAB->Fill(jets.size());
+    //_NJ_DED->Fill(jets.size());
     //_R_DAB->Fill(R);
     //_R_DED->Fill(R);
 
@@ -202,149 +226,149 @@ void JetRazor::processEvent( LCEvent * evt ) {
     double R;
     double beta2;
 
-        //int id, stat;
-    
-        for (int n=0;n<_inParVec->getNumberOfElements() ;n++){
+    //int id, stat;
 
-            MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
+    for (int n=0;n<_inParVec->getNumberOfElements() ;n++){
 
-            try{
-                id = aPart->getPDG();
-                stat = aPart->getGeneratorStatus();
-            }
-            catch(const std::exception& e){
-                cout << "exception caught with message " << e.what() << "\n";
-            }
+        MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
 
-            if(stat==1){
-                const double* parp = aPart->getMomentum();
-                double part4mom[4];
-
-                part4mom[0] = aPart->getEnergy(); 
-                part4mom[1] = parp[0];
-                part4mom[2] = parp[1]; 
-                part4mom[3] = parp[2]; 
-              
-
-                // need momentum and energy of entire jet 
-
-                bool isDarkMatter = (id == 1000022);
-                bool isNeutrino = (
-                        id == 12 || id == -12 ||
-                        id == 14 || id == -14 ||
-                        id == 16 || id == -16 ||
-                        id == 18 || id == -18);
-                double cos = parp[2]/(sqrt(parp[0]*parp[0]+parp[1]*parp[1]+parp[2]*parp[2]));
-                bool isForward = ( cos > 0.9 || cos < - 0.9);
-                int i = 1; // jet #
-                
-                //if(dot>=0){i=0;}
-                //if(dot<0){i=1;}
-                if (!isDarkMatter){
-                    cout << "i: "<< i << endl;  
-                    vec[i][0][0]+= part4mom[0]; 
-                    vec[i][0][1]+= part4mom[1];
-                    vec[i][0][2]+= part4mom[2];
-                    vec[i][0][3]+= part4mom[3];
-                    if (!isNeutrino){
-                        vec[i][1][0]+= part4mom[0];
-                        vec[i][1][1]+= part4mom[1];
-                        vec[i][1][2]+= part4mom[2];
-                        vec[i][1][3]+= part4mom[3];
-                        if(!isForward){
-                            vec[i][2][0]+= part4mom[0];
-                            vec[i][2][1]+= part4mom[1];
-                            vec[i][2][2]+= part4mom[2];
-                            vec[i][2][3]+= part4mom[3];
-                        }
-                    }
-                }       
-            }
+        try{
+            id = aPart->getPDG();
+            stat = aPart->getGeneratorStatus();
         }
-        
-        //int d = _thrustDetectability;
-        double beta = (vec[0][d][0]-vec[1][d][0])/(vec[0][d][3]-vec[1][d][3]); // beta using right particles 
-        //double beta2 = pow(beta,2);
-        beta2 = pow(beta,2);
-        double gamma = 1/(sqrt(1-beta2));
-        for (int n=0;n<_inParVec->getNumberOfElements() ;n++){
+        catch(const std::exception& e){
+            cout << "exception caught with message " << e.what() << "\n";
+        }
 
-            MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
+        if(stat==1){
             const double* parp = aPart->getMomentum();
+            double part4mom[4];
 
-            try{
-                id = aPart->getPDG();
-                stat = aPart->getGeneratorStatus();
-            }
-            catch(const std::exception& e){
-                cout << "exception caught with message " << e.what() << "\n";
-            }
-            double part4Vec[4] = {aPart->getEnergy(), parp[0], parp[1], parp[2] };
-            double R4Vec[4] = {gamma*part4Vec[0]-gamma*beta*part4Vec[3], part4Vec[1], part4Vec[2], 
-                -gamma*beta*part4Vec[0]+gamma*part4Vec[3] }; 
+            part4mom[0] = aPart->getEnergy(); 
+            part4mom[1] = parp[0];
+            part4mom[2] = parp[1]; 
+            part4mom[3] = parp[2]; 
+
+
+            // need momentum and energy of entire jet 
+
             bool isDarkMatter = (id == 1000022);
-
             bool isNeutrino = (
                     id == 12 || id == -12 ||
                     id == 14 || id == -14 ||
                     id == 16 || id == -16 ||
                     id == 18 || id == -18);
             double cos = parp[2]/(sqrt(parp[0]*parp[0]+parp[1]*parp[1]+parp[2]*parp[2]));
-            bool isForward = (cos > 0.9 || cos < - 0.9);
-            bool isDetectable = (!isDarkMatter && !isNeutrino);
-            bool isDetected = (isDetectable && !isForward); 
-            if(stat ==1){
-                cout << "id: "<<id<<endl;
-                cout << parp<< endl;
-                if(_jetDetectability == 0){
-                    if(!isDarkMatter){
-                        Rvec[d][0]+=R4Vec[0];
-                        Rvec[d][1]+=R4Vec[1];
-                        Rvec[d][2]+=R4Vec[2];
-                        Rvec[d][3]+=R4Vec[3];
+            bool isForward = ( cos > 0.9 || cos < - 0.9);
+            int i = 1; // jet #
+
+            //if(dot>=0){i=0;}
+            //if(dot<0){i=1;}
+            if (!isDarkMatter){
+
+                vec[i][0][0]+= part4mom[0]; 
+                vec[i][0][1]+= part4mom[1];
+                vec[i][0][2]+= part4mom[2];
+                vec[i][0][3]+= part4mom[3];
+                if (!isNeutrino){
+                    vec[i][1][0]+= part4mom[0];
+                    vec[i][1][1]+= part4mom[1];
+                    vec[i][1][2]+= part4mom[2];
+                    vec[i][1][3]+= part4mom[3];
+                    if(!isForward){
+                        vec[i][2][0]+= part4mom[0];
+                        vec[i][2][1]+= part4mom[1];
+                        vec[i][2][2]+= part4mom[2];
+                        vec[i][2][3]+= part4mom[3];
                     }
                 }
-                if(_jetDetectability ==1){
-                    if(isDetectable){
-                        Rvec[d][0]+=R4Vec[0];
-                        Rvec[d][1]+=R4Vec[1];
-                        Rvec[d][2]+=R4Vec[2];
-                        Rvec[d][3]+=R4Vec[3];
-                    }
-                }
-                if(_jetDetectability == 2){
-                    if(isDetected){
-                        Rvec[d][0]+=R4Vec[0];
-                        Rvec[d][1]+=R4Vec[1];
-                        Rvec[d][2]+=R4Vec[2];
-                        Rvec[d][3]+=R4Vec[3];
-                    }
-                }   
-            }
+            }       
         }
-        double ETM[2] = {-Rvec[d][1], - Rvec[d][2]};
-        double ETMmag = sqrt(ETM[0]*ETM[0]+ETM[1]*ETM[1]);
+    }
 
-        double ptj1mag = sqrt(vec[0][d][1]*vec[0][d][1]+vec[0][d][2]*vec[0][d][2]);
-        double ptj2mag = sqrt(vec[1][d][1]*vec[1][d][1]+vec[1][d][2]*vec[1][d][2]);
-        double ptmagsum = ptj1mag + ptj2mag; 
+    //int d = _thrustDetectability;
+    double beta = (vec[0][d][0]-vec[1][d][0])/(vec[0][d][3]-vec[1][d][3]); // beta using right particles 
+    //double beta2 = pow(beta,2);
+    beta2 = pow(beta,2);
+    double gamma = 1/(sqrt(1-beta2));
+    for (int n=0;n<_inParVec->getNumberOfElements() ;n++){
 
-        double ptvecsum[2] = {vec[0][d][1]+vec[1][d][1], vec[0][d][2]+vec[1][d][2]};
-        double ETMdotptvecsum = ETM[0]*ptvecsum[0]+ETM[1]*ptvecsum[1];
-        double MTR = sqrt((ETMmag*ptmagsum-ETMdotptvecsum)/2);
+        MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
+        const double* parp = aPart->getMomentum();
 
-        double pj1 = sqrt(vec[0][d][1]*vec[0][d][1]+vec[0][d][2]*vec[0][d][2]+vec[0][d][3]*vec[0][d][3]);
-        R = MTR/(2*pj1);
-    
+        try{
+            id = aPart->getPDG();
+            stat = aPart->getGeneratorStatus();
+        }
+        catch(const std::exception& e){
+            cout << "exception caught with message " << e.what() << "\n";
+        }
+        double part4Vec[4] = {aPart->getEnergy(), parp[0], parp[1], parp[2] };
+        double R4Vec[4] = {gamma*part4Vec[0]-gamma*beta*part4Vec[3], part4Vec[1], part4Vec[2], 
+            -gamma*beta*part4Vec[0]+gamma*part4Vec[3] }; 
+        bool isDarkMatter = (id == 1000022);
+
+        bool isNeutrino = (
+                id == 12 || id == -12 ||
+                id == 14 || id == -14 ||
+                id == 16 || id == -16 ||
+                id == 18 || id == -18);
+        double cos = parp[2]/(sqrt(parp[0]*parp[0]+parp[1]*parp[1]+parp[2]*parp[2]));
+        bool isForward = (cos > 0.9 || cos < - 0.9);
+        bool isDetectable = (!isDarkMatter && !isNeutrino);
+        bool isDetected = (isDetectable && !isForward); 
+        if(stat ==1){
+            //cout << "id: "<<id<<endl;
+            //cout << parp<< endl;
+            if(_jetDetectability == 0){
+                if(!isDarkMatter){
+                    Rvec[d][0]+=R4Vec[0];
+                    Rvec[d][1]+=R4Vec[1];
+                    Rvec[d][2]+=R4Vec[2];
+                    Rvec[d][3]+=R4Vec[3];
+                }
+            }
+            if(_jetDetectability ==1){
+                if(isDetectable){
+                    Rvec[d][0]+=R4Vec[0];
+                    Rvec[d][1]+=R4Vec[1];
+                    Rvec[d][2]+=R4Vec[2];
+                    Rvec[d][3]+=R4Vec[3];
+                }
+            }
+            if(_jetDetectability == 2){
+                if(isDetected){
+                    Rvec[d][0]+=R4Vec[0];
+                    Rvec[d][1]+=R4Vec[1];
+                    Rvec[d][2]+=R4Vec[2];
+                    Rvec[d][3]+=R4Vec[3];
+                }
+            }   
+        }
+    }
+    double ETM[2] = {-Rvec[d][1], - Rvec[d][2]};
+    double ETMmag = sqrt(ETM[0]*ETM[0]+ETM[1]*ETM[1]);
+
+    double ptj1mag = sqrt(vec[0][d][1]*vec[0][d][1]+vec[0][d][2]*vec[0][d][2]);
+    double ptj2mag = sqrt(vec[1][d][1]*vec[1][d][1]+vec[1][d][2]*vec[1][d][2]);
+    double ptmagsum = ptj1mag + ptj2mag; 
+
+    double ptvecsum[2] = {vec[0][d][1]+vec[1][d][1], vec[0][d][2]+vec[1][d][2]};
+    double ETMdotptvecsum = ETM[0]*ptvecsum[0]+ETM[1]*ptvecsum[1];
+    double MTR = sqrt((ETMmag*ptmagsum-ETMdotptvecsum)/2);
+
+    double pj1 = sqrt(vec[0][d][1]*vec[0][d][1]+vec[0][d][2]*vec[0][d][2]+vec[0][d][3]*vec[0][d][3]);
+    R = MTR/(2*pj1);
+
     if(beta2<=1){
         if(d==0){_R_T->Fill(R);}
         if(d==1){_R_DAB->Fill(R);}
         if(d==2){_R_DED->Fill(R);}
         if(parp1){
-            cout << "there are valid beta events that have only 1 particle" << endl; 
+            // cout << "there are valid beta events that have only 1 particle" << endl; 
         }
         if(!parp1){
-            cout << "there are valid beta events that have not only 1 particle" <<endl; 
+            //   cout << "there are valid beta events that have not only 1 particle" <<endl; 
         }
     }
     else{
@@ -353,15 +377,15 @@ void JetRazor::processEvent( LCEvent * evt ) {
         if(d==2){_R_DED->Fill(-2);}
 
         if(parp1){
-            cout << "there are inval beta events that have only 1 particle"<< endl;
+            //cout << "there are inval beta events that have only 1 particle"<< endl;
         }
         if(!parp1){
-            cout << "there are inval beta events that have not only 1 particle"<< endl;
+            //cout << "there are inval beta events that have not only 1 particle"<< endl;
             if(parp0){
-                cout <<" zero particles" << endl;
+                //cout <<" zero particles" << endl;
             }
             if(!parp0){
-                cout << "not zero particles"<< endl;
+                //cout << "not zero particles"<< endl;
             }
         }
 

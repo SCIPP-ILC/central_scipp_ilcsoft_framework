@@ -75,12 +75,12 @@ void example::processRunHeader( LCRunHeader* run) {
 void example::processEvent( LCEvent * evt ) { 
     LCCollection* col = evt->getCollection( _colName );
     _nEvt++;
+    cout << " +++ New Event +++" << endl;
     for(int i=0; i < col->getNumberOfElements(); ++i){
       MCParticle* particle=dynamic_cast<MCParticle*>(col->getElementAt(i));
       int pid=particle->getPDG();
       cout << "Particle found: " << pid << endl;
     }
-    cout << " +++ " << endl;
 }
 
 
@@ -91,7 +91,7 @@ void example::check( LCEvent * evt ) {
 
 
 void example::end(){ 
-  cout << "number of events: " << _nEvt << endl;
+  cout << endl << "Total # of events: " << _nEvt << endl;
   
   _rootfile->Write();
 }

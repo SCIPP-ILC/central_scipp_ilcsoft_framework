@@ -55,6 +55,10 @@ static TH1F* amom;
 static TH1F* bmom;
 static TH1F* cmom;
 static TH1F* dmom;
+static TH1F* _alpha;
+static TH1F* _beta;
+static TH1F* _az;
+static TH1F* _ez;
 
 static vector<Result> positron_results;
 static vector<Result> electron_results;
@@ -105,8 +109,12 @@ void Prediction::init() {
   tmom=new TH1F("tmom", "Eletron system energy", 500, 450, 550);
   amom=new TH1F("amom", "Distribution of Electron Theta", 500, 0,.1);
   bmom=new TH1F("bmom", "Distribution of Positron Theta", 500, 0,.1);
-  cmom=new TH1F("cmom", "Distribution of Electron Theta", 500, 0,.1);
-  dmom=new TH1F("dmom", "Distribution of Positron Theta", 500, 0,.1);
+  cmom=new TH1F("cmom", "Cut Distribution of Electron Theta", 500, 0,.1);
+  dmom=new TH1F("dmom", "Cut Distribution of Positron Theta", 500, 0,.1);
+  _alpha=new TH1F("alpha", "Alpha Distribution", 500, 0,550);
+  _beta=new TH1F("beta", "Beta Distribution", 500, 0,550);
+  _az=new TH1F("az", "Posistron Z-Momentum", 500, -250,250);
+  _ez=new TH1F("ez", "Electron Z-Momentum", 500, -250,250);
   _nEvt = 0 ;
 }
 
@@ -150,11 +158,16 @@ void Prediction::processEvent( LCEvent * evt ) {
    * I will make it easier to get the correct prediction.
    */
 
+  /*Debugging wb events straight don't even work.*/
+  _alpha->Fill(p.alpha);_beta->Fill(p.beta);
+  _az->Fill(p.positron.z);_ez->Fill(p.electron.z);
+
   //Collecting Data for Analysis
   Result positron_result;
   Result electron_result;
-  positron_result.system_energy=data.positron.e+data.electron.e+data.hadronic_nopseudo.e; //No hadronic energy
-  electron_result.system_energy=data.positron.e+data.electron.e+data.hadronic_nopseudo.e; //No hadronic energy
+
+  positron_result.system_energy=data.positron.e+data.electron.e+data.hadronic_nopseudo.e;
+  electron_result.system_energy=data.positron.e+data.electron.e+data.hadronic_nopseudo.e;
 
   positron_result.actual=data.positron;
   positron_result.predicted=p.positron;

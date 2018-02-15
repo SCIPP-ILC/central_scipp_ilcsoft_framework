@@ -34,7 +34,6 @@ namespace TwoPhoton{
   struct bundle{
     fourvec hadronic_nopseudo;
     fourvec hadronic;
-    fourvec electronic;
     fourvec electron;
     fourvec positron;
     fourvec pseudo;
@@ -51,7 +50,6 @@ namespace TwoPhoton{
     fourvec positron;
     double alpha=0;
     double beta=0;
-    prediction(double x,double y);
     prediction( bundle );
   };
   

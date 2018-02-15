@@ -7,6 +7,7 @@
 #include <string>
 #include <IMPL/ReconstructedParticleImpl.h>
 #include "fastjet/ClusterSequence.hh"
+#include <map>
 
 #include <CLHEP/Vector/ThreeVector.h>
 #include <CLHEP/Random/RanluxEngine.h>
@@ -61,7 +62,8 @@ class JetRazor : public Processor {
         /** Called after data processing for clean up.
         */
         virtual void end() ;
-
+        
+        std::map<int,std::string> pname;
 
     protected:
 
@@ -79,13 +81,15 @@ class JetRazor : public Processor {
         bool parp0; 
  
         int _jetDetectability; 
-        double _JetRParameter=11.0; // don't edit    
+        double _JetRParameter=5.0; // don't edit    
   
         LCCollection* _inParVec;
         //std::vector<Hep3Vector> _parp;
         std::vector<PseudoJet> _parp;
         std::string filename;
         RanluxEngine myrnd;
+        
+
 
         int _nRun ;
         int _nEvt ;
