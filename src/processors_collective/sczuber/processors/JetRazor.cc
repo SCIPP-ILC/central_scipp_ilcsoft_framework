@@ -76,7 +76,7 @@ void JetRazor::init() {
         _MR_T = new TH1F("MR_T","MR", 100, 0 ,10);
         _NJ_T = new TH1F("NJ_T","NJ",20, 0, 20); 
     }
-    if(_jetDetectability==1){_rootfile = new TFile("JetRazor_.39113._DAB0.5.root","RECREATE");
+    if(_jetDetectability==1){_rootfile = new TFile("JetRazor_.39133._DAB8.0.root","RECREATE");
         _MR_DAB = new TH1F("MR_DAB","MR", 100, 0 ,10); 
         _R_DAB = new TH1F("R_DAB", "R =MTR/MR",130,-3,10);
         _NJ_DAB = new TH1F("NJ_DAB","NJ",20,0,20);
@@ -86,7 +86,7 @@ void JetRazor::init() {
         _R_DED = new TH1F("R_DED", "R =MTR/MR",130,-3,10);
     }
     if(_jetDetectability==0){ freopen( "JetRazor_.39133._T8.0.log", "w", stdout ); }
-    if(_jetDetectability==1){ freopen( "JetRazor_.39113._DAB0.5.log", "w", stdout ); }
+    if(_jetDetectability==1){ freopen( "JetRazor_.39133._DAB8.0.log", "w", stdout ); }
     if(_jetDetectability==2){ freopen( "JetRazor_.39133._DED8.0.log", "w", stdout ); }
     // irameters() ;
 
@@ -139,32 +139,25 @@ void JetRazor::processEvent( LCEvent * evt ) {
     // usually the working horse ...
     cout << "EVENT: " << _nEvt << endl; 
     _inParVec = evt->getCollection( _colName) ;
-    cout << "num of elements " << _inParVec->getNumberOfElements() << endl;
+    //cout << "num of elements " << _inParVec->getNumberOfElements() << endl;
     if (!_parp.empty()) _parp.clear();
-
     int id, stat;
-
 
     for (int n=0;n<_inParVec->getNumberOfElements() ;n++)
     {
-
         MCParticle* aPart = dynamic_cast<MCParticle*>( _inParVec->getElementAt(n) );
         try{
             id = aPart->getPDG();
             stat = aPart->getGeneratorStatus();
-
         }
         catch(const std::exception& e){
             cout << "exception caught with message " << e.what() << "\n";
         }
-
         const double* parp = aPart->getMomentum();
-
         double parp_mag = sqrt(parp[0]*parp[0]+parp[1]*parp[1]+parp[2]*parp[2]);
 
         if(stat==1){
-            cout << "id: " << id << " " << pname[id] <<endl;
-            //cout << "parp: "<< parp[0]<<" "<< parp[1]<<" "<<parp[2]<<endl;
+            cout << "id: " << id << " " << pname[id] <<" " << parp[0]<<" "<< parp[1]<<" "<< parp[2] <<endl; 
             double penergy = aPart->getEnergy(); 
             bool isDarkMatter = (id == 1000022);
             bool isNeutrino = (
@@ -201,15 +194,16 @@ void JetRazor::processEvent( LCEvent * evt ) {
     ClusterSequence cs(_parp, jet_def);
     vector<PseudoJet> jets = sorted_by_pt(cs.inclusive_jets());
     // print out some info
-    cout << "Clustered with " << jet_def.description() << endl;
+    //cout << "Clustered with " << jet_def.description() << endl;
     // print the jets
-    cout << " pt y phi" << endl;
+    //cout << " pt y phi" << endl;
     cout << "NUMBER OF JETS: "<< jets.size() << endl; 
     for (unsigned i = 0; i < jets.size(); i++) {
-        cout << "jet " << i << ": "<< jets[i].perp() << " "<< jets[i].rap() << " " << endl; 
+        cout << "jet " << i << ": "<< jets[i].perp() << " "<< jets[i].rap() << " energy: " <<jets[i].e()<< endl; 
         vector<PseudoJet> constituents = jets[i].constituents();
         for (unsigned j = 0; j < constituents.size(); j++) {
-            cout << " constituent " << j << "’s pt: "<< constituents[j].perp() << endl; 
+            //cout << " constituent " << j << "’s pt: "<< constituents[j].perp() << endl; 
+            cout <<" constituent "<< j << " "<< constituents[j].px() << " "<<constituents[j].py() << " "<< constituents[j].pz()<< endl;
         }
     }
 
