@@ -81,7 +81,7 @@ class JetRazor : public Processor {
         bool parp0; 
  
         int _jetDetectability; 
-        double _JetRParameter=8.0; // don't edit    
+        double _JetRParameter=3.0; // don't edit    
   
         LCCollection* _inParVec;
         //std::vector<Hep3Vector> _parp;

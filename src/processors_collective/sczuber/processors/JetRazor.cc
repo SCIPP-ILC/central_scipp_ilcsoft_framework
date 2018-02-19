@@ -76,7 +76,7 @@ void JetRazor::init() {
         _MR_T = new TH1F("MR_T","MR", 100, 0 ,10);
         _NJ_T = new TH1F("NJ_T","NJ",20, 0, 20); 
     }
-    if(_jetDetectability==1){_rootfile = new TFile("JetRazor_.39133._DAB8.0.root","RECREATE");
+    if(_jetDetectability==1){_rootfile = new TFile("JetRazor_.39133._DAB3.0.root","RECREATE");
         _MR_DAB = new TH1F("MR_DAB","MR", 100, 0 ,10); 
         _R_DAB = new TH1F("R_DAB", "R =MTR/MR",130,-3,10);
         _NJ_DAB = new TH1F("NJ_DAB","NJ",20,0,20);
@@ -86,7 +86,7 @@ void JetRazor::init() {
         _R_DED = new TH1F("R_DED", "R =MTR/MR",130,-3,10);
     }
     if(_jetDetectability==0){ freopen( "JetRazor_.39133._T8.0.log", "w", stdout ); }
-    if(_jetDetectability==1){ freopen( "JetRazor_.39133._DAB8.0.log", "w", stdout ); }
+    if(_jetDetectability==1){ freopen( "JetRazor_.39133._DAB3.0.log", "w", stdout ); }
     if(_jetDetectability==2){ freopen( "JetRazor_.39133._DED8.0.log", "w", stdout ); }
     // irameters() ;
 
