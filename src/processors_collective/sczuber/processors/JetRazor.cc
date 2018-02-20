@@ -214,6 +214,9 @@ void JetRazor::processEvent( LCEvent * evt ) {
     //_R_DAB->Fill(R);
     //_R_DED->Fill(R);
 
+    // megajet algorithm: the combination of jets into two disjoint sets (megajets) is the combination that minimized the 
+    // sum of the squared-invariant-mass values of the two megajets 
+
     double vec[2][3][4]; // jet 1, jet 2 : true detectable, detected : energy, momx, momy, momz
     double Rvec[3][4]; // true, detectable, detected : energy, px, py, pz 
     int d = _jetDetectability;
