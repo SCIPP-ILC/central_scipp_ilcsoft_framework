@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <cmath>
 
 using namespace std; 
 
@@ -10,7 +11,11 @@ int main(){
     for (int i = 0; i<6; i++){
         cout << jets[i] << endl; 
     }
-
+    char counter[] = new char[6];
+    for (int i = 0; i< pow(2,6); i++){
+        int subet[] = {};
+         
+    }
     int subset[10] = {};
     return 0;
 
