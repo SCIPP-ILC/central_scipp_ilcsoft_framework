@@ -122,7 +122,6 @@ bundle TwoPhoton::getHadronicSystem(LCCollection* col){
     }
   }
   out.hadronic_nopseudo=out.hadronic;
- 
   //PSEUDO PARTICLE
   out.pseudo=*(new fourvec(
 			   -(out.hadronic.x+out.positron.x+out.electron.y),
@@ -269,4 +268,8 @@ double TwoPhoton::getTheta(fourvec a, fourvec b){
   double val=acos(theta);
   if(val!=val) return 0;
   return val;
+}
+
+double TwoPhoton::getPhi(fourvec input){
+  return atan(input.y/input.x);
 }

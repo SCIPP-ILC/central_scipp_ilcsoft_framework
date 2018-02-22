@@ -107,10 +107,10 @@ void Prediction::init() {
   _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
   zmom=new TH1F("zmom", "System energy", 500, 450, 550);
   tmom=new TH1F("tmom", "Eletron system energy", 500, 450, 550);
-  amom=new TH1F("amom", "Distribution of Electron Theta", 500, 0,.1);
-  bmom=new TH1F("bmom", "Distribution of Positron Theta", 500, 0,.1);
-  cmom=new TH1F("cmom", "Cut Distribution of Electron Theta", 500, 0,.1);
-  dmom=new TH1F("dmom", "Cut Distribution of Positron Theta", 500, 0,.1);
+  amom=new TH1F("amom", "Distribution of Actual Positron Theta", 500, 0,3.15);
+  bmom=new TH1F("bmom", "Distribution of Acutal Electron Theta", 500, 0,3.15);
+  cmom=new TH1F("cmom", "Distribution of Predicted Positron Theta", 500, 0,3.15);
+  dmom=new TH1F("dmom", "Distribution of Predicted Electron Theta", 500, 0,3.15);
   _alpha=new TH1F("alpha", "Alpha Distribution", 500, 0,550);
   _beta=new TH1F("beta", "Beta Distribution", 500, 0,550);
   _az=new TH1F("az", "Posistron Z-Momentum", 500, -250,250);
@@ -165,15 +165,28 @@ void Prediction::processEvent( LCEvent * evt ) {
   //Collecting Data for Analysis
   Result positron_result;
   Result electron_result;
-
-  positron_result.system_energy=data.positron.e+data.electron.e+data.hadronic_nopseudo.e;
-  electron_result.system_energy=data.positron.e+data.electron.e+data.hadronic_nopseudo.e;
+  double tot_energy=data.positron.e+data.electron.e+data.hadronic_nopseudo.e;
+  positron_result.system_energy=tot_energy;
+  electron_result.system_energy=tot_energy;
 
   positron_result.actual=data.positron;
   positron_result.predicted=p.positron;
   electron_result.actual=data.electron;
   electron_result.predicted=p.electron;
+  //cout << getPhi(data.electron) << "  :  " << getPhi(data.positron) << endl;
 
+  if(tot_energy > 494.0){
+    /*    double phi_ap=getPhi(data.positron), phi_ae=getPhi(data.electron), phi_pp=getPhi(p.positron), phi_pe=getPhi(p.electron);
+    if(phi_ap==phi_ap) amom->Fill(getPhi(data.positron));
+    if(phi_ae==phi_ae) bmom->Fill(getPhi(data.electron));
+    if(phi_pp==phi_pp) cmom->Fill(getPhi(p.positron));
+    if(phi_pe==phi_pe) dmom->Fill(getPhi(p.electron));
+    */
+    amom->Fill(getTheta(data.positron));
+    bmom->Fill(getTheta(data.electron));
+    cmom->Fill(getTheta(p.positron));
+    dmom->Fill(getTheta(p.electron));
+  }
   positron_results.push_back(positron_result);
   electron_results.push_back(electron_result);
 }
@@ -209,20 +222,19 @@ void Prediction::end(){
   printHMGrid(positron_results);
 
   double cut=494;
-  for(Result result: electron_results){
+  /*  for(Result result: electron_results){
     tmom->Fill(result.system_energy);
-    amom->Fill(getTheta(result.actual, result.predicted));
+
     if(result.system_energy > cut)
       cmom->Fill(getTheta(result.actual, result.predicted));
   }
   for(Result result: positron_results){
     zmom->Fill(result.system_energy);
-    bmom->Fill(getTheta(result.actual, result.predicted));
     if(result.system_energy > cut)
       dmom->Fill(getTheta(result.actual, result.predicted));
   }
-  
-  
+  cout << acos(-1) << endl;
+  */
   
   //HM Grids
   //This for loop will find out when the algorithm becomes very accurate

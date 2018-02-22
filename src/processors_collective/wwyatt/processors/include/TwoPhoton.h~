@@ -64,13 +64,13 @@ namespace TwoPhoton{
 
   // ===== Functions ===== \\
   //Specific function used in prediction algorithm.
-  //Finds the highest energy particle
+  //maxEnergy and maxParticle Finds the highest energy particle
    map<int,MCParticle*> maxParticle(LCCollection*, initializer_list<int>);
    map<int,double> maxEnergy(LCCollection*, 
 			     initializer_list<int> ids, 
 			     vector<MCParticle*>& final_state);
 
-  /*Returns a map with a few four vectors in it.
+  /*getHadronicSystem Returns a map with a few four vectors in it.
    * - hadronic vector
    * - electronic vector
    * - electron vector
@@ -79,15 +79,15 @@ namespace TwoPhoton{
    */
    bundle getHadronicSystem(LCCollection*);
    
-   //Returns a position fourvec, of the particle on the face of the beamcal.
+   //getBeamcalPosition Returns a position fourvec, of the particle on the face of the beamcal.
    fourvec getBeamcalPosition(fourvec, signed short = 0);
 
-   //Calculates a HM Grid and stores it in a hmgrid object.
+   //The following calculates a HM Grid and stores it in a hmgrid object.
    hmgrid getHMGrid(vector<fourvec> predicted, vector<fourvec> actual);
    void printHMGrid(vector<fourvec> predicted, vector<fourvec> actual);
    void printHMGrid(hmgrid);
 
-   //Calculates a HM grid with the option of an energy cut.
+   //The following calculates a HM grid with the option of an energy cut.
    hmgrid getHMGrid(vector<Result> input, double energy_cut=0.0);   
    void printHMGrid(vector<Result> input, double energy_cut=0.0);
    
