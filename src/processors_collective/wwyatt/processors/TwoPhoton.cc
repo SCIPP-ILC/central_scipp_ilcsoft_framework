@@ -124,7 +124,7 @@ bundle TwoPhoton::getHadronicSystem(LCCollection* col){
   out.hadronic_nopseudo=out.hadronic;
   //PSEUDO PARTICLE
   out.pseudo=*(new fourvec(
-			   -(out.hadronic.x+out.positron.x+out.electron.y),
+			   -(out.hadronic.x+out.positron.x+out.electron.x),
 			   -(out.hadronic.y+out.positron.y+out.electron.y) ));
   double total_energy=out.hadronic.E;
   out.hadronic.x=0;

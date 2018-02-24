@@ -55,6 +55,20 @@ static TH1F* amom;
 static TH1F* bmom;
 static TH1F* cmom;
 static TH1F* dmom;
+
+
+
+static TH1F* _p_positron_phi;
+static TH1F* _p_electron_phi;
+static TH1F* _a_positron_phi;
+static TH1F* _a_electron_phi;
+static TH1F* _positron_dtheta;
+static TH1F* _electron_dtheta;
+
+static TH2F* _e_theta_vs_p_theta;
+static TH2F* _ae_theta_vs_pp_theta;
+static TH2F* _pe_theta_vs_ap_theta;
+
 static TH1F* _alpha;
 static TH1F* _beta;
 static TH1F* _az;
@@ -107,14 +121,23 @@ void Prediction::init() {
   _vector = new TH1F("vector", "Vector", 200, 0.0, 0.05);
   zmom=new TH1F("zmom", "System energy", 500, 450, 550);
   tmom=new TH1F("tmom", "Eletron system energy", 500, 450, 550);
-  amom=new TH1F("amom", "Distribution of Actual Positron Theta", 500, 0,3.15);
-  bmom=new TH1F("bmom", "Distribution of Acutal Electron Theta", 500, 0,3.15);
-  cmom=new TH1F("cmom", "Distribution of Predicted Positron Theta", 500, 0,3.15);
-  dmom=new TH1F("dmom", "Distribution of Predicted Electron Theta", 500, 0,3.15);
+  amom=new TH1F("amom", "Distribution of Actual Positron Theta", 500, -1.6,1.6);
+  bmom=new TH1F("bmom", "Distribution of Acutal Electron Theta", 500, -1.6,1.6);
+  cmom=new TH1F("cmom", "Distribution of Predicted Positron Theta", 500, -1.6,1.6);
+  dmom=new TH1F("dmom", "Distribution of Predicted Electron Theta", 500, -1.6,1.6);
   _alpha=new TH1F("alpha", "Alpha Distribution", 500, 0,550);
   _beta=new TH1F("beta", "Beta Distribution", 500, 0,550);
   _az=new TH1F("az", "Posistron Z-Momentum", 500, -250,250);
   _ez=new TH1F("ez", "Electron Z-Momentum", 500, -250,250);
+  _p_positron_phi=new TH1F("p_positron_phi", "Distribution of Predicted Positron Phi", 500, -1.6,1.6);
+  _p_electron_phi=new TH1F("p_electron_phi", "Distribution of Predicted Electron Phi", 500, -1.6,1.6);
+  _a_positron_phi=new TH1F("a_positron_phi", "Distribution of Acutal Positron Phi", 500, -1.6,1.6);
+  _a_electron_phi=new TH1F("a_electron_phi", "Distribution of Actual Electron Phi", 500, -1.6,1.6);
+  _positron_dtheta=new TH1F("positron_dtheta", "Distribution of Delta Positron Theta", 500, 0,.01);
+  _electron_dtheta=new TH1F("electron_dtheta", "Distribution of Delta Electron Theta", 500, 0,.01);
+  _e_theta_vs_p_theta=new TH2F("e_theta_vs_p_theta", "e_theta vs p_theta bw events", 500, 0,.01,500,0,.01);
+  _ae_theta_vs_pp_theta=new TH2F("ae_theta_vs_pp_theta", "Actual Electron vs Predicted Positron Theta", 500,0,.01,500,0,.01);
+  _pe_theta_vs_ap_theta=new TH2F("pe_theta_vs_ap_theta", "Predicted Electron vs Actual Positron Theta", 500,0,.01,500,0,.01);
   _nEvt = 0 ;
 }
 
@@ -175,17 +198,20 @@ void Prediction::processEvent( LCEvent * evt ) {
   electron_result.predicted=p.electron;
   //cout << getPhi(data.electron) << "  :  " << getPhi(data.positron) << endl;
 
-  if(tot_energy > 494.0){
-    /*    double phi_ap=getPhi(data.positron), phi_ae=getPhi(data.electron), phi_pp=getPhi(p.positron), phi_pe=getPhi(p.electron);
-    if(phi_ap==phi_ap) amom->Fill(getPhi(data.positron));
-    if(phi_ae==phi_ae) bmom->Fill(getPhi(data.electron));
-    if(phi_pp==phi_pp) cmom->Fill(getPhi(p.positron));
-    if(phi_pe==phi_pe) dmom->Fill(getPhi(p.electron));
-    */
-    amom->Fill(getTheta(data.positron));
-    bmom->Fill(getTheta(data.electron));
-    cmom->Fill(getTheta(p.positron));
-    dmom->Fill(getTheta(p.electron));
+  //Make Delta-Theta and Phi plots (Delta-Theta is the angle difference between the predicted and actual momentum vector. Phi is the angle off the x-axis for the transverse momentum vector.)
+  if(tot_energy > 494){
+    double phi_ap=getPhi(data.positron), phi_ae=getPhi(data.electron), phi_pp=getPhi(p.positron), phi_pe=getPhi(p.electron);
+    //Phi
+    if(phi_ap==phi_ap) _a_positron_phi->Fill(getPhi(data.positron)); // Actual    Positron
+    if(phi_ae==phi_ae) _a_electron_phi->Fill(getPhi(data.electron)); // Actual    Electron
+    if(phi_pp==phi_pp) _p_positron_phi->Fill(getPhi(p.positron));    // Predicted Positron
+    if(phi_pe==phi_pe) _p_electron_phi->Fill(getPhi(p.electron));    // Predicted Electron
+    //dTheta
+    _positron_dtheta->Fill(getTheta(data.positron, p.positron));
+    _electron_dtheta->Fill(getTheta(data.electron, p.electron));
+    _e_theta_vs_p_theta->Fill(getTheta(p.electron), getTheta(p.positron));
+    _ae_theta_vs_pp_theta->Fill(getTheta(data.electron),getTheta(p.positron));
+    _pe_theta_vs_ap_theta->Fill(getTheta(p.electron),getTheta(data.positron));
   }
   positron_results.push_back(positron_result);
   electron_results.push_back(electron_result);
@@ -199,8 +225,7 @@ void Prediction::check( LCEvent * evt ) {
 
 void Prediction::end(){ 
   Will::META meta = Will::getMETA();
-  /*
-    
+  /*    
     cout << "Scatter Ratios:"<<endl;
     cout << "(positrons:electrons)\t= " << p_scatter << ":"<<e_scatter<<endl;
     cout << "Misc data: " << meta.MSC << endl;
@@ -222,19 +247,6 @@ void Prediction::end(){
   printHMGrid(positron_results);
 
   double cut=494;
-  /*  for(Result result: electron_results){
-    tmom->Fill(result.system_energy);
-
-    if(result.system_energy > cut)
-      cmom->Fill(getTheta(result.actual, result.predicted));
-  }
-  for(Result result: positron_results){
-    zmom->Fill(result.system_energy);
-    if(result.system_energy > cut)
-      dmom->Fill(getTheta(result.actual, result.predicted));
-  }
-  cout << acos(-1) << endl;
-  */
   
   //HM Grids
   //This for loop will find out when the algorithm becomes very accurate

@@ -271,8 +271,5 @@ double TwoPhoton::getTheta(fourvec a, fourvec b){
 }
 
 double TwoPhoton::getPhi(fourvec input){
-  cout << input.x << "  =  "<< input.y << endl;
-  cout << "prephi: " << input.y/input.x << endl;
-  if(input.x!=0) return atan(input.y,input.x);
-  else return 
+  return atan(input.y/input.x);
 }
