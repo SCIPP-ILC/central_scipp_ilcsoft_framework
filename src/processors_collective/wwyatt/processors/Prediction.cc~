@@ -65,6 +65,10 @@ static TH1F* _a_electron_phi;
 static TH1F* _positron_dtheta;
 static TH1F* _electron_dtheta;
 
+static TH2F* _e_theta_vs_p_theta;
+static TH2F* _ae_theta_vs_pp_theta;
+static TH2F* _pe_theta_vs_ap_theta;
+
 static TH1F* _alpha;
 static TH1F* _beta;
 static TH1F* _az;
@@ -131,7 +135,9 @@ void Prediction::init() {
   _a_electron_phi=new TH1F("a_electron_phi", "Distribution of Actual Electron Phi", 500, -1.6,1.6);
   _positron_dtheta=new TH1F("positron_dtheta", "Distribution of Delta Positron Theta", 500, 0,.01);
   _electron_dtheta=new TH1F("electron_dtheta", "Distribution of Delta Electron Theta", 500, 0,.01);
-
+  _e_theta_vs_p_theta=new TH2F("e_theta_vs_p_theta", "e_theta vs p_theta bw events", 500, 0,.01,500,0,.01);
+  _ae_theta_vs_pp_theta=new TH2F("ae_theta_vs_pp_theta", "Actual Electron vs Predicted Positron Theta", 500,0,.01,500,0,.01);
+  _pe_theta_vs_ap_theta=new TH2F("pe_theta_vs_ap_theta", "Predicted Electron vs Actual Positron Theta", 500,0,.01,500,0,.01);
   _nEvt = 0 ;
 }
 
@@ -163,7 +169,7 @@ void Prediction::processEvent( LCEvent * evt ) {
 
   //If there was no scatter, then there is nothing to see.
   //Also excludes small magnitude events.
-  if(data.mag<=1 || !data.p_scatter) return;
+  if(data.mag<=1) return;
   //if(!data.scattered) return;
   i_events++;
 
@@ -193,7 +199,7 @@ void Prediction::processEvent( LCEvent * evt ) {
   //cout << getPhi(data.electron) << "  :  " << getPhi(data.positron) << endl;
 
   //Make Delta-Theta and Phi plots (Delta-Theta is the angle difference between the predicted and actual momentum vector. Phi is the angle off the x-axis for the transverse momentum vector.)
-  if(tot_energy > 0){
+  if(tot_energy > 494){
     double phi_ap=getPhi(data.positron), phi_ae=getPhi(data.electron), phi_pp=getPhi(p.positron), phi_pe=getPhi(p.electron);
     //Phi
     if(phi_ap==phi_ap) _a_positron_phi->Fill(getPhi(data.positron)); // Actual    Positron
@@ -203,6 +209,9 @@ void Prediction::processEvent( LCEvent * evt ) {
     //dTheta
     _positron_dtheta->Fill(getTheta(data.positron, p.positron));
     _electron_dtheta->Fill(getTheta(data.electron, p.electron));
+    _e_theta_vs_p_theta->Fill(getTheta(p.electron), getTheta(p.positron));
+    _ae_theta_vs_pp_theta->Fill(getTheta(data.electron),getTheta(p.positron));
+    _pe_theta_vs_ap_theta->Fill(getTheta(p.electron),getTheta(data.positron));
   }
   positron_results.push_back(positron_result);
   electron_results.push_back(electron_result);
@@ -216,8 +225,7 @@ void Prediction::check( LCEvent * evt ) {
 
 void Prediction::end(){ 
   Will::META meta = Will::getMETA();
-  /*
-    
+  /*    
     cout << "Scatter Ratios:"<<endl;
     cout << "(positrons:electrons)\t= " << p_scatter << ":"<<e_scatter<<endl;
     cout << "Misc data: " << meta.MSC << endl;

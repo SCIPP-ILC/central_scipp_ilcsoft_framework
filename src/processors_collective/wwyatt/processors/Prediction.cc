@@ -245,7 +245,7 @@ void Prediction::end(){
   cout << endl;
   cout << "Positron  HM Grid: " << endl;
   printHMGrid(positron_results);
-
+  printGuessTable(positron_results, electron_results);
   double cut=494;
   
   //HM Grids

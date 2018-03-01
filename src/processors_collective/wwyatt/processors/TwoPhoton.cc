@@ -1,5 +1,7 @@
 #include <TwoPhoton.h>
 #include <Will.h>
+#include <iostream>
+#include <iomanip>
 using namespace TwoPhoton;
 using namespace Will;
 fourvec TwoPhoton::transform_to_lab(fourvec input){
@@ -195,6 +197,43 @@ void TwoPhoton::recordHMValue(hmgrid &output, fourvec predicted, fourvec actual)
   else if( !hit_pred &&  hit_real )output.mh++;
   else if(  hit_pred && !hit_real )output.hm++;
   else if( !hit_pred && !hit_real )output.mm++;
+}
+unsigned int TwoPhoton::decToBin(unsigned int dec){
+  unsigned int out=0000;
+  if((dec & 1)>0)out+=1;
+  if((dec & 2)>0)out+=10;
+  if((dec & 4)>0)out+=100;
+  if((dec & 8)>0)out+=1000;
+  return out;
+}
+void TwoPhoton::printGuessTable(vector<Result> positron, vector<Result> electron){  
+  int array[16]={0};
+  for(unsigned int i = 0; i < positron.size(); ++i){
+    fourvec preal=getBeamcalPosition(positron[i].actual);
+    fourvec ppred=getBeamcalPosition(positron[i].predicted);
+    fourvec ereal=getBeamcalPosition(electron[i].actual);
+    fourvec epred=getBeamcalPosition(electron[i].predicted);
+    unsigned int  phit_real=(get_hitStatus(preal)<3) << 0;
+    unsigned int  phit_pred=(get_hitStatus(ppred)<3) << 1;
+    unsigned int  ehit_real=(get_hitStatus(ereal)<3) << 2;
+    unsigned int  ehit_pred=(get_hitStatus(epred)<3) << 3;
+    unsigned int out=phit_real|phit_pred|ehit_real|ehit_pred;
+    ++array[out];
+  }
+  cout << "Printing hit table " << endl;
+  cout << "#e+e- " << endl << "#TPTP" << endl;
+  double total=positron.size();
+  long unsigned int bad=0;
+  for(unsigned int i = 0; i < 16; ++i){
+    total+=array[i];
+    if(i==1||i==4||i==5||i==6||i==9){
+      bad += array[i];
+    }
+
+    cout << "#" << decToBin(i) << ": " << array[i]/total << endl;
+  }
+  cout << "total: " << positron.size() << endl;
+  cout << "bad events: " << bad/total << endl;
 }
 void TwoPhoton::printHMGrid(vector<fourvec> pred, vector<fourvec> actual){
   printHMGrid(getHMGrid(pred,actual));

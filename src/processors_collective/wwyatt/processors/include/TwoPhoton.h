@@ -103,6 +103,8 @@ namespace TwoPhoton{
    int get_hitStatus(const fourvec, const bool=false);
    int get_hitStatus(MCParticle*);
    
+   void printGuessTable(vector<Result>, vector<Result>);
+   unsigned int decToBin(unsigned int);
    //Like the ilc version but it supports MCParticle and fourvectors. 
    //Also it returns a new foucvec that has been transformed.
    fourvec transform_to_lab(MCParticle*);

@@ -103,6 +103,8 @@ namespace TwoPhoton{
    int get_hitStatus(const fourvec, const bool=false);
    int get_hitStatus(MCParticle*);
    
+   void printGuessTable(vector<Result>, vector<Result>);
+
    //Like the ilc version but it supports MCParticle and fourvectors. 
    //Also it returns a new foucvec that has been transformed.
    fourvec transform_to_lab(MCParticle*);
@@ -137,7 +139,8 @@ namespace TwoPhoton{
    double getTheta(const double*, const double*);
    double getTheta(const fourvec, const fourvec);
 
-
+   //Retuns angle of the transverse momentum
+   double getPhi(const fourvec);
 }
 
 #endif
