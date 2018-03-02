@@ -23,11 +23,9 @@
 #include <EVENT/LCCollection.h>
 #include <EVENT/SimCalorimeterHit.h>
 #include <EVENT/MCParticle.h>
-
+#include <TwoPhoton.h>
 #include <TFile.h>
 #include <TH2D.h>
-#include <MyParticle.h>
-#include <Will.h>
 
 // ----- include for verbosity dependend logging ---------
 #include "marlin/VerbosityLevels.h"
@@ -36,7 +34,6 @@
 using namespace lcio;
 using namespace marlin;
 using namespace std;
-using namespace Will;
 using namespace TwoPhoton;
 
 
@@ -224,19 +221,8 @@ void Prediction::check( LCEvent * evt ) {
 
 
 void Prediction::end(){ 
-  Will::META meta = Will::getMETA();
-  /*    
-    cout << "Scatter Ratios:"<<endl;
-    cout << "(positrons:electrons)\t= " << p_scatter << ":"<<e_scatter<<endl;
-    cout << "Misc data: " << meta.MSC << endl;
-  */
-  //General Analysis
-  //cout << "total photons: " << photons << endl;
-  //cout << "Photons with pi-0 parent: " << nphotons << endl;
   cout << "==== " << n_events << " Events ====" << endl;
   cout << "==== " << i_events << " Counted Events (mag>1) ====" << endl;
-  cout << "Predicted Z-Direction Errors:" << meta.err_direction << endl;
-  //cout << "(scattered:not-scattered)\t= " << meta.SCATTERS << ":" << meta.NOSCATTERS << endl;  
   cout << "Electron Results Collected:" << electron_results.size() << endl;
   cout << "Positron Results Collected:" << positron_results.size() << endl;
   cout << endl;

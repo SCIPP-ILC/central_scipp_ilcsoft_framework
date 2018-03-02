@@ -1,9 +1,7 @@
 #include <TwoPhoton.h>
-#include <Will.h>
 #include <iostream>
 #include <iomanip>
 using namespace TwoPhoton;
-using namespace Will;
 fourvec TwoPhoton::transform_to_lab(fourvec input){
   double px=input.x;
   double e=input.e;
@@ -148,9 +146,7 @@ bundle TwoPhoton::getHadronicSystem(LCCollection* col){
     //out.hadronic += hadron;
     //}
   }
-  //out.hadronic+=out.pseudo;
- 
-  out.scattered ? meta.SCATTERS++ : meta.NOSCATTERS++; //Accounting for later statistical use.
+
   return out;
 }
 
@@ -159,8 +155,7 @@ fourvec TwoPhoton::getBeamcalPosition(const fourvec input, signed short dir){
   fourvec pos;
   //Positron moves in -z direction
   double direction = lab.z / abs(lab.z);
-  if(dir != 0 && dir != direction) meta.err_direction++;
-  pos.z = META::BEAMCAL * direction;
+  pos.z = 3265 * direction;
   pos.x = lab.x * pos.z / lab.z + pos.z * .007 * (-direction);
   pos.y = lab.y * pos.z / lab.z;
   return pos;

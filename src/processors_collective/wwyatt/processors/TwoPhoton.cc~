@@ -1,9 +1,7 @@
 #include <TwoPhoton.h>
-#include <Will.h>
 #include <iostream>
 #include <iomanip>
 using namespace TwoPhoton;
-using namespace Will;
 fourvec TwoPhoton::transform_to_lab(fourvec input){
   double px=input.x;
   double e=input.e;
@@ -148,9 +146,7 @@ bundle TwoPhoton::getHadronicSystem(LCCollection* col){
     //out.hadronic += hadron;
     //}
   }
-  //out.hadronic+=out.pseudo;
- 
-  out.scattered ? meta.SCATTERS++ : meta.NOSCATTERS++; //Accounting for later statistical use.
+
   return out;
 }
 
@@ -160,7 +156,7 @@ fourvec TwoPhoton::getBeamcalPosition(const fourvec input, signed short dir){
   //Positron moves in -z direction
   double direction = lab.z / abs(lab.z);
   if(dir != 0 && dir != direction) meta.err_direction++;
-  pos.z = META::BEAMCAL * direction;
+  pos.z = 3265 * direction;
   pos.x = lab.x * pos.z / lab.z + pos.z * .007 * (-direction);
   pos.y = lab.y * pos.z / lab.z;
   return pos;
@@ -222,9 +218,18 @@ void TwoPhoton::printGuessTable(vector<Result> positron, vector<Result> electron
   }
   cout << "Printing hit table " << endl;
   cout << "#e+e- " << endl << "#TPTP" << endl;
+  double total=positron.size();
+  long unsigned int bad=0;
   for(unsigned int i = 0; i < 16; ++i){
-    cout << "#" << decToBin(i) << ": " << array[i] << endl;
+    total+=array[i];
+    if(i==1||i==4||i==5||i==6||i==9){
+      bad += array[i];
+    }
+
+    cout << "#" << decToBin(i) << ": " << array[i]/total << endl;
   }
+  cout << "total: " << positron.size() << endl;
+  cout << "bad events: " << bad/total << endl;
 }
 void TwoPhoton::printHMGrid(vector<fourvec> pred, vector<fourvec> actual){
   printHMGrid(getHMGrid(pred,actual));
