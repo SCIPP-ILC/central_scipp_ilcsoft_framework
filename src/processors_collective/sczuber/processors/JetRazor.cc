@@ -35,6 +35,8 @@
 #include <IMPL/ReconstructedParticleImpl.h>
 #include <IMPL/LCTOOLS.h>
 
+#include "testy.cc"
+
 using namespace lcio;
 using namespace marlin;
 using namespace fastjet;
@@ -207,7 +209,7 @@ void JetRazor::processEvent( LCEvent * evt ) {
         }
     }
 
-
+    vector<PseudoJet> megajets = findMegaJets(jets);
     //_NJ_T->Fill(jets.size());
     _NJ_DAB->Fill(jets.size());
     //_NJ_DED->Fill(jets.size());

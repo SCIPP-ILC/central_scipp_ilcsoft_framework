@@ -2,6 +2,7 @@
 #include <vector>
 #include <fstream>
 #include <cmath>
+#include "fastjet/ClusterSequence.hh"
 
 using namespace std; 
 
@@ -11,27 +12,32 @@ int main(){
     for (int i = 0; i<6; i++){
         cout << jets[i] << endl; 
     }
-    //char counter[] = new char[6];
-    for (unsigned int i = 0; i< pow(2,6); i++){
-        cout << "NEW SUBSET   " << i << endl; 
-        std::vector<int> subet;
 
-        for (unsigned int j = 0; j<6; j++){
-            unsigned int bit = pow(2,j); 
-            //cout << "bit " << bit << endl; 
-            if ((i  &  bit) != 0){
-                subet.push_back(jets[j]);
-            }
-        }
-        for (int k = 0; k<subet.size(); k++){
-            cout << subet[k]; 
-        }
-        cout << endl; 
-        subet.clear();
-        
-    }
     int subset[10] = {};
     return 0;
 
 
+}
+
+vector<PseudoJet> findMegaJets(vector<PseudoJet> jets){
+    
+    for (unsigned int i = 0; i< pow(2,6); i++){
+        cout << "NEW SUBSET   " << i << endl; 
+        std::vector<PseudoJet> subset;
+        for (unsigned int j = 0; j<6; j++){
+            unsigned int bit = pow(2,j);  
+            if ((i  &  bit) != 0){
+                subset.push_back(jets[j]);
+            }
+        }
+        for (int k = 0; k<subset.size(); k++){
+            cout << subset[k]; 
+        }
+        cout << endl;
+         
+        subset.clear();
+        
+    }
+    vector<PseudoJet> megajets; 
+    return megajets;
 }
