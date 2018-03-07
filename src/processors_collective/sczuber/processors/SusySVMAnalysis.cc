@@ -98,11 +98,11 @@ void SusySVMAnalysis::processEvent( LCEvent * evt ) {
     // usually the working horse ...
 
     _inParVec = evt->getCollection( _colName ) ;
-    cout << "# of Elements "<<_inParVec->getNumberOfElements()<<endl;
-    cout << endl;
-    cout << endl;
-    cout << endl;
-    cout << "event = " << _nEvt << endl;
+    //cout << "# of Elements "<<_inParVec->getNumberOfElements()<<endl;
+    //cout << endl;
+    //cout << endl;
+    //cout << endl;
+    //cout << "event = " << _nEvt << endl;
     
     double vec[4][3];
     double scalars[4];
@@ -121,7 +121,7 @@ void SusySVMAnalysis::processEvent( LCEvent * evt ) {
             
            try{ 
             id = particle->getPDG();
-            cout << id << endl;  
+            //cout << id << endl;  
             stat = particle->getGeneratorStatus();
            }
            catch(const std::exception& e){
