@@ -35,7 +35,7 @@
 #include <IMPL/ReconstructedParticleImpl.h>
 #include <IMPL/LCTOOLS.h>
 
-#include "testy.cc"
+#include "megajet.h"
 
 using namespace lcio;
 using namespace marlin;
