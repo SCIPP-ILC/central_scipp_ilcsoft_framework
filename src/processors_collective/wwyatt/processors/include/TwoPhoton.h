@@ -76,8 +76,10 @@ namespace TwoPhoton{
    * - electron vector
    * - positron vector
    * This should be used to calculate a prediction vector.
+   * ptKick should be ON for TwoPhotonEvents
+   * observables will remove neutrinos and dark matter.
    */
-   bundle getHadronicSystem(LCCollection*);
+   bundle getHadronicSystem(LCCollection*, bool ptKick=true);
    
    //getBeamcalPosition Returns a position fourvec, of the particle on the face of the beamcal.
    fourvec getBeamcalPosition(fourvec, signed short = 0);

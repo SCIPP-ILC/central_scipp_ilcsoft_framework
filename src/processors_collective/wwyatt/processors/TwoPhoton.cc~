@@ -81,7 +81,7 @@ map<int,MCParticle*> TwoPhoton::maxParticle(LCCollection* col, initializer_list<
   return max;
 }
 
-bundle TwoPhoton::getHadronicSystem(LCCollection* col){
+bundle TwoPhoton::getHadronicSystem(LCCollection* col, bool ptKick){
   bundle out;
   vector<MCParticle*> all_particles;
   vector<MCParticle*> hadronic_system;
@@ -122,31 +122,32 @@ bundle TwoPhoton::getHadronicSystem(LCCollection* col){
     }
   }
   out.hadronic_nopseudo=out.hadronic;
+  if(ptKick){
   //PSEUDO PARTICLE
-  out.pseudo=*(new fourvec(
-			   -(out.hadronic.x+out.positron.x+out.electron.x),
-			   -(out.hadronic.y+out.positron.y+out.electron.y) ));
-  double total_energy=out.hadronic.E;
-  out.hadronic.x=0;
-  out.hadronic.y=0;
-  out.hadronic.z=0;
-  out.hadronic.e=0;
-  int count = 0;
-  short n_hadrons = hadronic_system.size();
-  out.mag += getTMag(out.pseudo);    
-  for(auto particle: hadronic_system){
-    fourvec hadron = getFourVector(particle);
-    ++count;
-    out.hadronic += (hadron+=out.pseudo*(hadron.E/total_energy));
-    //To remove unobservable particles.
-    //int id=particle->getPDG();
-    //const double angle = 0.5; //Cutting angle
-    //if(id==12||id==14||id==16||id==18|| (id>=1000001 && id<=1000039))continue;
-    //      if(true || abs(hadron.z/getMag(hadron)) < angle ){
-    //out.hadronic += hadron;
-    //}
+    out.pseudo=*(new fourvec(
+			     -(out.hadronic.x+out.positron.x+out.electron.x),
+			     -(out.hadronic.y+out.positron.y+out.electron.y) ));
+    double total_energy=out.hadronic.E;
+    out.hadronic.x=0;
+    out.hadronic.y=0;
+    out.hadronic.z=0;
+    out.hadronic.e=0;
+    int count = 0;
+    short n_hadrons = hadronic_system.size();
+    out.mag += getTMag(out.pseudo);    
+    for(auto particle: hadronic_system){
+      fourvec hadron = getFourVector(particle);
+      ++count;
+      out.hadronic += (hadron+=out.pseudo*(hadron.E/total_energy));
+      //To remove unobservable particles.
+      //int id=particle->getPDG();
+      //const double angle = 0.5; //Cutting angle
+      //if(id==12||id==14||id==16||id==18|| (id>=1000001 && id<=1000039))continue;
+      //      if(true || abs(hadron.z/getMag(hadron)) < angle ){
+      //out.hadronic += hadron;
+      //}
+    }
   }
-
   return out;
 }
 
@@ -155,7 +156,6 @@ fourvec TwoPhoton::getBeamcalPosition(const fourvec input, signed short dir){
   fourvec pos;
   //Positron moves in -z direction
   double direction = lab.z / abs(lab.z);
-  if(dir != 0 && dir != direction) meta.err_direction++;
   pos.z = 3265 * direction;
   pos.x = lab.x * pos.z / lab.z + pos.z * .007 * (-direction);
   pos.y = lab.y * pos.z / lab.z;
