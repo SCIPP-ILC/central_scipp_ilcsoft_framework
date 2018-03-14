@@ -106,7 +106,9 @@ namespace TwoPhoton{
    int get_hitStatus(MCParticle*);
    
    void printGuessTable(vector<Result>, vector<Result>);
-   unsigned int decToBin(unsigned int);
+
+   string getCombinationFromIndex(const unsigned int); //turns number 1-16 into a combination of THTH where T=1 H=0 and the four characters is the binary for of the input.
+   string getGoodOrBad(const int);
    //Like the ilc version but it supports MCParticle and fourvectors. 
    //Also it returns a new foucvec that has been transformed.
    fourvec transform_to_lab(MCParticle*);

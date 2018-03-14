@@ -194,15 +194,20 @@ void TwoPhoton::recordHMValue(hmgrid &output, fourvec predicted, fourvec actual)
   else if(  hit_pred && !hit_real )output.hm++;
   else if( !hit_pred && !hit_real )output.mm++;
 }
-unsigned int TwoPhoton::decToBin(unsigned int dec){
-  unsigned int out=0000;
-  if((dec & 1)>0)out+=1;
-  if((dec & 2)>0)out+=10;
-  if((dec & 4)>0)out+=100;
-  if((dec & 8)>0)out+=1000;
+string TwoPhoton::getCombinationFromIndex(unsigned int dec){
+  string out="";
+  for(int i = 1; i <= 8; i*=2){
+    if((dec & i)>0)out+="H";
+    else out+="M";
+  }
   return out;
 }
-void TwoPhoton::printGuessTable(vector<Result> positron, vector<Result> electron){  
+string TwoPhoton::getGoodOrBad(int index){
+  if(index==1||index==4||index==5||index==6||index==9)
+    return "!";
+  else return "-";
+}
+void TwoPhoton::printGuessTable(vector<Result> positron, vector<Result> electron){ 
   int array[16]={0};
   for(unsigned int i = 0; i < positron.size(); ++i){
     fourvec preal=getBeamcalPosition(positron[i].actual);
@@ -217,19 +222,17 @@ void TwoPhoton::printGuessTable(vector<Result> positron, vector<Result> electron
     ++array[out];
   }
   cout << "Printing hit table " << endl;
-  cout << "#e+e- " << endl << "#TPTP" << endl;
+  cout << "#e+e- " << endl << "#TPTP\t\t[Quantity]" << endl;
   double total=positron.size();
   long unsigned int bad=0;
   for(unsigned int i = 0; i < 16; ++i){
-    total+=array[i];
     if(i==1||i==4||i==5||i==6||i==9){
       bad += array[i];
     }
-
-    cout << "#" << decToBin(i) << ": " << array[i]/total << endl;
+    cout << setprecision(4) << fixed << getGoodOrBad(i) << getCombinationFromIndex(i) << ": " << 100*array[i]/total << "%\t[" << array[i] << "]" << endl;
   }
   cout << "total: " << positron.size() << endl;
-  cout << "bad events: " << bad/total << endl;
+  cout << "bad events(!): " << 100*bad/total <<"%" << endl;
 }
 void TwoPhoton::printHMGrid(vector<fourvec> pred, vector<fourvec> actual){
   printHMGrid(getHMGrid(pred,actual));
