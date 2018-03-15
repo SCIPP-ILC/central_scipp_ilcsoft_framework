@@ -143,7 +143,7 @@ bundle TwoPhoton::getHadronicSystem(LCCollection* col, bool ptKick){
       //int id=particle->getPDG();
       //const double angle = 0.5; //Cutting angle
       //if(id==12||id==14||id==16||id==18|| (id>=1000001 && id<=1000039))continue;
-      //      if(true || abs(hadron.z/getMag(hadron)) < angle ){
+      //      if(abs(hadron.z/getMag(hadron)) < angle ){
       //out.hadronic += hadron;
       //}
     }
