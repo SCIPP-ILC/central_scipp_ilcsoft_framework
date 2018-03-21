@@ -197,8 +197,8 @@ void TwoPhoton::recordHMValue(hmgrid &output, fourvec predicted, fourvec actual)
 string TwoPhoton::getCombinationFromIndex(unsigned int dec){
   string out="";
   for(int i = 1; i <= 8; i*=2){
-    if((dec & i)>0)out+="H";
-    else out+="M";
+    if((dec & i)>0)out="H"+out;
+    else out="o"+out;
   }
   return out;
 }
@@ -214,15 +214,17 @@ void TwoPhoton::printGuessTable(vector<Result> positron, vector<Result> electron
     fourvec ppred=getBeamcalPosition(positron[i].predicted);
     fourvec ereal=getBeamcalPosition(electron[i].actual);
     fourvec epred=getBeamcalPosition(electron[i].predicted);
-    unsigned int  phit_real=(get_hitStatus(preal)<3) << 0;
-    unsigned int  phit_pred=(get_hitStatus(ppred)<3) << 1;
-    unsigned int  ehit_real=(get_hitStatus(ereal)<3) << 2;
-    unsigned int  ehit_pred=(get_hitStatus(epred)<3) << 3;
+
+    unsigned int  ehit_pred=(get_hitStatus(epred)<3) << 0;
+    unsigned int  ehit_real=(get_hitStatus(ereal)<3) << 1;
+    unsigned int  phit_pred=(get_hitStatus(ppred)<3) << 2;
+    unsigned int  phit_real=(get_hitStatus(preal)<3) << 3;
+
     unsigned int out=phit_real|phit_pred|ehit_real|ehit_pred;
     ++array[out];
   }
   cout << "Printing hit table " << endl;
-  cout << "#e+e- " << endl << "#TPTP\t\t[Quantity]" << endl;
+  cout << "#e-e+ " << endl << "#PTPT\t\t[Quantity]" << endl;
   double total=positron.size();
   long unsigned int bad=0;
   for(unsigned int i = 0; i < 16; ++i){
