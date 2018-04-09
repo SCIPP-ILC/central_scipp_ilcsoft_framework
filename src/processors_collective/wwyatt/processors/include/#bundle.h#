@@ -1,6 +1,0 @@
-#indef tbun
-#def tbun
-
-#incluce <EVENT/MCParticle.h>
-
-#endif

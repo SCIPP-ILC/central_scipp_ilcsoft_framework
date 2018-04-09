@@ -1,3 +1,0 @@
-Razor.cc is copy from ThurstRazor.cc 
-
-in which will attempt to inlude JetFinder to use it 
