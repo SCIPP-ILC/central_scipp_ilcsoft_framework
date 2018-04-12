@@ -101,6 +101,7 @@ AUX_SOURCE_DIRECTORY( ./src/core_processors library_sources )
 AUX_SOURCE_DIRECTORY( ./src/processors library_sources ) 
 AUX_SOURCE_DIRECTORY( ./src/base/util library_sources )
 AUX_SOURCE_DIRECTORY( ./src/base/beamcal_recon library_sources )
+AUX_SOURCE_DIRECTORY( ./src/shared_processors library_sources )
 
 # add library
 ADD_SHARED_LIBRARY( ${PROJECT_NAME} ${library_sources} )
